@@ -4,9 +4,15 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
- 
-int main(int argc , char *argv[])
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
+int main(int argc, char* argv[])
 {
+    pid_t process_id = 0;
+    pid_t sid = 0;
+
     int socket_desc , client_sock , c , *new_sock;
     int port;
     struct sockaddr_in server , client;
@@ -19,10 +25,33 @@ int main(int argc , char *argv[])
 	exit(0);
     }
 
-    port = 8888;
+    port = 9999;
     if ( argc > 1 ) {
 	port = atoi( argv[1] );
     }
+
+    process_id = fork();
+    if (process_id < 0)
+    {
+	printf("fork failed!\n");
+	exit(1);
+    }
+    if (process_id > 0)
+    {
+	printf("process_id of child process %d \n", process_id);
+	exit(0);
+    }
+    umask(0);
+    sid = setsid();
+    if (sid < 0)
+    {
+	exit(1);
+    }
+
+    chdir("/");
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
 
     //Create socket
     socket_desc = socket(AF_INET , SOCK_STREAM , 0);
@@ -39,23 +68,23 @@ int main(int argc , char *argv[])
         printf("bind failed. Error\n");
         return 1;
     }
- 
+
     listen(socket_desc , 3);
-     
+
     printf("ready for incoming connections on port %d\n", port);
 
     c = sizeof(struct sockaddr_in);
+
     while( (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
     {
 	close(client_sock);
     }
-     
+
     if (client_sock < 0)
     {
         printf("accept failed\n");
         return 1;
     }
-     
-    return 0;
+
+    return (0);
 }
- 
