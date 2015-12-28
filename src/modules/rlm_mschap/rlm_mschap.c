@@ -725,7 +725,7 @@ static int do_mschap(rlm_mschap_t *inst,
 					     TRUE, /* wait */
 					     buffer, sizeof(buffer),
 					     inst->ntlm_auth_timeout,
-					     NULL, NULL, 1);
+					     request->packet->vps, NULL, 1);
 		if (result != 0) {
 			char *p;
 			VALUE_PAIR *vp = NULL;
