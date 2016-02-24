@@ -37,7 +37,7 @@ static int mac_bypass_instantiate(CONF_SECTION *conf, void **instance)
     }
     memset(inst, 0, sizeof(rlm_mac_bypass_t));
     if (cf_section_parse(conf, inst, module_config) < 0) {
-        radlog(L_ERR, "rlm_mac_bypass: Failed parsing the configuration");
+        radlog(L_ERR, "60024 rlm_mac_bypass: Failed parsing the configuration");
         mac_bypass_detach(inst);
         return -1;
     }
@@ -56,29 +56,29 @@ static int mac_bypass_authorize(UNUSED void *instance, REQUEST *request)
     int result;
 
     if (!request->client || !request->client->cs) {
-        radlog(L_ERR, "rlm_mac_bypass: Unknown client definition");
+        radlog(L_ERR, "60025 rlm_mac_bypass: Unknown client definition");
         return RLM_MODULE_NOOP;
     }
 
-    if ((vp = pairfind(request->packet->vps, PW_CALLING_STATION_ID)) != NULL) {
+    if ((vp = pairfind(request->packet->vps, PW_USER_NAME)) != NULL) {
 	if (!snprintf(buffer, sizeof(buffer), "%s", vp->vp_strvalue)) {
-    	    radlog(L_ERR, "rlm_mac_bypass: Unable to get mac address");
+    	    radlog(L_ERR, "60026 rlm_mac_bypass: Unable to process username");
     	    return RLM_MODULE_FAIL; 
 	}
     } else {
-        radlog(L_ERR, "rlm_mac_bypass: Unable to get mac address");
+        radlog(L_ERR, "60027 rlm_mac_bypass: Unable to get username");
         return RLM_MODULE_FAIL; 
     }
 
     if (!snprintf(cmdline, sizeof(cmdline), "%s %d %s", inst->program, request->packet->dst_port, buffer)) {
-        radlog(L_ERR, "rlm_mac_bypass: Unable to make cmd line");
+        radlog(L_ERR, "60028 rlm_mac_bypass: Unable to make cmd line");
         return RLM_MODULE_FAIL; 
     }
 
     result = radius_exec_program(cmdline, request, TRUE, NULL, 0, 10000, request->packet->vps, NULL, 1);
 
     if (result != 0) {
-        radlog(L_ERR, "rlm_mac_bypass: External script '%s' failed", cmdline);
+        radlog(L_ERR, "60029 rlm_mac_bypass: External script '%s' failed", cmdline);
         return RLM_MODULE_REJECT;
     } else {
 	return RLM_MODULE_OK;

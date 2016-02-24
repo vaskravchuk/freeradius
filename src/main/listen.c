@@ -1324,11 +1324,16 @@ static int client_socket_encode(UNUSED rad_listen_t *listener, REQUEST *request)
 
 static int client_socket_decode(UNUSED rad_listen_t *listener, REQUEST *request)
 {
+	char buffer[128];
+
 	if (rad_verify(request->packet, NULL,
 		       request->client->secret) < 0) {
+
+		radlog(L_ERR, "60014 Unable to verify incoming connection from client %s, wrong secret?",
+		       ip_ntoh(&request->packet->src_ipaddr, buffer, sizeof(buffer)));
+		
 		return -1;
 	}
-
 	return rad_decode(request->packet, NULL,
 			  request->client->secret);
 }
