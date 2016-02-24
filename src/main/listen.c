@@ -1329,8 +1329,8 @@ static int client_socket_decode(UNUSED rad_listen_t *listener, REQUEST *request)
 	if (rad_verify(request->packet, NULL,
 		       request->client->secret) < 0) {
 
-		radlog(L_ERR, "60014 Unable to verify incoming connection from client %s, wrong secret?",
-		       ip_ntoh(&request->packet->src_ipaddr, buffer, sizeof(buffer)));
+		radlog(L_ERR, "60014 Unable to verify incoming connection from client %s to port %d, wrong secret?",
+		       ip_ntoh(&request->packet->src_ipaddr, buffer, sizeof(buffer)), request->packet->dst_port);
 		
 		return -1;
 	}
