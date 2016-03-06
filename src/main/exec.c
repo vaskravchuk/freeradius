@@ -31,6 +31,7 @@ RCSID("$Id$")
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
+#include <string.h>
 
 #ifdef HAVE_SYS_WAIT_H
 #	include <sys/wait.h>
@@ -45,6 +46,12 @@ RCSID("$Id$")
 #define MAX_ARGV (256)
 
 #define USEC 1000000
+
+typedef struct exec_var_t {
+	char *name;
+	int index;
+} exec_var_t;
+
 static void tv_sub(struct timeval *end, struct timeval *start,
 		   struct timeval *elapsed)
 {
@@ -64,6 +71,19 @@ static void tv_sub(struct timeval *end, struct timeval *start,
 	}
 }
 
+
+static uint32_t exec_var_hash(const void *data)
+{
+    const exec_var_t *ev = data;
+    return fr_hash_string(ev->name);
+}
+
+static void exec_var_free(const void *data)
+{
+    const exec_var_t *ev = data;
+    free(ev->name);
+    free(ev);
+}
 
 /*
  *	Execute a program on successful authentication.
@@ -87,7 +107,7 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 	int comma = 0;
 	int status;
 	int i;
-	int n, left, done;
+	int n, left, done, k;
 	char * const argv[MAX_ARGV];
 	char answer[4096];
 	char argv_buf[4096];
@@ -130,7 +150,15 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 
 	if (input_pairs) {
 		int envlen;
-		char buffer[1024];
+		char buffer[2048];
+		char all_vars_buf[4096];
+		fr_hash_table_t *vars_hash;
+		int rcode;
+
+		vars_hash = fr_hash_table_create(exec_var_hash, NULL, exec_var_free);
+		if (!vars_hash) {
+		    RDEBUG("ERROR: Failed to set up vars_hash");
+		}
 
 		/*
 		 *	Set up the environment variables in the
@@ -139,6 +167,7 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 		 *	and will remain locked in the child.
 		 */
 		envlen = 0;
+		snprintf(all_vars_buf, sizeof(all_vars_buf), "RADIUS_ALL_ATTRIBUTES=");
 
 		for (vp = input_pairs; vp != NULL; vp = vp->next) {
 			/*
@@ -146,7 +175,34 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 			 *	user's password in an environment
 			 *	variable...
 			 */
-			snprintf(buffer, sizeof(buffer), "%s=", vp->name);
+
+			if (vars_hash) {
+			    exec_var_t ev, *oev;
+			    ev.name = vp->name;
+			    oev = fr_hash_table_finddata(vars_hash, &ev);
+			    if (oev) {
+				oev->index++;
+			    } else {
+				oev = rad_malloc(sizeof(*oev));
+				memset(oev, 0, sizeof(*oev));
+				oev->name = strdup(vp->name);
+				oev->index = 0;
+				rcode = fr_hash_table_insert(vars_hash, oev);
+				if (!rcode) {
+				    RDEBUG("Failed to store variable %s in the hash", vp->name);
+				    exec_var_free(oev);
+				    oev = NULL;
+				}
+			    }
+			    if (oev && oev->index > 0) {
+				snprintf(buffer, sizeof(buffer), "%s-%d=", vp->name, oev->index);
+			    } else {
+				snprintf(buffer, sizeof(buffer), "%s=", vp->name);
+			    }
+			} else {
+				snprintf(buffer, sizeof(buffer), "%s=", vp->name);
+			}
+
 			if (shell_escape) {
 				for (p = buffer; *p != '='; p++) {
 					if (*p == '-') {
@@ -157,6 +213,10 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 				}
 			}
 
+			k = strlen(all_vars_buf);
+			snprintf(all_vars_buf + k, sizeof(all_vars_buf) - k, "%s", buffer);
+			all_vars_buf[strlen(all_vars_buf)-1]=' ';
+
 			n = strlen(buffer);
 			vp_prints_value(buffer+n, sizeof(buffer) - n, vp, shell_escape);
 
@@ -165,7 +225,14 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 			/*
 			 *	Don't add too many attributes.
 			 */
-			if (envlen == (MAX_ENVP - 1)) break;
+			if (envlen == (MAX_ENVP - 2)) break;
+		}
+		k = strlen(all_vars_buf);
+		all_vars_buf[k - 1]=0;
+		envp[envlen++] = strdup(all_vars_buf);
+
+		if (vars_hash) {
+		    fr_hash_table_free(vars_hash);
 		}
 		envp[envlen] = NULL;
 	}
