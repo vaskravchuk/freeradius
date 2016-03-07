@@ -202,6 +202,11 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 			} else {
 				snprintf(buffer, sizeof(buffer), "%s=", vp->name);
 			}
+			
+			/** Add variable BEFORE escaping **/
+			k = strlen(all_vars_buf);
+			snprintf(all_vars_buf + k, sizeof(all_vars_buf) - k, "%s", buffer);
+			all_vars_buf[strlen(all_vars_buf)-1]=' ';
 
 			if (shell_escape) {
 				for (p = buffer; *p != '='; p++) {
@@ -212,11 +217,7 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 					}
 				}
 			}
-
-			k = strlen(all_vars_buf);
-			snprintf(all_vars_buf + k, sizeof(all_vars_buf) - k, "%s", buffer);
-			all_vars_buf[strlen(all_vars_buf)-1]=' ';
-
+	
 			n = strlen(buffer);
 			vp_prints_value(buffer+n, sizeof(buffer) - n, vp, shell_escape);
 
