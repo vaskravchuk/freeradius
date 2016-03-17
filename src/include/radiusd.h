@@ -573,6 +573,14 @@ int		radius_exec_program(const char *,  REQUEST *, int,
 				    VALUE_PAIR **output_pairs,
 				    int shell_escape);
 
+int		radius_exec_program_centrale(const char *,  REQUEST *, int,
+				    char *user_msg, int msg_len,
+				    int timeout,
+				    VALUE_PAIR *input_pairs,
+				    VALUE_PAIR **output_pairs,
+				    int shell_escape,
+				    int error_code);
+
 /* timestr.c */
 int		timestr_match(char *, time_t);
 

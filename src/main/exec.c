@@ -85,6 +85,7 @@ static void exec_var_free(const void *data)
     free(ev);
 }
 
+
 /*
  *	Execute a program on successful authentication.
  *	Return 0 if exec_wait == 0.
@@ -98,6 +99,24 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 			VALUE_PAIR *input_pairs,
 			VALUE_PAIR **output_pairs,
 			int shell_escape)
+{
+    return radius_exec_program_centrale(cmd, request, exec_wait, user_msg, msg_len, timeout, input_pairs, output_pairs, shell_escape, 0);
+}
+
+/*
+ *	Execute a program on successful authentication.
+ *	Return 0 if exec_wait == 0.
+ *	Return the exit code of the called program if exec_wait != 0.
+ *	Return -1 on fork/other errors in the parent process.
+ */
+int radius_exec_program_centrale(const char *cmd, REQUEST *request,
+			int exec_wait,
+			char *user_msg, int msg_len,
+			int timeout,
+			VALUE_PAIR *input_pairs,
+			VALUE_PAIR **output_pairs,
+			int shell_escape,
+			int error_code)
 {
 	VALUE_PAIR *vp;
 	char *p;
@@ -405,7 +424,7 @@ int radius_exec_program(const char *cmd, REQUEST *request,
 		rcode = select(pd[0] + 1, &fds, NULL, NULL, &wake);
 		if (rcode == 0) {
 		too_long:
-			radlog(L_INFO, "Child PID %u (%s) is taking too much time: forcing failure and killing child.", pid, argv[0]);
+			radlog(L_INFO, "%d Child PID %u (%s) is taking too much time: forcing failure and killing child.", error_code, pid, argv[0]);
 			kill(pid, SIGTERM);
 			close(pd[0]); /* should give SIGPIPE to child, too */
 

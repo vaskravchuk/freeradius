@@ -721,11 +721,11 @@ static int do_mschap(rlm_mschap_t *inst,
 		/*
 		 *	Run the program, and expect that we get 16
 		 */
-		result = radius_exec_program(inst->ntlm_auth, request,
+		result = radius_exec_program_centrale(inst->ntlm_auth, request,
 					     TRUE, /* wait */
 					     buffer, sizeof(buffer),
 					     inst->ntlm_auth_timeout,
-					     request->packet->vps, NULL, 1);
+					     request->packet->vps, NULL, 1, 60025);
 		if (result != 0) {
 			char *p;
 			VALUE_PAIR *vp = NULL;
