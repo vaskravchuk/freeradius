@@ -314,7 +314,7 @@ static int pap_authorize(void *instance, REQUEST *request)
 	int found_pw = FALSE;
 	VALUE_PAIR *vp, *next;
 
-	for (vp = request->config_items; vp != NULL; vp = next) {
+	for (vp = request->packet->vps; vp != NULL; vp = next) {
 		next = vp->next;
 
 		switch (vp->attribute) {
