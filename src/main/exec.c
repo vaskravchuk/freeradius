@@ -536,7 +536,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 				answer[strlen(answer) - 1] = '\0';
 			}
 
-			RDEBUG("Exec output: %s", answer);
+			RDEBUG("Exec output for parsing the vars: %s", answer);
 
 			vp = NULL;
 			if (userparse(answer, &vp) == T_OP_INVALID) {

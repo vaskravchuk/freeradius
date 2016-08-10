@@ -164,6 +164,7 @@ static void peap_free(void *p)
 	pairfree(&t->username);
 	pairfree(&t->state);
 	pairfree(&t->accept_vps);
+	pairfree(&t->challenge_vps);
 	pairfree(&t->soh_reply_vps);
 
 	free(t);
@@ -306,6 +307,13 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 			pairadd(&handler->request->reply->vps, peap->accept_vps);
 			peap->accept_vps = NULL;
 		}
+		if (peap->challenge_vps) {
+			RDEBUG2("Using saved attributes from the original Access-Challenge");
+			debug_pair_list(peap->challenge_vps);
+			pairadd(&handler->request->reply->vps, peap->challenge_vps);
+			peap->challenge_vps = NULL;
+		}
+
 
 		/*
 		 *	Success: Automatically return MPPE keys.

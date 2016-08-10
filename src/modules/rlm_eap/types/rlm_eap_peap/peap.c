@@ -461,6 +461,9 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 
 			t->accept_vps = reply->vps;
 			reply->vps = NULL;
+
+			RDEBUG2("Stored following attributes to accept_vps list - 1");
+			debug_pair_list(t->accept_vps);
 		}
 		break;
 
@@ -499,15 +502,22 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		 */
 		if (t->home_access_accept && t->use_tunneled_reply) {
 			RDEBUG2("Saving tunneled attributes for later");
-
-			/*
-			 *	Clean up the tunneled reply.
-			 */
 			pairdelete(&reply->vps, PW_PROXY_STATE);
 			pairdelete(&reply->vps, PW_MESSAGE_AUTHENTICATOR);
-
-			t->accept_vps = reply->vps;
+			pairmove(&t->accept_vps, &(reply->vps));
 			reply->vps = NULL;
+			RDEBUG2("Stored following attributes to accept_vps list");
+			debug_pair_list(t->accept_vps);
+		}
+		/** Hack for Centrale attributes, passing from mschap script */
+		if (!t->home_access_accept && t->use_tunneled_reply) {
+			RDEBUG2("Saving tunneled attributes for later");
+			pairdelete(&reply->vps, PW_PROXY_STATE);
+			pairdelete(&reply->vps, PW_MESSAGE_AUTHENTICATOR);
+			pairmove(&t->challenge_vps, &(reply->vps));
+			reply->vps = NULL;
+			RDEBUG2("Stored following attributes to challenge_vps list");
+			debug_pair_list(t->challenge_vps);
 		}
 
 		/*
@@ -594,7 +604,6 @@ static int eappeap_postproxy(EAP_HANDLER *handler, void *data)
 			
 			RDEBUG("Final reply from tunneled session code %s",
 			       fr_packet_codes[fake->reply->code]);
-		
 			debug_pair_list(fake->reply->vps);
 		}
 

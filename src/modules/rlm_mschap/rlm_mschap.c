@@ -684,6 +684,11 @@ static int do_mschap(rlm_mschap_t *inst,
 		     uint8_t *nthashhash, int do_ntlm_auth)
 {
 	uint8_t		calculated[24];
+	/* Extra output variables */
+	VALUE_PAIR **output_pairs;
+	VALUE_PAIR *answer = NULL;
+
+	output_pairs = &request->reply->vps;
 
 	/*
 	 *	Do normal authentication.
@@ -725,12 +730,21 @@ static int do_mschap(rlm_mschap_t *inst,
 					     TRUE, /* wait */
 					     buffer, sizeof(buffer),
 					     inst->ntlm_auth_timeout,
-					     request->packet->vps, NULL, 1, 60025);
+					     request->packet->vps, &answer, 1, 60025);
 		if (result != 0) {
 			char *p;
 			VALUE_PAIR *vp = NULL;
-
 			RDEBUG2("External script failed.");
+			if (answer != NULL) {
+			    if (output_pairs) {
+				RDEBUG2("Adding failure variables to the reply");
+				pairmove(output_pairs, &answer);
+				for (vp = *output_pairs; vp != NULL; vp = vp->next) {
+				    RDEBUG("Failure variable: %s=%s\n", vp->name, vp->vp_strvalue);
+				}
+			    }
+			    pairfree(&answer);
+			}
 
 			vp = pairmake("Module-Failure-Message", "", T_OP_EQ);
 			if (!vp) {
@@ -745,9 +759,20 @@ static int do_mschap(rlm_mschap_t *inst,
 				 inst->xlat_name, buffer);
 			vp->length = strlen(vp->vp_strvalue);
 			pairadd(&request->packet->vps, vp);
+
 			return -1;
 		}
 
+		if (answer != NULL) {
+		    VALUE_PAIR *vp = NULL;
+		    for (vp = answer; vp != NULL; vp = vp->next) {
+			if (memcmp(vp->name, "Tmp-String-0", 12) == 0) {
+			    RDEBUG("Got NT_KEY from attribute %s=%s\n", vp->name, vp->vp_strvalue);
+			    snprintf(buffer, 256, "%s", vp->vp_strvalue);
+			    break;
+			}
+		    }
+		}
 		/*
 		 *	Parse the answer as an nthashhash.
 		 *
@@ -774,6 +799,14 @@ static int do_mschap(rlm_mschap_t *inst,
 		if (fr_hex2bin(buffer + 8, nthashhash, 16) != 16) {
 			RDEBUG2("Invalid output from ntlm_auth: NT_KEY has non-hex values");
 			return -1;
+		}
+
+		if (answer != NULL) {
+	    	    if (output_pairs != NULL) {
+			RDEBUG2("Moving script value pairs to the reply");
+			pairmove(output_pairs, &answer);
+		    }
+		    pairfree(&answer);
 		}
 	}
 
@@ -1385,12 +1418,12 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 			mppe_add_reply(request,
 				       "MS-MPPE-Send-Key",
 				       mppe_sendkey, 16);
-
 		}
 		radius_pairmake(request, &request->reply->vps,
 				"MS-MPPE-Encryption-Policy",
 				(inst->require_encryption)? "0x00000002":"0x00000001",
 				T_OP_EQ);
+
 		radius_pairmake(request, &request->reply->vps,
 				"MS-MPPE-Encryption-Types",
 				(inst->require_strong)? "0x00000004":"0x00000006",
