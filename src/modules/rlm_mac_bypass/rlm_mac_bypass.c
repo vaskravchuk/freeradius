@@ -75,7 +75,7 @@ static int mac_bypass_authorize(UNUSED void *instance, REQUEST *request)
         return RLM_MODULE_FAIL; 
     }
 
-    result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, 10000, request->packet->vps, NULL, 1, 60027);
+    result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, EXEC_TIMEOUT, request->packet->vps, NULL, 1, 60027);
 
     if (result != 0) {
         radlog(L_ERR, "60029 rlm_mac_bypass: External script '%s' failed", cmdline);

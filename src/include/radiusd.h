@@ -411,7 +411,7 @@ typedef struct main_config_t {
 #define RETRY_DELAY             5
 #define RETRY_COUNT             3
 #define DEAD_TIME               120
-#define EXEC_TIMEOUT	       10
+#define EXEC_TIMEOUT	        45
 
 #define L_DBG			1
 #define L_AUTH			2

@@ -624,8 +624,8 @@ static int mschap_instantiate(CONF_SECTION *conf, void **instance)
 			      inst->ntlm_auth_timeout);
 		return -1;
 	}
-	if (inst->ntlm_auth_timeout > 10) {
-		radlog(L_ERR, "rlm_mschap: ntlm_auth_timeout '%d' is too large (maximum: 10)",
+	if (inst->ntlm_auth_timeout > 45) {
+		radlog(L_ERR, "rlm_mschap: ntlm_auth_timeout '%d' is too large (maximum: 45)",
 			      inst->ntlm_auth_timeout);
 		return -1;
 	}

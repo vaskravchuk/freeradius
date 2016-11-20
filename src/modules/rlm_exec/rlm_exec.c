@@ -270,10 +270,10 @@ static int exec_instantiate(CONF_SECTION *conf, void **instance)
 		return -1;
 	}
 	/*
-	 *	Blocking a request longer than 30 seconds isn't going to help anyone.
+	 *	Blocking a request longer than 45 seconds isn't going to help anyone.
 	 */
-	if (inst->timeout > 30) {
-		radlog(L_ERR, "rlm_exec: Timeout '%d' is too large (maximum: 30)", inst->timeout);
+	if (inst->timeout > 45) {
+		radlog(L_ERR, "rlm_exec: Timeout '%d' is too large (maximum: 45)", inst->timeout);
 		return -1;
 	}
 

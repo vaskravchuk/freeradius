@@ -95,7 +95,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         return RLM_MODULE_FAIL; 
     }
 
-    result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, 10000, NULL, NULL, FALSE, 60026);
+    result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, EXEC_TIMEOUT, NULL, NULL, FALSE, 60026);
 
     if (result != 0) {
         radlog(L_ERR, "60022 rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
