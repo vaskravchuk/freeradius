@@ -595,6 +595,7 @@ static int cbtls_verify(int ok, X509_STORE_CTX *ctx)
 	REQUEST *request;
 	ASN1_INTEGER *sn = NULL;
 	ASN1_TIME *asn_time = NULL;
+
 #ifdef HAVE_OPENSSL_OCSP_H
 	X509_STORE *ocsp_store = NULL;
 #endif
@@ -740,7 +741,7 @@ static int cbtls_verify(int ok, X509_STORE_CTX *ctx)
 		radlog(L_ERR,"--> verify error:num=%d:%s\n",err, p);
 		radius_pairmake(request, &request->packet->vps,
 				"Module-Failure-Message", p, T_OP_SET);
-		return my_ok;
+ 		    return my_ok;
 	}
 
 	if (lookup == 0) {
@@ -869,12 +870,12 @@ static int cbtls_verify(int ok, X509_STORE_CTX *ctx)
 #endif
 
 		while (conf->verify_client_cert_cmd) {
-			char filename[256];
+			char filename[1024];
 			int fd;
 			FILE *fp;
 
-			snprintf(filename, sizeof(filename), "%s/%s.client.XXXXXXXX",
-				 conf->verify_tmp_dir, progname);
+			snprintf(filename, sizeof(filename), "%s/%s.%s.client.XXXXXXXX",
+				 conf->verify_tmp_dir, request->client->shortname, progname);
 			fd = mkstemp(filename);
 			if (fd < 0) {
 				RDEBUG("Failed creating file in %s: %s",
@@ -1017,6 +1018,88 @@ static int set_ecdh_curve(SSL_CTX *ctx, const char *ecdh_curve)
 }
 #endif
 #endif
+
+static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
+
+	X509 *client_cert = NULL;
+	int result;
+	char common_name[1024];
+	int my_ok = 0;
+	EAP_HANDLER *handler = NULL;
+	EAP_TLS_CONF *conf;
+	REQUEST *request;
+	SSL *ssl;
+
+	ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+	handler = (EAP_HANDLER *)SSL_get_ex_data(ssl, 0);
+	request = handler->request;
+	conf = (EAP_TLS_CONF *)SSL_get_ex_data(ssl, 1);
+
+	result=X509_verify_cert(ctx);
+	client_cert = X509_STORE_CTX_get_current_cert(ctx);
+
+	if (client_cert != NULL) {
+	    X509_NAME_get_text_by_NID(X509_get_subject_name(client_cert),
+				  NID_commonName, common_name, sizeof(common_name));
+	    common_name[sizeof(common_name) - 1] = '\0';
+	    DEBUG2("rlm_eap: Got client certificate with common name %s", common_name);
+	    
+		while (conf->verify_client_cert_cmd) {
+			char filename[1024];
+			int fd;
+			FILE *fp;
+
+			snprintf(filename, sizeof(filename), "%s/%s.%s.client.XXXXXXXX",
+				 conf->verify_tmp_dir, request->client->shortname, progname);
+			fd = mkstemp(filename);
+			if (fd < 0) {
+				RDEBUG("Failed creating file in %s: %s",
+				       conf->verify_tmp_dir, strerror(errno));
+				break;
+			}
+
+			fp = fdopen(fd, "w");
+			if (!fp) {
+				RDEBUG("Failed opening file %s: %s",
+				       filename, strerror(errno));
+				break;
+			}
+
+			if (!PEM_write_X509(fp, client_cert)) {
+				fclose(fp);
+				RDEBUG("Failed writing certificate to file");
+				goto do_unlink;
+			}
+			fclose(fp);
+
+			if (!radius_pairmake(request, &request->packet->vps,
+					     "TLS-Client-Cert-Filename",
+					     filename, T_OP_SET)) {
+				RDEBUG("Failed creating TLS-Client-Cert-Filename");
+
+				goto do_unlink;
+			}
+
+			RDEBUG("Verifying client certificate: %s",
+			       conf->verify_client_cert_cmd);
+			if (radius_exec_program(conf->verify_client_cert_cmd,
+						request, 1, NULL, 0,
+						EXEC_TIMEOUT,
+						request->packet->vps,
+						NULL, 1) != 0) {
+				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
+			} else {
+				my_ok = 1;
+				RDEBUG("Client certificate CN %s passed external validation", common_name);
+			}
+
+		do_unlink:
+			unlink(filename);
+			break;
+		}
+	}
+	return my_ok;
+}
 
 /*
  *	Create Global context SSL and use it in every new session
@@ -1265,6 +1348,9 @@ static SSL_CTX *init_tls_ctx(EAP_TLS_CONF *conf)
 	if (conf->verify_depth) {
 		SSL_CTX_set_verify_depth(ctx, conf->verify_depth);
 	}
+
+	/* Custom callback function to accept all certificates */
+	SSL_CTX_set_cert_verify_callback(ctx, cert_verify_callback, NULL);
 
 	/* Load randomness */
 	if (conf->random_file) {
