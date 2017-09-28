@@ -3417,7 +3417,7 @@ int rad_tunnel_pwdecode(uint8_t *passwd, size_t *pwlen, const char *secret,
 
 	encrypted_len = *pwlen;
 
-	fprintf(stderr, "HERE %d\n", __LINE__);
+	//fprintf(stderr, "HERE %d\n", __LINE__);
 
 	/*
 	 *	We need at least a salt.
