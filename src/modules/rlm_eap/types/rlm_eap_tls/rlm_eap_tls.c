@@ -578,7 +578,7 @@ static int cbtls_verify(int ok, X509_STORE_CTX *ctx)
 {
 	// always pass cert. we will check it next in cert_verify_callback
 	return 1;
-	
+
 	char subject[1024]; /* Used for the subject name */
 	char issuer[1024]; /* Used for the issuer name */
 	char attribute[1024];
@@ -1036,7 +1036,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 	request = handler->request;
 	conf = (EAP_TLS_CONF *)SSL_get_ex_data(ssl, 1);
 
-	client_cert = ctx->certs;
+	client_cert = ctx->cert;
 
 	if (client_cert != NULL) {
 	    X509_NAME_get_text_by_NID(X509_get_subject_name(client_cert),
