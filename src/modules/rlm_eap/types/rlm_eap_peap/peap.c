@@ -745,6 +745,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	const uint8_t	*data;
 	unsigned int data_len;
 
+	int reuse_tls_session = 0;
+
 	REQUEST *request = handler->request;
 	EAP_DS *eap_ds = handler->eap_ds;
 
@@ -769,7 +771,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	case PEAP_STATUS_TUNNEL_ESTABLISHED:
 		/* FIXME: should be no data in the buffer here, check & assert? */
 		
-		if (SSL_session_reused(tls_session->ssl)) {
+		if (reuse_tls_session && SSL_session_reused(tls_session->ssl)) {
 			RDEBUG2("Skipping Phase2 because of session resumption");
 			t->session_resumption_state = PEAP_RESUMPTION_YES;
 			if (t->soh) {
