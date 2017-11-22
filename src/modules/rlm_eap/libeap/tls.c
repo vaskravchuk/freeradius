@@ -429,13 +429,21 @@ void tls_session_information(tls_session_t *tls_session)
 	case TLS1_2_VERSION:
 		str_version = "TLS 1.2";
 		break;
+	case DTLS1_VERSION:
+		str_version = "DTLS 1";
+		break;
+	case DTLS1_2_VERSION:
+		str_version = "DTLS 1.2";
+		break;
 	default:
 		str_version = "Unknown TLS version";
 		break;
 	}
 
 	if (tls_session->info.version == SSL3_VERSION ||
-	    tls_session->info.version == TLS1_VERSION) {
+	    tls_session->info.version == TLS1_VERSION ||
+	    tls_session->info.version == TLS1_1_VERSION ||
+	    tls_session->info.version == TLS1_2_VERSION) {
 		switch (tls_session->info.content_type) {
 		case SSL3_RT_CHANGE_CIPHER_SPEC:
 			str_content_type = "ChangeCipherSpec";
