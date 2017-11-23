@@ -424,10 +424,10 @@ void tls_session_information(tls_session_t *tls_session)
 		str_version = "TLS 1.0 ";
 		break;
 	case TLS1_1_VERSION:
-		str_version = "TLS 1.1";
+		str_version = "TLS 1.1 ";
 		break;
 	case TLS1_2_VERSION:
-		str_version = "TLS 1.2";
+		str_version = "TLS 1.2 ";
 		break;
 	case DTLS1_VERSION:
 		str_version = "DTLS 1";
