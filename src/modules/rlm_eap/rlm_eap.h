@@ -30,6 +30,7 @@ RCSIDH(rlm_eap_h, "$Id$")
 #include <freeradius-devel/modpriv.h>
 #include "eap.h"
 #include "eap_types.h"
+#include "timer.h"
 
 /*
  * Keep track of which sub modules we've loaded.
@@ -58,11 +59,12 @@ typedef struct rlm_eap_t {
 	 *	Configuration items.
 	 */
 	int		timer_limit;
-	char		*default_eap_type_name;
+	char	*default_eap_type_name;
 	int		default_eap_type;
 	int		ignore_unknown_eap_types;
 	int		cisco_accounting_username_bug;
 	int		max_sessions;
+	int		expiration_checking_interval;
 
 #ifdef HAVE_PTHREAD_H
 	pthread_mutex_t	session_mutex;
@@ -71,6 +73,8 @@ typedef struct rlm_eap_t {
 
 	const char	*xlat_name; /* no xlat's yet */
 	fr_randctx	rand_pool;
+
+	timer_t 	timer; /* timer to check requests expiration */
 } rlm_eap_t;
 
 /*
@@ -111,7 +115,8 @@ void	    	eap_handler_free(rlm_eap_t *inst, EAP_HANDLER *handler);
 int 	    	eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler);
 EAP_HANDLER 	*eaplist_find(rlm_eap_t *inst, REQUEST *request,
 			      eap_packet_t *eap_packet);
-void		eaplist_free(rlm_eap_t *inst);
+void			eaplist_expire_all(rlm_eap_t *inst)
+void			eaplist_free(rlm_eap_t *inst);
 
 /* State */
 void	    	generate_key(void);

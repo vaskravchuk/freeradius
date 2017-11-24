@@ -41,6 +41,8 @@ static const CONF_PARSER module_config[] = {
 	  offsetof(rlm_eap_t, cisco_accounting_username_bug), NULL, "no" },
 	{ "max_sessions", PW_TYPE_INTEGER,
 	  offsetof(rlm_eap_t, max_sessions), NULL, "2048"},
+	{ "expiration_checking_interval", PW_TYPE_INTEGER,
+	  offsetof(rlm_eap_t, expiration_checking_interval), NULL, "2"},
 
  	{ NULL, -1, 0, NULL, NULL }           /* end the list */
 };
@@ -71,6 +73,9 @@ static int eap_detach(void *instance)
 	}
 
 	free(inst);
+
+	/* free timer */
+	free_timer(inst->timer);
 
 	return 0;
 }
@@ -277,6 +282,9 @@ static int eap_instantiate(CONF_SECTION *cs, void **instance)
 		return -1;
 	}
 #endif
+
+	/* create timer to check requests expiration */
+	inst->timer = create_timer(inst->expiration_checking_interval, check_requests_expirations, inst);
 
 	*instance = inst;
 	return 0;
