@@ -284,7 +284,7 @@ static int eap_instantiate(CONF_SECTION *cs, void **instance)
 #endif
 
 	/* create timer to check requests expiration */
-	inst->timer = create_timer(inst->expiration_checking_interval, check_requests_expirations, inst);
+	inst->timer = create_timer(inst->expiration_checking_interval, eaplist_expire_all, inst);
 
 	*instance = inst;
 	return 0;

@@ -74,7 +74,7 @@ typedef struct rlm_eap_t {
 	const char	*xlat_name; /* no xlat's yet */
 	fr_randctx	rand_pool;
 
-	timer_t 	timer; /* timer to check requests expiration */
+	ptimer_t 	timer; /* timer to check requests expiration */
 } rlm_eap_t;
 
 /*
@@ -115,7 +115,7 @@ void	    	eap_handler_free(rlm_eap_t *inst, EAP_HANDLER *handler);
 int 	    	eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler);
 EAP_HANDLER 	*eaplist_find(rlm_eap_t *inst, REQUEST *request,
 			      eap_packet_t *eap_packet);
-void			eaplist_expire_all(rlm_eap_t *inst)
+void			eaplist_expire_all(void *instance);
 void			eaplist_free(rlm_eap_t *inst);
 
 /* State */

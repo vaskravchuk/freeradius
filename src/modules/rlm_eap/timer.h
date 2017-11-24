@@ -1,6 +1,9 @@
 /*
  * thread.h    Header file containing the interfaces for posix timers.
  */
+
+#include <pthread.h>
+
 typedef struct {
     int interval;           /* timer tick interval in microseconds */
     pthread_t thread;       /* posix thread handler */
@@ -12,7 +15,7 @@ typedef struct {
 /*
  * Timer handler
  */
-typedef timer_info* timer_t;
+typedef timer_info* ptimer_t;
 
 /*
  * Create new timer that begin after interval delay
@@ -20,9 +23,9 @@ typedef timer_info* timer_t;
  * interval = timer interval in seconds
  * action = method to tick by timer
  */
-timer_t create_timer(double interval, void action(void*), void *user_data);
+ptimer_t create_timer(double interval, void action(void*), void *user_data);
 
 /*
  * Free timer
  */
-void free_timer(timer_t timer);
+void free_timer(ptimer_t timer);

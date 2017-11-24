@@ -2,9 +2,8 @@
  * thread.c    Posix timers implementation.
  */
 
-#include <timer.h>
+#include "timer.h"
 #include <stdio.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -30,10 +29,10 @@ void timer_tick(void *data)
     }
 }
 
-timer_t create_timer(double interval, void action(void*), void *user_data) {
+ptimer_t create_timer(double interval, void action(void*), void *user_data) {
     /* create timer handler. Wrapper with necessary info */
     timer_info* t_info;
-    
+
     t_info = malloc(sizeof(timer_info));
 
     /* convert seconds to microseconds */
@@ -47,7 +46,7 @@ timer_t create_timer(double interval, void action(void*), void *user_data) {
     return t_info;
 }
 
-void free_timer(timer_t timer) {
+void free_timer(ptimer_t timer) {
     int status;
 
     /* for some optimization issues */

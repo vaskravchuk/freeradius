@@ -328,34 +328,6 @@ static EAP_HANDLER *eaplist_delete(rlm_eap_t *inst, EAP_HANDLER *handler)
 	return handler;
 }
 
-
-/*
- *	Check all request to expirations
- */
-void eaplist_expire_all(rlm_eap_t *inst)
-{
-	rlm_eap_t *inst;
-    time_t current_time;
-
-	inst = (rlm_eap_t *)instance;
-    current_time = time(NULL);
-
-	/*
-	 *	Playing with a data structure shared among threads
-	 *	means that we need a lock, to avoid conflict.
-	 */
-	PTHREAD_MUTEX_LOCK(&(inst->session_mutex));
-
-	int count = rbtree_num_elements(inst->session_tree);
-
-	/* 
-	 * Do main expiration checking logic
-	 */
-	eaplist_expire(inst, current_time);
-
-	PTHREAD_MUTEX_UNLOCK(&(inst->session_mutex));
-}
-
 static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 {
 	int i;
@@ -395,6 +367,31 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 			eap_handler_free(inst, handler);
 		}
 	}
+}
+
+/*
+ *	Check all request to expirations
+ */
+void eaplist_expire_all(void *instance)
+{
+	rlm_eap_t *inst;
+    time_t current_time;
+
+	inst = (rlm_eap_t *)instance;
+    current_time = time(NULL);
+
+	/*
+	 *	Playing with a data structure shared among threads
+	 *	means that we need a lock, to avoid conflict.
+	 */
+	PTHREAD_MUTEX_LOCK(&(inst->session_mutex));
+
+	/* 
+	 * Do main expiration checking logic
+	 */
+	eaplist_expire(inst, current_time);
+
+	PTHREAD_MUTEX_UNLOCK(&(inst->session_mutex));
 }
 
 /*
