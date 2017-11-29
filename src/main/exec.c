@@ -619,3 +619,21 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 	return 0;
 #endif
 }
+
+
+
+int		radius_exec_logger_centrale(const char * cmd, REQUEST * request, const char * error_code) {
+	if (!radius_pairmake(request, &request->packet->vps, "P-Error-Code", error_code, T_OP_SET)) {
+			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-ERROR-CODE");
+		}
+
+		radlog(L_ERR, "radius_exec_logger_centrale: radius_exec_program '%s'",cmd);
+		int scr_res = radius_exec_program(cmd, request,
+            0, /* wait */
+			NULL, 0,
+			45,
+			request->packet->vps, NULL, 1);
+		if (scr_res != 0) {
+			radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", cmd);
+		}
+}
