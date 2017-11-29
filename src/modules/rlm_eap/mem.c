@@ -175,6 +175,8 @@ void eap_handler_free(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 	if (handler->certs) pairfree(&handler->certs);
 
+	if (handler->cached_request) request_free(&handler->cached_request);
+
 	free(handler);
 }
 
@@ -349,6 +351,40 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 		 *	They should be the oldest ones.
 		 */
 		if ((timestamp - handler->timestamp) > inst->timer_limit) {
+			/* 
+			 * send additional log
+			 */
+			radlog(L_ERR, "***eaplist_expire***");
+			if (inst->additional_logger == NULL) {
+				radlog(L_ERR, "eaplist_expire: inst->additional_logger");
+			}
+			if (handler->cached_request == NULL) {
+				radlog(L_ERR, "eaplist_expire: handler->cached_request == NULL");
+			}
+			else if (handler->cached_request->packet == NULL) {
+				radlog(L_ERR, "eaplist_expire: handler->cached_request->packet == NULL");
+			}
+			else {
+				if (handler->cached_request->parent == NULL) {
+					radlog(L_ERR, "eaplist_expire: handler->cached_request->parent == NULL");
+				}
+				if (handler->cached_request->packet->vps == NULL) {
+					radlog(L_ERR, "eaplist_expire: handler->cached_request->packet->vps == NULL");
+				}
+
+				radlog(L_ERR, "eaplist_expire: radius_exec_program '%s'",inst->additional_logger);
+				int scr_res = radius_exec_program(inst->additional_logger, handler->cached_request,
+                    0, /* wait */
+					NULL, 0,
+					45,
+					handler->cached_request->packet->vps, NULL, 1);
+				if (scr_res != 0) {
+					radlog(L_ERR, "eaplist_expire: External script '%s' failed", cmdline);
+				}
+			}
+			/*
+			 * clear all 
+			 */
 			rbnode_t *node;
 			node = rbtree_find(inst->session_tree, handler);
 			rad_assert(node != NULL);
@@ -515,7 +551,14 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 	/*
 	 *	We don't need this any more.
 	 */
-	if (status > 0) handler->request = NULL;
+	if (status > 0) {
+		// create copy to catch timeout errors
+		REQUEST *fake = request_alloc_fake(handler->request);
+        fake->packet->vps = paircopy(handler->request->packet->vps);
+        handler->cached_request = fake;
+        
+		handler->request = NULL;
+	}
 
 	PTHREAD_MUTEX_UNLOCK(&(inst->session_mutex));
 

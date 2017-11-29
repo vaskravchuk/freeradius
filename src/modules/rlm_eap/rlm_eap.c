@@ -43,6 +43,8 @@ static const CONF_PARSER module_config[] = {
 	  offsetof(rlm_eap_t, max_sessions), NULL, "2048"},
 	{ "expiration_checking_interval", PW_TYPE_INTEGER,
 	  offsetof(rlm_eap_t, expiration_checking_interval), NULL, "2"},
+	{ "additional_logger",   PW_TYPE_STRING_PTR,
+	  offsetof(rlm_eap_t, additional_logger), NULL,  NULL },
 
  	{ NULL, -1, 0, NULL, NULL }           /* end the list */
 };

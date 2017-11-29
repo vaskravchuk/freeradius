@@ -76,6 +76,7 @@ typedef enum operation_t {
  * timestamp  = timestamp when this handler was last used.
  * identity = Identity, as obtained, from EAP-Identity response.
  * request = RADIUS request data structure
+ * cached_request = RADIUS request data structure saved for timeout logging
  * prev_eapds = Previous EAP request, for which eap_ds contains the response.
  * eap_ds   = Current EAP response.
  * opaque   = EAP-Type holds some data that corresponds to the current
@@ -99,6 +100,8 @@ typedef struct _eap_handler {
 	time_t		timestamp;
 
 	REQUEST		*request;
+
+	REQUEST		*cached_request;
 
 	char		*identity; /* User name from EAP-Identity */
 

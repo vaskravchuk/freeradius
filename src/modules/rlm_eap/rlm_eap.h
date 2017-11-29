@@ -65,6 +65,7 @@ typedef struct rlm_eap_t {
 	int		cisco_accounting_username_bug;
 	int		max_sessions;
 	int		expiration_checking_interval;
+	char	*additional_logger;
 
 #ifdef HAVE_PTHREAD_H
 	pthread_mutex_t	session_mutex;
