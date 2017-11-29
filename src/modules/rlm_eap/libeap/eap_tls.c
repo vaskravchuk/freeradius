@@ -44,6 +44,7 @@ RCSID("$Id$")
 #include <freeradius-devel/autoconf.h>
 #include <assert.h>
 #include "eap_tls.h"
+#include "rlm_eap.h"
 
 /*
  *      Allocate a new TLS_PACKET
@@ -793,6 +794,23 @@ static eaptls_status_t eaptls_operation(eaptls_status_t status,
 	if (!tls_handshake_recv(handler->request, tls_session)) {
 		DEBUG2("TLS receive handshake failed during operation");
 		SSL_CTX_remove_session(tls_session->ctx, tls_session->ssl->session);
+
+		/*
+		 * tls handshake logging
+		 */
+		if (handler->inst_holder == NULL) {
+			radlog(L_ERR, "eaptls_operation: handler->inst_holder == NULL");
+		}
+		else {
+			if (handler->cached_request->packet->vps == NULL) {
+				radlog(L_ERR, "eaptls_operation: handler->cached_request->packet->vps == NULL");
+			}
+
+			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
+			radlog(L_ERR, "eaptls_operation: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60003");
+		}
+
 		return EAPTLS_FAIL;
 	}
 

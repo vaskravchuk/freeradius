@@ -331,6 +331,11 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	}
 
 	/*
+	 *	Safe rlm_eap_t to pass settings next
+	 */
+	handler->inst_holder = inst;
+
+	/*
 	 *	Select the appropriate eap_type or default to the
 	 *	configured one
 	 */
@@ -357,7 +362,6 @@ static int eap_authenticate(void *instance, REQUEST *request)
 		 *	can retrieve it in the post-proxy stage, and
 		 *	send a response.
 		 */
-		handler->inst_holder = inst;
 		rcode = request_data_add(request,
 					 inst, REQUEST_DATA_EAP_HANDLER,
 					 handler,
@@ -383,7 +387,6 @@ static int eap_authenticate(void *instance, REQUEST *request)
 		 *	can retrieve it in the post-proxy stage, and
 		 *	send a response.
 		 */
-		handler->inst_holder = inst;
 		rcode = request_data_add(request,
 					 inst, REQUEST_DATA_EAP_HANDLER,
 					 handler,

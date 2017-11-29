@@ -365,14 +365,11 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				radlog(L_ERR, "eaplist_expire: handler->cached_request->packet == NULL");
 			}
 			else {
-				if (handler->cached_request->parent == NULL) {
-					radlog(L_ERR, "eaplist_expire: handler->cached_request->parent == NULL");
-				}
 				if (handler->cached_request->packet->vps == NULL) {
 					radlog(L_ERR, "eaplist_expire: handler->cached_request->packet->vps == NULL");
 				}
 
-				radlog(L_ERR, "eaplist_expire: radius_exec_program '%s'",inst->additional_logger);
+				radlog(L_ERR, "eaplist_expire: radius_exec_logger_centrale '%s'",inst->additional_logger);
 				radius_exec_logger_centrale(inst->additional_logger, handler->cached_request, "60002");
 			}
 			/*
