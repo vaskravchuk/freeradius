@@ -273,7 +273,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 
 			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
 			radlog(L_ERR, "eappeap_authenticate: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
-			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60003");
+			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60030");
 		}
 
 		return 0;
