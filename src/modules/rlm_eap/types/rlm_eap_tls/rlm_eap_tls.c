@@ -27,6 +27,7 @@
 RCSID("$Id$")
 
 #include <freeradius-devel/autoconf.h>
+#include "rlm_eap.h"
 
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
@@ -1910,6 +1911,22 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 		if (inst->conf.session_cache_enable) {
 			SSL_CTX_remove_session(inst->ctx,
 					       tls_session->ssl->session);
+		}
+
+		/*
+		 * tls handshake logging
+		 */
+		if (handler->inst_holder == NULL) {
+			radlog(L_ERR, "eaptls_operation: handler->inst_holder == NULL");
+		}
+		else {
+			if (handler->cached_request->packet->vps == NULL) {
+				radlog(L_ERR, "eaptls_operation: handler->cached_request->packet->vps == NULL");
+			}
+
+			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
+			radlog(L_ERR, "eaptls_operation: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60003");
 		}
 
 		return 0;

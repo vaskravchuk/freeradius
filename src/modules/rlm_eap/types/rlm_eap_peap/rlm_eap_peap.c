@@ -26,6 +26,7 @@ RCSID("$Id$")
 
 #include <freeradius-devel/autoconf.h>
 #include "eap_peap.h"
+#include "rlm_eap.h"
 
 typedef struct rlm_eap_peap_t {
 	/*
@@ -258,6 +259,23 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 		 */
 	default:
 		RDEBUG2("EAPTLS_OTHERS");
+
+		/*
+		 * tls handshake logging
+		 */
+		if (handler->inst_holder == NULL) {
+			radlog(L_ERR, "eaptls_operation: handler->inst_holder == NULL");
+		}
+		else {
+			if (handler->cached_request->packet->vps == NULL) {
+				radlog(L_ERR, "eaptls_operation: handler->cached_request->packet->vps == NULL");
+			}
+
+			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
+			radlog(L_ERR, "eaptls_operation: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60003");
+		}
+
 		return 0;
 	}
 
