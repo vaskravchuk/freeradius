@@ -1917,15 +1917,15 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 		 * tls handshake logging
 		 */
 		if (handler->inst_holder == NULL) {
-			radlog(L_ERR, "eaptls_operation: handler->inst_holder == NULL");
+			radlog(L_ERR, "eaptls_authenticate: handler->inst_holder == NULL");
 		}
 		else {
 			if (handler->cached_request->packet->vps == NULL) {
-				radlog(L_ERR, "eaptls_operation: handler->cached_request->packet->vps == NULL");
+				radlog(L_ERR, "eaptls_authenticate: handler->cached_request->packet->vps == NULL");
 			}
 
 			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
-			radlog(L_ERR, "eaptls_operation: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+			radlog(L_ERR, "eaptls_authenticate: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
 			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60003");
 		}
 
