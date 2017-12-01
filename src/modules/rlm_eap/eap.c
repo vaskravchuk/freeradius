@@ -406,6 +406,19 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 				return EAP_INVALID;
 			}
 
+			/*
+			 *	Portnox supports only tls, peap, mschapv2 eap types.
+			 */
+			if (eaptype->type != PW_EAP_TLS &&
+				eaptype->type != PW_EAP_TTLS &&
+				eaptype->type != PW_EAP_PEAP &&
+				eaptype->type != PW_EAP_MSCHAPV2 &&
+				eaptype->type != PW_EAP_CISCO_MSCHAPV2) {
+				RDEBUG2("EAP type %d-%s is unsupported by Portnox",
+				       eaptype->type, eaptype_name);
+				return EAP_INVALID;
+			}
+
 			rad_assert(handler->stage == AUTHENTICATE);
 			handler->eap_type = eaptype->type;
 			if (eaptype_call(inst->types[eaptype->type],

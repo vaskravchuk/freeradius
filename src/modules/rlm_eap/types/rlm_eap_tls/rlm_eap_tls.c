@@ -1920,8 +1920,8 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 			radlog(L_ERR, "eaptls_authenticate: handler->inst_holder == NULL");
 		}
 		else {
-			if (handler->cached_request->packet->vps == NULL) {
-				radlog(L_ERR, "eaptls_authenticate: handler->cached_request->packet->vps == NULL");
+			if (handler->request->packet->vps == NULL) {
+				radlog(L_ERR, "eaptls_authenticate: handler->request->packet->vps == NULL");
 			}
 
 			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;

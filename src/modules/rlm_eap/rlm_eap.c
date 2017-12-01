@@ -348,6 +348,18 @@ static int eap_authenticate(void *instance, REQUEST *request)
 		eap_fail(handler);
 		eap_handler_free(inst, handler);
 		RDEBUG2("Failed in EAP select");
+
+		/*
+		 * wrong eap type logging
+		 */
+		if (handler->request->packet->vps == NULL) {
+			radlog(L_ERR, "eap_authenticate: handler->request->packet->vps == NULL");
+		}
+
+		rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
+		radlog(L_ERR, "eap_authenticate: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+		radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60031");
+
 		return RLM_MODULE_INVALID;
 	}
 
