@@ -425,7 +425,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 					 handler) == 0) {
 				RDEBUG2("Handler failed in EAP/%s",
 				       eaptype_name);
-				return EAP_INVALID;
+				return EAP_FAIL;
 			}
 		break;
 	}

@@ -342,7 +342,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	rcode = eaptype_select(inst, handler);
 
 	/*
-	 *	If it failed, die.
+	 *	If it wrong type -> log.
 	 */
 	if (rcode == EAP_INVALID) {
 		/*
@@ -354,7 +354,12 @@ static int eap_authenticate(void *instance, REQUEST *request)
 
 		radlog(L_ERR, "eap_authenticate: radius_exec_logger_centrale '%s'",inst->additional_logger);
 		radius_exec_logger_centrale(inst->additional_logger, handler->request, "60031");
+	}
 
+	/*
+	 *	If it failed or invalid, die.
+	 */
+	if (rcode == EAP_INVALID || rcode == EAP_FAIL) {
 		eap_fail(handler);
 		eap_handler_free(inst, handler);
 		RDEBUG2("Failed in EAP select");
