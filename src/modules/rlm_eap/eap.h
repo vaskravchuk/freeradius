@@ -60,6 +60,10 @@ typedef enum operation_t {
 } operation_t;
 
 
+#define HANDER_VALIDATION_UNKNOWN            (0)
+#define HANDER_VALIDATION_SUCCESS            (1)
+#define HANDER_VALIDATION_FAILED             (2)
+
 /*
  * EAP_HANDLER is the interface for any EAP-Type.
  * Each handler contains information for one specific EAP-Type.
@@ -111,6 +115,8 @@ typedef struct _eap_handler {
 	void 		*opaque;
 	void 		(*free_opaque)(void *opaque);
 	void		*inst_holder;
+
+	int		validation_status;
 
 	int		status;
 

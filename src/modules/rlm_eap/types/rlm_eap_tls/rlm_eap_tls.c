@@ -1088,9 +1088,11 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 						EXEC_TIMEOUT,
 						request->packet->vps,
 						NULL, 1) != 0) {
+				handler->validation_status = HANDER_VALIDATION_FAILED;
 				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
 			} else {
 				my_ok = 1;
+				handler->validation_status = HANDER_VALIDATION_SUCCESS;
 				RDEBUG("Client certificate CN %s passed external validation", common_name);
 			}
 
@@ -1915,18 +1917,22 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 
 		/*
 		 * tls handshake logging
+		 * only if we don't try to validate by backend 
+		 * to avoid alerts duplication
 		 */
-		if (handler->inst_holder == NULL) {
-			radlog(L_ERR, "eaptls_authenticate: handler->inst_holder == NULL");
-		}
-		else {
-			if (handler->request->packet->vps == NULL) {
-				radlog(L_ERR, "eaptls_authenticate: handler->request->packet->vps == NULL");
+		if (handler->validation_status != HANDER_VALIDATION_UNKNOWN) {
+			if (handler->inst_holder == NULL) {
+				radlog(L_ERR, "eaptls_authenticate: handler->inst_holder == NULL");
 			}
+			else {
+				if (handler->request->packet->vps == NULL) {
+					radlog(L_ERR, "eaptls_authenticate: handler->request->packet->vps == NULL");
+				}
 
-			rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
-			radlog(L_ERR, "eaptls_authenticate: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
-			radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60030");
+				rlm_eap_t *eap_inst = (rlm_eap_t*)handler->inst_holder;
+				radlog(L_ERR, "eaptls_authenticate: radius_exec_logger_centrale '%s'",eap_inst->additional_logger);
+				radius_exec_logger_centrale(eap_inst->additional_logger, handler->request, "60030");
+			}
 		}
 
 		return 0;
