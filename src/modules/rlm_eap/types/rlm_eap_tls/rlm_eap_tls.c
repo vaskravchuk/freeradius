@@ -1917,10 +1917,10 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 
 		/*
 		 * tls handshake logging
-		 * only if we don't try to validate by backend 
+		 * only if we didn't try to validate by backend 
 		 * to avoid alerts duplication
 		 */
-		if (handler->validation_status != HANDER_VALIDATION_UNKNOWN) {
+		if (handler->validation_status == HANDER_VALIDATION_UNKNOWN) {
 			if (handler->inst_holder == NULL) {
 				radlog(L_ERR, "eaptls_authenticate: handler->inst_holder == NULL");
 			}
