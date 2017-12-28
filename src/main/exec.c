@@ -635,8 +635,8 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		*buffer = '\0';
 		va_list ap;
 
-		va_start(ap, msg);
-		vsnprintf(buffer, sizeof(buffer) - 1, fmt, ap);
+		va_start(ap, format);
+		vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
 		va_end(ap);
 		radlog(L_DBG, buffer);
 		if (!radius_pairmake(request, &request->packet->vps, "P-Error-Msg", buffer, T_OP_SET)) {
