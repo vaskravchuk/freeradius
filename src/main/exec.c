@@ -650,6 +650,6 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		45,
 		request->packet->vps, NULL, 1);
 	if (scr_res != 0) {
-		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", cmd);
+		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", portnox_log_script);
 	}
 }
