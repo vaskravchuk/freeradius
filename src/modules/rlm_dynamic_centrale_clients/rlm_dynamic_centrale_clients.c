@@ -57,54 +57,54 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     int result;
 
     if ((request->packet->vps != NULL) || (request->parent != NULL)) {
-        radlog(L_ERR, "60015 rlm_dynamic_centrale_clients: Improper configuration");
+        radius_exec_logger_centrale(request, "60015", "rlm_dynamic_centrale_clients: Improper configuration");
         return RLM_MODULE_NOOP;
     }
 
     if (!request->client || !request->client->cs) {
-        radlog(L_ERR, "60016 rlm_dynamic_centrale_clients: Unknown client definition");
+        radius_exec_logger_centrale(request, "60016", "rlm_dynamic_centrale_clients: Unknown client definition");
         return RLM_MODULE_NOOP;
     }
 
     cp = cf_pair_find(request->client->cs, "directory");
     if (!cp) {
-        radlog(L_ERR, "60017 rlm_dynamic_centrale_clients: No directory configuration in the client");
+        radius_exec_logger_centrale(request, "60017", "rlm_dynamic_centrale_clients: No directory configuration in the client");
         return RLM_MODULE_NOOP;
     }      
            
     value = cf_pair_value(cp);
     if (!value) {
-        radlog(L_ERR, "60018 rlm_dynamic_centrale_clients: No value given for the directory entry in the client.");
+        radius_exec_logger_centrale(request, "60018", "rlm_dynamic_centrale_clients: No value given for the directory entry in the client.");
         return RLM_MODULE_NOOP;
     }
                               
     ip_ntoh(&request->packet->src_ipaddr, hostname, sizeof(hostname));
 
     if ((strlen(hostname) + strlen(value)) >= sizeof(buffer)) {
-        radlog(L_ERR, "60019 rlm_dynamic_centrale_clients: Directory name too long");
+        radius_exec_logger_centrale(request, "60019", "rlm_dynamic_centrale_clients: Directory name too long");
         return RLM_MODULE_NOOP;
     }
 
     if (!snprintf(buffer, sizeof(buffer), "%s/%s", value, hostname)) {
-        radlog(L_ERR, "60020 rlm_dynamic_centrale_clients: Unable to make cmd line");
+        radius_exec_logger_centrale(request, "60020", "rlm_dynamic_centrale_clients: Unable to make cmd line");
         return RLM_MODULE_FAIL; 
     }
 
     if (!snprintf(cmdline, sizeof(cmdline), "%s %s %d %s", inst->program, hostname, request->packet->dst_port, buffer)) {
-        radlog(L_ERR, "60021 rlm_dynamic_centrale_clients: Unable to make cmd line");
+        radius_exec_logger_centrale(request, "60021", "rlm_dynamic_centrale_clients: Unable to make cmd line");
         return RLM_MODULE_FAIL; 
     }
 
     result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, EXEC_TIMEOUT, NULL, NULL, FALSE, 60026);
 
     if (result != 0) {
-        radlog(L_ERR, "60022 rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
+        radlog(L_DBG, "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
         return RLM_MODULE_FAIL;
     }
 
     c = client_read(buffer, (request->client->server != NULL), TRUE);
     if (!c) {
-        radlog(L_ERR, "60023 rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
+        radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
         return RLM_MODULE_FAIL;
     }
 

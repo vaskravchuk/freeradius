@@ -622,18 +622,34 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 
 
 
-int		radius_exec_logger_centrale(const char * cmd, REQUEST * request, const char * error_code) {
-	if (!radius_pairmake(request, &request->packet->vps, "P-Error-Code", error_code, T_OP_SET)) {
-			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-ERROR-CODE");
-		}
+int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, const char * format, ...) {
 
-		radlog(L_ERR, "radius_exec_logger_centrale: radius_exec_program '%s'",cmd);
-		int scr_res = radius_exec_program(cmd, request,
-            0, /* wait */
-			NULL, 0,
-			45,
-			request->packet->vps, NULL, 1);
-		if (scr_res != 0) {
-			radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", cmd);
+	radlog(L_ERR, "radius_exec_logger_centrale: radius_exec_program '%s'", portnox_log_script);
+
+	if (!radius_pairmake(request, &request->packet->vps, "P-Error-Code", error_code, T_OP_SET)) {
+		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Code");
+	}
+
+	if (format != NULL) {
+		char buffer[8192];
+		*buffer = '\0';
+		va_list ap;
+
+		va_start(ap, msg);
+		vsnprintf(buffer, sizeof(buffer) - 1, fmt, ap);
+		va_end(ap);
+		radlog(L_DBG, buffer);
+		if (!radius_pairmake(request, &request->packet->vps, "P-Error-Msg", buffer, T_OP_SET)) {
+			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Msg");
 		}
+	}
+
+	int scr_res = radius_exec_program(portnox_log_script, request,
+        0, /* wait */
+		NULL, 0,
+		45,
+		request->packet->vps, NULL, 1);
+	if (scr_res != 0) {
+		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", cmd);
+	}
 }

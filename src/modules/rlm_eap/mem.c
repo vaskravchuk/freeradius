@@ -370,7 +370,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				}
 
 				radlog(L_ERR, "eaplist_expire: radius_exec_logger_centrale '%s'",inst->additional_logger);
-				radius_exec_logger_centrale(inst->additional_logger, handler->cached_request, "60029");
+				radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
 			}
 			/*
 			 * clear all 

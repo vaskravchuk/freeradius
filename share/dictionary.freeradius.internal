@@ -137,7 +137,8 @@ ATTRIBUTE	Password-With-Header			1101	string
 ATTRIBUTE	Inner-Tunnel-User-Name			1102	string
 
 # For errors codes to portnox
-ATTRIBUTE       P-Error-Code                            1103    string
+ATTRIBUTE       P-Error-Code                1103    string
+ATTRIBUTE       P-Error-Msg                1104    string
 
 #
 #	EAP-IKEv2 is experimental.
