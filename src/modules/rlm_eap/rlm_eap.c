@@ -350,7 +350,6 @@ static int eap_authenticate(void *instance, REQUEST *request)
 			radlog(L_ERR, "eap_authenticate: handler->request->packet->vps == NULL");
 		}
 
-		radlog(L_ERR, "eap_authenticate: radius_exec_logger_centrale '%s'",inst->additional_logger);
 		radius_exec_logger_centrale(handler->request, "60031", NULL);
 	}
 
