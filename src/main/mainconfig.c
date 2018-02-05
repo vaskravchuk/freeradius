@@ -75,6 +75,11 @@ typedef struct cached_config_t {
 static cached_config_t	*cs_cache = NULL;
 
 /*
+ * Script for log portnox errors
+ */
+char	*portnox_log_script;
+
+/*
  *	Temporary local variables for parsing the configuration
  *	file.
  */

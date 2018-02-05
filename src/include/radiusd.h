@@ -460,7 +460,7 @@ void			radius_signal_self(int flag);
 /*
  * Script for log portnox errors
  */
-char	*portnox_log_script;
+extern char	*portnox_log_script;
 
 #define RADIUS_SIGNAL_SELF_NONE		(0)
 #define RADIUS_SIGNAL_SELF_HUP		(1 << 0)
