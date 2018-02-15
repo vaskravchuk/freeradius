@@ -284,4 +284,7 @@ VALUE	NAS-Port-Type			Wireless-802.22		29
 VALUE	NAS-Port-Type			xPON			35
 VALUE	NAS-Port-Type			Wireless-XGP		36
 
+#internal portnox
+VALUE   NAS-Port-Type           Portnox             50
+
 VALUE	Framed-Protocol			PPTP			9
