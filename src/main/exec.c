@@ -624,8 +624,6 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 
 int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, const char * format, ...) {
 
-	radlog(L_ERR, "radius_exec_logger_centrale: radius_exec_program '%s'", portnox_log_script);
-
 	if (!radius_pairmake(request, &request->packet->vps, "P-Error-Code", error_code, T_OP_SET)) {
 		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Code");
 	}
