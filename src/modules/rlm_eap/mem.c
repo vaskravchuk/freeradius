@@ -354,7 +354,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 			/* 
 			 * send additional log
 			 */
-			radlog(L_ERR, "***eaplist_expire***");
+			radlog(L_ERR, "***eaplist_expire started");
 			if (handler->cached_request == NULL) {
 				radlog(L_ERR, "eaplist_expire: handler->cached_request == NULL");
 			}
@@ -368,6 +368,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 
 				radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
 			}
+			radlog(L_ERR, "***eaplist_expire last_logged");
 			/*
 			 * clear all 
 			 */
@@ -375,6 +376,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 			node = rbtree_find(inst->session_tree, handler);
 			rad_assert(node != NULL);
 			rbtree_delete(inst->session_tree, node);
+			radlog(L_ERR, "***eaplist_expire deleted");
 
 			/*
 			 *	handler == inst->session_head
@@ -387,6 +389,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				inst->session_tail = NULL;
 			}
 			eap_handler_free(inst, handler);
+			radlog(L_ERR, "***eaplist_expire free");
 		}
 	}
 }
