@@ -179,8 +179,10 @@ RADCLIENT *client_listener_find(const rad_listen_t *listener,
 	if (client->dynamic && (src_port != 0)) {
 		/*
 		 *	Lives forever.  Return it.
+		 *	Removed. Shared seced cached moved 
+		 *	to dynamic_centrale_clients bash script
 		 */
-		if (client->lifetime == 0) return client;
+//		if (client->lifetime == 0) return client;
 
 		/*
 		 *	Rate-limit the deletion of known clients.

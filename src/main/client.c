@@ -418,7 +418,7 @@ int client_add(RADCLIENT_LIST *clients, RADCLIENT *client)
 	 *	us.  The client_create() function sets it AFTER
 	 *	calling us.
 	 */
-	if (client->dynamic && (client->lifetime == 0)) {
+	if (client->dynamic) { // && (client->lifetime == 0)) {
 		RADCLIENT *network;
 
 		/*
