@@ -703,6 +703,16 @@ static void received_response_to_ping(REQUEST *request)
 	rad_assert(request->home_server != NULL);
 
 	home = request->home_server;
+
+	/*
+	 *	Auth should be success
+	 */
+	if (home->type == HOME_TYPE_AUTH && 
+		(request->proxy_reply == NULL || request->proxy_reply->code != PW_AUTHENTICATION_ACK))
+	{
+		return;
+	}
+
 	home->num_received_pings++;
 
 	radlog(L_PROXY, "Received response to status check %d (%d in current sequence)",
