@@ -796,6 +796,9 @@ static void ping_home_server(void *ctx)
 		radius_pairmake(request, &request->proxy->vps,
 				"Message-Authenticator", "0x00", T_OP_SET);
 
+		// For Portnox internal logic
+		radius_pairmake(request, &request->proxy->vps,
+				"NAS-Port-Type", "Portnox", T_OP_SET);
 	} else {
 #ifdef WITH_ACCOUNTING
 		request->proxy->code = PW_ACCOUNTING_REQUEST;
