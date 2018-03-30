@@ -822,8 +822,17 @@ autz_redo:
 		snprintf(msg, sizeof(msg), "Login OK (%s)",
 			 module_msg->vp_strvalue);
 		rad_authlog(msg, request, 1);
+
+		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
+		if (request->packet->dst_port != 0) {
+			radius_exec_logger_centrale(request, "60032", "Authenticate status '%s'", "OK");
 	} else {
 		rad_authlog("Login OK", request, 1);
+
+		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
+		if (request->packet->dst_port != 0) {
+			radius_exec_logger_centrale(request, "60033", "Authenticate status '%s'", "OK");
+		}
 	}
 
 	return result;
