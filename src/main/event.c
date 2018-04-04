@@ -44,6 +44,7 @@ extern pid_t radius_pid;
 extern int dont_fork;
 extern int check_config;
 extern char *debug_condition;
+extern char *current_server;
 
 /*
  *	Ridiculous amounts of local state.
@@ -759,6 +760,15 @@ static void received_response_to_ping(REQUEST *request)
 			 &request->proxy->dst_ipaddr.ipaddr,
 			 buffer, sizeof(buffer)),
 	       request->proxy->dst_port);
+
+	radius_exec_logger_centrale(request, "60035", "Enable home server %s port %d",
+			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			home->port);
+	radlog(L_PROXY, "60035 Enable home server %s port %d",
+			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			home->port);
 }
 
 
@@ -1192,6 +1202,16 @@ static void no_response_to_proxied_request(void *ctx)
 	       inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
 			 buffer, sizeof(buffer)),
 	       home->port);
+
+	radius_exec_logger_centrale(request, "60034", "Disable home server %s port %d",
+			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			home->port);
+	radlog(L_PROXY, "60034 Disable home server %s port %d",
+			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			home->port);
+
 	
 	/*
 	 *	Start pinging the home server.
@@ -1993,6 +2013,36 @@ static int proxy_request(REQUEST *request)
 			 buffer, sizeof(buffer)),
 	       request->proxy->dst_port);
 
+	radius_exec_logger_centrale(request, "60036", "Proxying request %u to home server %s port %d",
+			request->number,
+			inet_ntop(request->proxy->dst_ipaddr.af,
+				&request->proxy->dst_ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			request->proxy->dst_port);
+	radlog(L_PROXY, "60036 Proxying request %u to home server %s port %d",
+			request->number,
+			inet_ntop(request->proxy->dst_ipaddr.af,
+				&request->proxy->dst_ipaddr.ipaddr,
+				buffer, sizeof(buffer)),
+			request->proxy->dst_port);
+
+	char *str_home_server;
+	asprintf(&str_home_server, "home server %s port %d",
+									inet_ntop(request->proxy->dst_ipaddr.af,
+										&request->proxy->dst_ipaddr.ipaddr,
+										buffer, sizeof(buffer)),
+									request->proxy->dst_port);
+	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
+	{
+		if (current_server != NULL) {
+			free(current_server);
+			current_server = NULL;
+		}
+		current_server = strdup(str_home_server);
+		free(str_home_server); str_home_server = NULL;
+		radlog(L_PROXY, "60038 Enable %s", current_server);
+	}
+
 	/*
 	 *	Note that we set proxied BEFORE sending the packet.
 	 *
@@ -2020,6 +2070,19 @@ static int proxy_request(REQUEST *request)
  */
 static int proxy_to_virtual_server(REQUEST *request)
 {
+	radius_exec_logger_centrale(request, "60037", "Proxying request %u to a virtual server", request->number);
+	radlog(L_PROXY, "60037 Proxying request %u to a virtual server", request->number);
+	char *str_home_server = "Virtual server";
+	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
+	{
+		if (current_server != NULL) {
+			free(current_server);
+			current_server = NULL;
+		}
+		current_server = strdup(str_home_server);
+		radlog(L_PROXY, "60039 Enable Virtual server");
+	}
+
 	REQUEST *fake;
 	RAD_REQUEST_FUNP fun;
 
