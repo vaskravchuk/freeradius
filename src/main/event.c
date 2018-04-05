@@ -45,6 +45,7 @@ extern int dont_fork;
 extern int check_config;
 extern char *debug_condition;
 extern char *current_server;
+extern const char *STR_VIRTUAL_SERVER;
 
 /*
  *	Ridiculous amounts of local state.
@@ -2013,25 +2014,11 @@ static int proxy_request(REQUEST *request)
 			 buffer, sizeof(buffer)),
 	       request->proxy->dst_port);
 
-	radius_exec_logger_centrale(request, "60036", "Proxying request %u to home server %s port %d",
-			request->number,
-			inet_ntop(request->proxy->dst_ipaddr.af,
-				&request->proxy->dst_ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			request->proxy->dst_port);
-	radlog(L_PROXY, "60036 Proxying request %u to home server %s port %d",
-			request->number,
-			inet_ntop(request->proxy->dst_ipaddr.af,
-				&request->proxy->dst_ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			request->proxy->dst_port);
-
 	char *str_home_server;
-	asprintf(&str_home_server, "home server %s port %d",
-									inet_ntop(request->proxy->dst_ipaddr.af,
-										&request->proxy->dst_ipaddr.ipaddr,
-										buffer, sizeof(buffer)),
-									request->proxy->dst_port);
+	asprintf(&str_home_server, "%s",
+								inet_ntop(request->proxy->dst_ipaddr.af,
+									&request->proxy->dst_ipaddr.ipaddr,
+									buffer, sizeof(buffer)));
 	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
 	{
 		if (current_server != NULL) {
@@ -2039,8 +2026,13 @@ static int proxy_request(REQUEST *request)
 			current_server = NULL;
 		}
 		current_server = strdup(str_home_server);
-		free(str_home_server); str_home_server = NULL;
-		radlog(L_PROXY, "60038 Enable %s", current_server);
+
+		radius_exec_logger_centrale(request, "60038", "Enable home server %s", current_server);
+		radlog(L_PROXY, "60038 Enable home server %s", current_server);
+	}
+	if (str_home_server != NULL) {
+		free(str_home_server);
+		str_home_server = NULL;
 	}
 
 	/*
@@ -2070,16 +2062,14 @@ static int proxy_request(REQUEST *request)
  */
 static int proxy_to_virtual_server(REQUEST *request)
 {
-	radius_exec_logger_centrale(request, "60037", "Proxying request %u to a virtual server", request->number);
-	radlog(L_PROXY, "60037 Proxying request %u to a virtual server", request->number);
-	char *str_home_server = "Virtual server";
-	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
+	if (current_server == NULL || strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
 	{
 		if (current_server != NULL) {
 			free(current_server);
 			current_server = NULL;
 		}
-		current_server = strdup(str_home_server);
+		current_server = strdup(STR_VIRTUAL_SERVER);
+		radius_exec_logger_centrale(request, "60039", "Enable Virtual server");
 		radlog(L_PROXY, "60039 Enable Virtual server");
 	}
 
