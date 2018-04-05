@@ -762,11 +762,7 @@ static void received_response_to_ping(REQUEST *request)
 			 buffer, sizeof(buffer)),
 	       request->proxy->dst_port);
 
-	radius_exec_logger_centrale(request, "60035", "Enable home server %s port %d",
-			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			home->port);
-	radlog(L_PROXY, "60035 Enable home server %s port %d",
+	radius_exec_logger_centrale(request, "60034", "Enable home server %s port %d",
 			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
 				buffer, sizeof(buffer)),
 			home->port);
@@ -1204,16 +1200,11 @@ static void no_response_to_proxied_request(void *ctx)
 			 buffer, sizeof(buffer)),
 	       home->port);
 
-	radius_exec_logger_centrale(request, "60034", "Disable home server %s port %d",
-			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			home->port);
-	radlog(L_PROXY, "60034 Disable home server %s port %d",
+	radius_exec_logger_centrale(request, "60035", "Disable home server %s port %d",
 			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
 				buffer, sizeof(buffer)),
 			home->port);
 
-	
 	/*
 	 *	Start pinging the home server.
 	 */
@@ -2027,8 +2018,7 @@ static int proxy_request(REQUEST *request)
 		}
 		current_server = strdup(str_home_server);
 
-		radius_exec_logger_centrale(request, "60038", "Enable home server %s", current_server);
-		radlog(L_PROXY, "60038 Enable home server %s", current_server);
+		radius_exec_logger_centrale(request, "60036", "Enable home server %s", current_server);
 	}
 	if (str_home_server != NULL) {
 		free(str_home_server);
@@ -2069,8 +2059,7 @@ static int proxy_to_virtual_server(REQUEST *request)
 			current_server = NULL;
 		}
 		current_server = strdup(STR_VIRTUAL_SERVER);
-		radius_exec_logger_centrale(request, "60039", "Enable Virtual server");
-		radlog(L_PROXY, "60039 Enable Virtual server");
+		radius_exec_logger_centrale(request, "60037", "Enable Virtual server");
 	}
 
 	REQUEST *fake;
