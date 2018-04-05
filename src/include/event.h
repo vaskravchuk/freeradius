@@ -58,13 +58,6 @@ int fr_event_fd_delete(fr_event_list_t *el, int type, int fd);
 int fr_event_loop(fr_event_list_t *el);
 void fr_event_loop_exit(fr_event_list_t *el, int code);
 
-void free_ptr(void *ptr) {
-	if (ptr != NULL) {
-		free(ptr);
-		ptr = NULL;
-	}
-}
-
 #ifdef __cplusplus
 }
 #endif

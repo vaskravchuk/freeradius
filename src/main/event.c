@@ -114,6 +114,13 @@ static void event_socket_handler(fr_event_list_t *xel, UNUSED int fd, void *ctx)
 static void event_poll_detail(void *ctx);
 #endif
 
+void free_pointer(void **ptr) {
+	if (*ptr != NULL) {
+		free(*ptr);
+		*ptr = NULL;
+	}
+}
+
 static void NEVER_RETURNS _rad_panic(const char *file, unsigned int line,
 				    const char *msg)
 {
@@ -2012,12 +2019,12 @@ static int proxy_request(REQUEST *request)
 									buffer, sizeof(buffer)));
 	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
 	{
-		free_ptr(current_server);
+		free_pointer(&current_server);
 		current_server = strdup(str_home_server);
 
 		radius_exec_logger_centrale(request, "60036", "Enable home server %s", current_server);
 	}
-	free_ptr(str_home_server);
+	free_pointer(&str_home_server);
 
 	/*
 	 *	Note that we set proxied BEFORE sending the packet.
@@ -2048,7 +2055,7 @@ static int proxy_to_virtual_server(REQUEST *request)
 {
 	if (current_server == NULL || strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
 	{
-		free_ptr(current_server);
+		free_pointer(&current_server);
 		current_server = strdup(STR_VIRTUAL_SERVER);
 		radius_exec_logger_centrale(request, "60037", "Enable Virtual server");
 	}
