@@ -61,6 +61,8 @@ RCSID("$Id$")
 struct main_config_t mainconfig;
 char *request_log_file = NULL;
 char *debug_condition = NULL;
+char *current_server = NULL;
+const char *STR_VIRTUAL_SERVER = "Virtual server";
 
 #ifdef HAVE_GMTIME_R
 extern int log_dates_utc;
