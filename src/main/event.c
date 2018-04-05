@@ -2012,18 +2012,12 @@ static int proxy_request(REQUEST *request)
 									buffer, sizeof(buffer)));
 	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
 	{
-		if (current_server != NULL) {
-			free(current_server);
-			current_server = NULL;
-		}
+		free_ptr(current_server);
 		current_server = strdup(str_home_server);
 
 		radius_exec_logger_centrale(request, "60036", "Enable home server %s", current_server);
 	}
-	if (str_home_server != NULL) {
-		free(str_home_server);
-		str_home_server = NULL;
-	}
+	free_ptr(str_home_server);
 
 	/*
 	 *	Note that we set proxied BEFORE sending the packet.
@@ -2054,10 +2048,7 @@ static int proxy_to_virtual_server(REQUEST *request)
 {
 	if (current_server == NULL || strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
 	{
-		if (current_server != NULL) {
-			free(current_server);
-			current_server = NULL;
-		}
+		free_ptr(current_server);
 		current_server = strdup(STR_VIRTUAL_SERVER);
 		radius_exec_logger_centrale(request, "60037", "Enable Virtual server");
 	}
