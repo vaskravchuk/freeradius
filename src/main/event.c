@@ -114,7 +114,7 @@ static void event_socket_handler(fr_event_list_t *xel, UNUSED int fd, void *ctx)
 static void event_poll_detail(void *ctx);
 #endif
 
-void free_pointer(void **ptr) {
+static void free_pointer(void **ptr) {
 	if (*ptr != NULL) {
 		free(*ptr);
 		*ptr = NULL;
@@ -768,11 +768,6 @@ static void received_response_to_ping(REQUEST *request)
 			 &request->proxy->dst_ipaddr.ipaddr,
 			 buffer, sizeof(buffer)),
 	       request->proxy->dst_port);
-
-	radius_exec_logger_centrale(request, "60034", "Enable home server %s port %d",
-			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			home->port);
 }
 
 
@@ -1206,11 +1201,6 @@ static void no_response_to_proxied_request(void *ctx)
 	       inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
 			 buffer, sizeof(buffer)),
 	       home->port);
-
-	radius_exec_logger_centrale(request, "60035", "Disable home server %s port %d",
-			inet_ntop(home->ipaddr.af, &home->ipaddr.ipaddr,
-				buffer, sizeof(buffer)),
-			home->port);
 
 	/*
 	 *	Start pinging the home server.
@@ -2013,18 +2003,20 @@ static int proxy_request(REQUEST *request)
 	       request->proxy->dst_port);
 
 	char *str_home_server;
-	asprintf(&str_home_server, "%s",
+	int res = asprintf(&str_home_server, "%s",
 								inet_ntop(request->proxy->dst_ipaddr.af,
 									&request->proxy->dst_ipaddr.ipaddr,
 									buffer, sizeof(buffer)));
-	if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
-	{
-		free_pointer(&current_server);
-		current_server = strdup(str_home_server);
+	if (res != -1) {
+		if (current_server == NULL || strcmp(current_server, str_home_server) != 0)
+		{
+			free_pointer((void**)&current_server);
+			current_server = strdup(str_home_server);
 
-		radius_exec_logger_centrale(request, "60036", "Enable home server %s", current_server);
+			radius_exec_logger_centrale(request, "60034", "Enable home server %s", current_server);
+		}
+		free_pointer((void**)&str_home_server);
 	}
-	free_pointer(&str_home_server);
 
 	/*
 	 *	Note that we set proxied BEFORE sending the packet.
@@ -2055,9 +2047,9 @@ static int proxy_to_virtual_server(REQUEST *request)
 {
 	if (current_server == NULL || strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
 	{
-		free_pointer(&current_server);
+		free_pointer((void**)&current_server);
 		current_server = strdup(STR_VIRTUAL_SERVER);
-		radius_exec_logger_centrale(request, "60037", "Enable Virtual server");
+		radius_exec_logger_centrale(request, "60035", "Enable Virtual server");
 	}
 
 	REQUEST *fake;
