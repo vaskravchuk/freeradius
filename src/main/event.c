@@ -2013,7 +2013,7 @@ static int proxy_request(REQUEST *request)
 			free_pointer((void**)&current_server);
 			current_server = strdup(str_home_server);
 
-			radius_exec_logger_centrale(request, "60034", "Enable home server %s", current_server);
+			radius_exec_logger_centrale(request, "60056", "Enable home server %s", current_server);
 		}
 		free_pointer((void**)&str_home_server);
 	}
@@ -2049,7 +2049,7 @@ static int proxy_to_virtual_server(REQUEST *request)
 	{
 		free_pointer((void**)&current_server);
 		current_server = strdup(STR_VIRTUAL_SERVER);
-		radius_exec_logger_centrale(request, "60035", "Enable Virtual server");
+		radius_exec_logger_centrale(request, "60057", "Enable Virtual server");
 	}
 
 	REQUEST *fake;
