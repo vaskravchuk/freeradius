@@ -133,6 +133,9 @@ EAP_HANDLER *eap_handler_alloc(rlm_eap_t *inst)
 		PTHREAD_MUTEX_UNLOCK(&(inst->handler_mutex));
 	
 	}
+
+	handler->cached_request = NULL;
+
 	return handler;
 }
 
@@ -543,9 +546,18 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 	if (status > 0) {
 		// create copy to catch timeout errors
 		REQUEST *fake = request_alloc_fake(handler->request);
-        fake->packet->vps = paircopy(handler->request->packet->vps);
-        handler->cached_request = fake;
-        
+		if (fake->packet && fake->packet->vps) {
+			pairfree(fake->packet->vps);
+			fake->packet->vps = NULL;
+		}
+		fake->packet->vps = paircopy(handler->request->packet->vps);
+
+		if (handler->cached_request != NULL) {
+			request_free(&handler->cached_request);
+			handler->cached_request = NULL;
+		}
+		handler->cached_request = fake;
+
 		handler->request = NULL;
 	}
 

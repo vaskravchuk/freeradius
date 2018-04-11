@@ -682,6 +682,11 @@ static RADCLIENT *client_parse(CONF_SECTION *cs, int in_server)
 		}
 
 		if (prefix_ptr) *prefix_ptr = '/';
+
+		if (c->longname) {
+			free(c->longname);
+			c->longname = NULL;
+		}
 		c->longname = strdup(name2);
 
 		if (!c->shortname) c->shortname = strdup(c->longname);
@@ -721,6 +726,11 @@ static RADCLIENT *client_parse(CONF_SECTION *cs, int in_server)
 		}
 
 		ip_ntoh(&c->ipaddr, buffer, sizeof(buffer));
+
+		if (c->longname) {
+			free(c->longname);
+			c->longname = NULL;
+		}
 		c->longname = strdup(buffer);
 
 		/*
@@ -1028,6 +1038,11 @@ int client_validate(RADCLIENT_LIST *clients, RADCLIENT *master, RADCLIENT *c)
 	c->dynamic = TRUE;
 	c->lifetime = master->lifetime;
 	c->created = time(NULL);
+
+	if (c->longname) {
+		free(c->longname);
+		c->longname = NULL;
+	}
 	c->longname = strdup(c->shortname);
 
 	DEBUG("- Added client %s with shared secret %s",
