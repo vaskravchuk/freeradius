@@ -411,6 +411,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 */
 			if (eaptype->type != PW_EAP_TLS &&
 				eaptype->type != PW_EAP_TTLS &&
+				eaptype->type != PW_EAP_MD5 &&
 				eaptype->type != PW_EAP_PEAP &&
 				eaptype->type != PW_EAP_MSCHAPV2 &&
 				eaptype->type != PW_EAP_CISCO_MSCHAPV2) {

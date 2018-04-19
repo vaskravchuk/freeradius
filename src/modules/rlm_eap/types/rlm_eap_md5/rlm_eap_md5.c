@@ -33,6 +33,58 @@ RCSID("$Id$")
 
 #include <freeradius-devel/rad_assert.h>
 
+static const CONF_PARSER module_config[] = {
+	{ "md5_auth", PW_TYPE_STRING_PTR,
+	  offsetof(eap_md5_t, md5_auth), NULL, NULL },
+
+ 	{ NULL, -1, 0, NULL, NULL }           /* end the list */
+};
+
+/*
+ *	Detach the EAP-MD5 module.
+ */
+static int md5_detach(void *arg)
+{
+	eap_md5_t 	 *inst;
+
+	inst = (eap_md5_t *) arg;
+
+	free(inst);
+
+	return 0;
+}
+
+
+/*
+ *	Attach the EAP-MD5 module.
+ */
+static int md5_attach(CONF_SECTION *cs, void **instance)
+{
+	eap_md5_t 	 *inst;
+
+	/* Store all these values in the data structure for later references */
+	inst = (eap_md5_t *)malloc(sizeof(*inst));
+	if (!inst) {
+		radlog(L_ERR, "rlm_eap_md5: out of memory");
+		return -1;
+	}
+	memset(inst, 0, sizeof(*inst));
+
+	/*
+	 *	Hack: conf is the first structure inside of inst.  The
+	 *	CONF_PARSER stuff above uses offsetof() and
+	 *	EAP_md5_CONF, which is technically wrong.
+	 */
+	if (cf_section_parse(cs, inst, module_config) < 0) {
+		eapmd5_detach(inst);
+		return -1;
+	}
+
+	*instance = inst;
+
+	return 0;
+}
+
 /*
  *	Initiate the EAP-MD5 session by sending a challenge to the peer.
  */
@@ -122,34 +174,62 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	password = pairfind(handler->request->config_items, PW_CLEARTEXT_PASSWORD);
 	if (password == NULL) {
 		DEBUG2("rlm_eap_md5: Cleartext-Password is required for EAP-MD5 authentication");
-		return 0;
+		//return 0;
 	}
-
 	/*
 	 *	Extract the EAP-MD5 packet.
 	 */
-	if (!(packet = eapmd5_extract(handler->eap_ds)))
+	if (!(packet = eapmd5_extract(handler->eap_ds))) {
+		DEBUG2("rlm_eap_md5: !eapmd5_extract");
 		return 0;
-
+	}
 	/*
 	 *	Create a reply, and initialize it.
 	 */
 	reply = eapmd5_alloc();
 	if (!reply) {
 		eapmd5_free(&packet);
+		DEBUG2("rlm_eap_md5: !reply");
 		return 0;
 	}
 	reply->id = handler->eap_ds->request->id;
 	reply->length = 0;
 
 	/*
+	 *	Way for MAC_BYPASS protocol in eap-md5
+	 */
+	if (!password) {
+		char buffer[1024];
+		eap_md5_t *inst = arg;
+
+		VALUE_PAIR *answer = NULL;
+		int result;
+		if (reply->code != PW_MD5_FAILURE && inst && inst->md5_auth) {
+			result = radius_exec_program_centrale(inst->md5_auth, handler->request,
+			     TRUE, /* wait */
+			     buffer, sizeof(buffer),
+			     EXEC_TIMEOUT,
+			     handler->request->packet->vps, &answer, 1, 60025);
+			if (result != 0) {
+				DEBUG2("rlm_eap_md5: 60029 rlm_eap_md5: External script '%s' failed", inst->md5_auth);
+				radius_exec_logger_centrale(handler->request, "60029", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
+				reply->code = PW_MD5_FAILURE;
+			} else {
+				reply->code = PW_MD5_SUCCESS;
+				DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS_mac_bypass");
+			}
+		}
+	}
+	/*
 	 *	Verify the received packet against the previous packet
 	 *	(i.e. challenge) which we sent out.
 	 */
-	if (eapmd5_verify(packet, password, handler->opaque)) {
+	else if (eapmd5_verify(packet, password, handler->opaque)) {
 		reply->code = PW_MD5_SUCCESS;
+		DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
 	} else {
 		reply->code = PW_MD5_FAILURE;
+		DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
 	}
 
 	/*
@@ -168,9 +248,9 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
  */
 EAP_TYPE rlm_eap_md5 = {
 	"eap_md5",
-	NULL,				/* attach */
+	md5_attach,				/* attach */
 	md5_initiate,			/* Start the initial request */
 	NULL,				/* authorization */
 	md5_authenticate,		/* authentication */
-	NULL				/* detach */
+	md5_detach				/* detach */
 };
