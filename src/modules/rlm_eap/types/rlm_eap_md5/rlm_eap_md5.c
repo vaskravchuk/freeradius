@@ -174,7 +174,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	password = pairfind(handler->request->config_items, PW_CLEARTEXT_PASSWORD);
 	if (password == NULL) {
 		DEBUG2("rlm_eap_md5: Cleartext-Password is required for EAP-MD5 authentication");
-		//return 0;
+		//return 0; /// 'mac_bypass' Don't have password field
 	}
 	/*
 	 *	Extract the EAP-MD5 packet.
@@ -196,40 +196,44 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	reply->length = 0;
 
 	/*
-	 *	Way for MAC_BYPASS protocol in eap-md5
-	 */
-	if (!password) {
-		char buffer[1024];
-		eap_md5_t *inst = arg;
-
-		VALUE_PAIR *answer = NULL;
-		int result;
-		if (reply->code != PW_MD5_FAILURE && inst && inst->md5_auth) {
-			result = radius_exec_program_centrale(inst->md5_auth, handler->request,
-			     TRUE, /* wait */
-			     buffer, sizeof(buffer),
-			     EXEC_TIMEOUT,
-			     handler->request->packet->vps, &answer, 1, 60025);
-			if (result != 0) {
-				DEBUG2("rlm_eap_md5: 60029 rlm_eap_md5: External script '%s' failed", inst->md5_auth);
-				radius_exec_logger_centrale(handler->request, "60029", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
-				reply->code = PW_MD5_FAILURE;
-			} else {
-				reply->code = PW_MD5_SUCCESS;
-				DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS_mac_bypass");
-			}
-		}
-	}
-	/*
 	 *	Verify the received packet against the previous packet
 	 *	(i.e. challenge) which we sent out.
 	 */
-	else if (eapmd5_verify(packet, password, handler->opaque)) {
-		reply->code = PW_MD5_SUCCESS;
-		DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
-	} else {
+	if (password) {
+		if (eapmd5_verify(packet, password, handler->opaque)) {
+			reply->code = PW_MD5_SUCCESS;
+			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
+		} else {
+			reply->code = PW_MD5_FAILURE;
+			DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
+		}
+	}
+	else if (packet->value_size != 16) { /// part of 'eapmd5_verify' verify
 		reply->code = PW_MD5_FAILURE;
+		radlog(L_ERR, "rlm_eap_md5: Expected 16 bytes of response to challenge, got %d", packet->value_size);
 		DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
+	}
+
+	char buffer[1024];
+	eap_md5_t *inst = arg;
+	VALUE_PAIR *answer = NULL;
+
+	if (reply->code != PW_MD5_FAILURE &&
+		(inst && inst->md5_auth))
+	{
+		int result = radius_exec_program_centrale(inst->md5_auth, handler->request,
+			TRUE, /* wait */
+			buffer, sizeof(buffer),
+			EXEC_TIMEOUT,
+			handler->request->packet->vps, &answer, 1, 60040);
+		if (result != 0) {
+			DEBUG2("rlm_eap_md5: 60041 rlm_eap_md5: External script '%s' failed", inst->md5_auth);
+			radius_exec_logger_centrale(handler->request, "60041", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
+			reply->code = PW_MD5_FAILURE;
+		} else {
+			reply->code = PW_MD5_SUCCESS;
+			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
+		}
 	}
 
 	/*
