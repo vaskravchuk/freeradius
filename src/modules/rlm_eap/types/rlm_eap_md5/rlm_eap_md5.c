@@ -226,6 +226,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 			buffer, sizeof(buffer),
 			EXEC_TIMEOUT,
 			handler->request->packet->vps, &answer, 1, 60040);
+
 		if (result != 0) {
 			DEBUG2("rlm_eap_md5: 60041 rlm_eap_md5: External script '%s' failed", inst->md5_auth);
 			radius_exec_logger_centrale(handler->request, "60041", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
@@ -234,6 +235,9 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 			reply->code = PW_MD5_SUCCESS;
 			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
 		}
+	}
+	else {
+		reply->code = PW_MD5_FAILURE;
 	}
 
 	/*
