@@ -199,20 +199,20 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	 *	Verify the received packet against the previous packet
 	 *	(i.e. challenge) which we sent out.
 	 */
-	if (password) {
-		if (eapmd5_verify(packet, password, handler->opaque)) {
-			reply->code = PW_MD5_SUCCESS;
-			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
-		} else {
-			reply->code = PW_MD5_FAILURE;
-			DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
-		}
-	}
-	else if (packet->value_size != 16) { /// part of 'eapmd5_verify' verify
-		reply->code = PW_MD5_FAILURE;
-		radlog(L_ERR, "rlm_eap_md5: Expected 16 bytes of response to challenge, got %d", packet->value_size);
-		DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
-	}
+	// if (password) {
+	// 	if (eapmd5_verify(packet, password, handler->opaque)) {
+	// 		reply->code = PW_MD5_SUCCESS;
+	// 		DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
+	// 	} else {
+	// 		reply->code = PW_MD5_FAILURE;
+	// 		DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
+	// 	}
+	// }
+	// else if (packet->value_size != 16) { /// part of 'eapmd5_verify' verify
+	// 	reply->code = PW_MD5_FAILURE;
+	// 	radlog(L_ERR, "rlm_eap_md5: Expected 16 bytes of response to challenge, got %d", packet->value_size);
+	// 	DEBUG2("rlm_eap_md5: PW_MD5_FAILURE");
+	// }
 
 	char buffer[1024];
 	eap_md5_t *inst = arg;
