@@ -239,6 +239,8 @@
 
 #define PW_EAP_SESSION_ID		1146
 
+#define PW_EAP_MD5_CHALLENGE		1195
+
 /*
  *	Integer Translations
  */
