@@ -45,6 +45,11 @@ typedef struct md5_packet {
 	char		*name;
 } MD5_PACKET;
 
+/* This structure gets stored in arg */
+typedef struct _eap_md5_t {
+	char *md5_auth;
+} eap_md5_t;
+
 /* function declarations here */
 
 MD5_PACKET 	*eapmd5_alloc(void);

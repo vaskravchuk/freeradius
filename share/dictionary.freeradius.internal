@@ -136,6 +136,8 @@ ATTRIBUTE	Cleartext-Password			1100	string
 ATTRIBUTE	Password-With-Header			1101	string
 ATTRIBUTE	Inner-Tunnel-User-Name			1102	string
 
+ATTRIBUTE	MD5-Challenge				1195	octets
+
 # For errors codes to portnox
 ATTRIBUTE       P-Error-Code                1103    string
 ATTRIBUTE       P-Error-Msg                1104    string
