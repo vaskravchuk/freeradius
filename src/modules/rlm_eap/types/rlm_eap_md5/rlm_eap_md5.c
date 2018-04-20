@@ -209,15 +209,12 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	// 	}
 	// }
 
-	VALUE_PAIR *vp;
-
-	vp = radius_paircreate(handler->request, &handler->request->packet->vps, PW_EAP_MD5_CHALLENGE, PW_TYPE_OCTETS);
-	strlcpy(vp->vp_strvalue, handler->opaque, MD5_CHALLENGE_LEN);
-	vp->length = MD5_CHALLENGE_LEN;
-
-	vp = radius_paircreate(handler->request, &handler->request->packet->vps, PW_MD5_PASSWORD, PW_TYPE_OCTETS);
-	strlcpy(vp->vp_strvalue, packet->value, packet->value_size);
-	vp->length = packet->value_size;
+	if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Challenge", handler->opaque, PW_TYPE_OCTETS)) {
+		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating MD5-Challenge");
+	}
+	if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Password", packet->value, PW_TYPE_OCTETS)) {
+		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating MD5-Password");
+	}
 
 	char buffer[1024];
 	eap_md5_t *inst = arg;
