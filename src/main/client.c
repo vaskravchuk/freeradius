@@ -111,6 +111,11 @@ void client_free(RADCLIENT *client)
 	free(client->password);
 	free(client->server);
 
+	if(client->cs_base) {
+		cf_section_free(&client->cs_base);
+	}
+
+
 #ifdef WITH_STATS
 	free(client->auth);
 #ifdef WITH_ACCOUNTING
@@ -1171,22 +1176,24 @@ RADCLIENT *client_read(const char *filename, int in_server, int flag)
 {
 	const char *p;
 	RADCLIENT *c;
-	CONF_SECTION *cs;
+	CONF_SECTION *cs1;
+	CONF_SECTION *cs2;
 	char buffer[256];
 
 	if (!filename) return NULL;
 
-	cs = cf_file_read(filename);
-	if (!cs) return NULL;
+	cs1 = cf_file_read(filename);
+	if (!cs1) return NULL;
 	
-	cs = cf_section_sub_find(cs, "client");
-	if (!cs) {
+	cs2 = cf_section_sub_find(cs1, "client");
+	if (!cs2) {
 		radlog(L_ERR, "No \"client\" section found in client file");
 		return NULL;
 	}
 
-	c = client_parse(cs, in_server);
+	c = client_parse(cs2, in_server);
 	if (!c) return NULL;
+	c->cs_base = cs1;
 
 	p = strrchr(filename, FR_DIR_SEP);
 	if (p) {

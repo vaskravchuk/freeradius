@@ -126,6 +126,7 @@ typedef struct radclient {
 	char			*server;
 	int			number;	/* internal use only */
 	const CONF_SECTION	*cs;
+	const CONF_SECTION	*cs_base;
 #ifdef WITH_STATS
 	fr_stats_t		*auth;
 #ifdef WITH_ACCOUNTING
