@@ -103,13 +103,13 @@ void client_free(RADCLIENT *client)
 	}
 #endif
 
-	free(client->longname);
-	free(client->secret);
-	free(client->shortname);
-	free(client->nastype);
-	free(client->login);
-	free(client->password);
-	free(client->server);
+	free(client->longname); client->longname = NULL;
+	free(client->secret); client->secret = NULL;
+	free(client->shortname); client->shortname = NULL;
+	free(client->nastype); client->nastype = NULL;
+	free(client->login); client->login = NULL;
+	free(client->password); client->password = NULL;
+	free(client->server); client->server = NULL;
 
 	if(client->cs_base) {
 		cf_section_free(&client->cs_base);
@@ -117,17 +117,17 @@ void client_free(RADCLIENT *client)
 
 
 #ifdef WITH_STATS
-	free(client->auth);
+	free(client->auth); client->auth = NULL;
 #ifdef WITH_ACCOUNTING
-	free(client->acct);
+	free(client->acct); client->acct = NULL;
 #endif
 #endif
 
 #ifdef WITH_DYNAMIC_CLIENTS
-	free(client->client_server);
+	free(client->client_server); client->client_server = NULL;
 #endif
 
-	free(client);
+	free(client); client = NULL;
 }
 
 /*
