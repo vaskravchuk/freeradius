@@ -342,7 +342,7 @@ void cf_section_parse_free(CONF_SECTION *cs, void *base)
 			p = (char **) (((char *)base) + variables[i].offset);
 		}
 
-		free(*p);
+		if (*p) free(*p);
 		*p = NULL;
 	}
 
