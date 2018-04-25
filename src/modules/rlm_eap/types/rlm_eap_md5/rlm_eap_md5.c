@@ -219,11 +219,11 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	char buffer[1024];
 	eap_md5_t *inst = arg;
 	VALUE_PAIR *answer = NULL;
+	VALUE_PAIR **output_pairs = NULL;
 
 	if (reply->code != PW_MD5_FAILURE &&
 		(inst && inst->md5_auth))
 	{
-
 		int result = radius_exec_program_centrale(inst->md5_auth, handler->request,
 			TRUE, /* wait */
 			buffer, sizeof(buffer),
@@ -235,7 +235,28 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 			radius_exec_logger_centrale(handler->request, "60041", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
 			reply->code = PW_MD5_FAILURE;
 		} else {
+		    if (answer != NULL) {
+		        if (request->reply != NULL) {
+        	        output_pairs = &request->reply->vps;
+    	            if (output_pairs != NULL) {
+			            DEBUG2("rlm_eap_md5: Moving script value pairs to the reply");
+			            pairmove(output_pairs, &answer);
+	    	        }
+	    	        else {
+			            DEBUG2("rlm_eap_md5: output_pairs==NULL");
+	    	        }
+	    	        pairfree(&answer);
+	    	    }
+	    	    else {
+		            DEBUG2("rlm_eap_md5: request->reply==NULL");
+	    	    }
+	        }
+	        else {
+		        DEBUG2("rlm_eap_md5: answer==NULL");
+	        }
+
 			reply->code = PW_MD5_SUCCESS;
+
 			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
 		}
 	}

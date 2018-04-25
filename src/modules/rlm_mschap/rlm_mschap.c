@@ -685,7 +685,7 @@ static int do_mschap(rlm_mschap_t *inst,
 {
 	uint8_t		calculated[24];
 	/* Extra output variables */
-	VALUE_PAIR **output_pairs;
+	VALUE_PAIR **output_pairs = NULL;
 	VALUE_PAIR *answer = NULL;
 
 	output_pairs = &request->reply->vps;
