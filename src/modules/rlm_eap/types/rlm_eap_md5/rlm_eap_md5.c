@@ -236,8 +236,8 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 			reply->code = PW_MD5_FAILURE;
 		} else {
 		    if (answer != NULL) {
-		        if (request->reply != NULL) {
-        	        output_pairs = &request->reply->vps;
+		        if (handler->request->reply != NULL) {
+        	        output_pairs = &handler->request->reply->vps;
     	            if (output_pairs != NULL) {
 			            DEBUG2("rlm_eap_md5: Moving script value pairs to the reply");
 			            pairmove(output_pairs, &answer);
