@@ -376,9 +376,11 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 			 * clear all 
 			 */
 			rbnode_t *node;
-			node = rbtree_find(inst->session_tree, handler);
-			rad_assert(node != NULL);
-			rbtree_delete(inst->session_tree, node);
+			if (inst->session_tree) {
+			    node = rbtree_find(inst->session_tree, handler);
+			    rad_assert(node != NULL);
+			    rbtree_delete(inst->session_tree, node);
+		    }
 			radlog(L_ERR, "***eaplist_expire deleted");
 
 			/*
