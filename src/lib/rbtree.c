@@ -473,8 +473,9 @@ rbnode_t *rbtree_find(rbtree_t *tree, const void *Data)
 	 *  find node containing Data  *
 	 *******************************/
 
-    // check just in case
-    if (!tree || !tree->Root) return NULL;
+	// check just in case
+	if (!tree) return NULL;
+	if (!tree->Root) return NULL;
 
 	rbnode_t *Current = tree->Root;
 
