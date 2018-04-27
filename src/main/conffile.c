@@ -1996,7 +1996,7 @@ CONF_PAIR *cf_pair_find(const CONF_SECTION *cs, const char *name)
 	/*
 	 *	Find the name in the tree, for speed.
 	 */
-	if (name) {
+	if (name && cs->pair_tree) {
 		CONF_PAIR mycp;
 
 		mycp.attr = name;
