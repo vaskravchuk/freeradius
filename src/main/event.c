@@ -2045,9 +2045,9 @@ static int proxy_request(REQUEST *request)
  */
 static int proxy_to_virtual_server(REQUEST *request)
 {
-	if (current_server != NULL || strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
+	if (current_server != NULL && strcmp(current_server, STR_VIRTUAL_SERVER) != 0)
 	{
-		radius_exec_logger_centrale(request, "60057", "Enable Virtual server from home server %s", current_server);
+		radius_exec_logger_centrale(request, "60057", "Switched to Virtual server from home server %s", current_server);
 	}
 	free_pointer((void**)&current_server);
 	current_server = strdup(STR_VIRTUAL_SERVER);
