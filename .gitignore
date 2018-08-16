@@ -27,3 +27,5 @@ autom4te.cache
 config.cache
 /libltdl/Makefile
 .DS_Store
+
+nbproject/
