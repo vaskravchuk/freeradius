@@ -540,6 +540,9 @@ static int pap_authorize(void *instance, REQUEST *request)
 				radius_exec_logger_centrale(request, "60058", "Unable to verify incoming connection from client %s to port %d, wrong secret?",
 					ip_ntoh(&request->packet->src_ipaddr, buffer, sizeof(buffer)), request->packet->dst_port);
 
+				/// Clear wrong data from password for normal read on BE
+				memset(request->password->vp_strvalue, 0, sizeof(*request->password->vp_strvalue));
+
 				return RLM_MODULE_NOOP;
 			}
 			p += size;
