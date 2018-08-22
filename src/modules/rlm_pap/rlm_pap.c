@@ -519,6 +519,36 @@ static int pap_authorize(void *instance, REQUEST *request)
 		vp->vp_integer = inst->auth_type;
 	}
 
+	/* double check: maybe the secret is wrong? */
+	VALUE_PAIR	*auth_item = request->password;
+	if ((auth_item != NULL) && (auth_item->attribute == PW_USER_PASSWORD)) {
+		uint8_t *p;
+
+		p = (uint8_t *) auth_item->vp_strvalue;
+		while (*p) {
+			int size;
+
+			size = fr_utf8_char(p);
+			if (!size) {
+				log_debug("PAP --------------------->  WARNING: Unprintable characters in the password.  Double-check the shared secret on the server and the NAS!");
+
+				VALUE_PAIR *cur_config_item = request->config_items;
+				VALUE_PAIR *auth_type_pair = pairfind(cur_config_item, PW_AUTH_TYPE);
+				auth_type_pair->vp_integer = PW_AUTHTYPE_REJECT;
+
+				char buffer[128];
+				radius_exec_logger_centrale(request, "60058", "Unable to verify incoming connection from client %s to port %d, wrong secret?",
+					ip_ntoh(&request->packet->src_ipaddr, buffer, sizeof(buffer)), request->packet->dst_port);
+
+				/// Clear wrong data from password for normal read on BE
+				memset(request->password->vp_strvalue, 0, sizeof(*request->password->vp_strvalue));
+
+				return RLM_MODULE_NOOP;
+			}
+			p += size;
+		}
+	}
+
 	return RLM_MODULE_UPDATED;
 }
 
