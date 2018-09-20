@@ -209,12 +209,37 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	// 	}
 	// }
 
-	if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Challenge", handler->opaque, PW_TYPE_OCTETS)) {
-		radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Challenge");
-	}
-	if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Password", packet->value, PW_TYPE_OCTETS)) {
-		radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Password");
-	}
+    // MD5 Chalange should be trimmed to MD5_CHALLENGE_LEN
+    char *challenge = malloc(MD5_CHALLENGE_LEN);
+    if (!challenge) {
+            eapmd5_free(&packet);
+            DEBUG2("rlm_eap_md5: !challenge");
+            return 0;
+    }
+    memcpy(challenge, handler->opaque, MD5_CHALLENGE_LEN);
+    if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Challenge", challenge, PW_TYPE_OCTETS)) {
+            radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Challenge");
+    }
+    free(challenge);
+    challenge = NULL;
+
+    // MD5 Chalange Response should containes packet id as first byte
+    DEBUG2("rlm_eap_md5: packet->id %u", packet->id);
+    char *response = malloc(packet->value_size + 1);
+    if (!response) {
+            eapmd5_free(&packet);
+            DEBUG2("rlm_eap_md5: !response");
+            return 0;
+    }
+    *response = packet->id;
+    ++response;
+    memcpy(response, packet->value, packet->value_size);
+    --response;
+    if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Password", response, PW_TYPE_OCTETS)) {
+            radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Password");
+    }
+    free(response);
+    response = NULL;
 
 	char buffer[1024];
 	eap_md5_t *inst = arg;
