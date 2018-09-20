@@ -173,7 +173,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 
 	password = pairfind(handler->request->config_items, PW_CLEARTEXT_PASSWORD);
 	if (password == NULL) {
-		DEBUG2("rlm_eap_md5: Cleartext-Password is required for EAP-MD5 authentication");
+		//DEBUG2("rlm_eap_md5: Cleartext-Password is required for EAP-MD5 authentication");
 		//return 0; /// 'mac_bypass' Don't have password field
 	}
 	/*
