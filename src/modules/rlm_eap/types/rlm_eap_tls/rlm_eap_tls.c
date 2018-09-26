@@ -1033,9 +1033,11 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 	SSL *ssl;
 	VALUE_PAIR *answer = NULL;
 	VALUE_PAIR **output_pairs = NULL;
+	tls_session_t *tls_session;
 
 	ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
 	handler = (EAP_HANDLER *)SSL_get_ex_data(ssl, 0);
+	tls_session = (tls_session_t *)handler->opaque;
 	request = handler->request;
 	conf = (EAP_TLS_CONF *)SSL_get_ex_data(ssl, 1);
 
@@ -1094,20 +1096,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
 			} else {
 			    if (answer != NULL) {
-			        if (request->reply != NULL) {
-            	        output_pairs = &request->reply->vps;
-	    	            if (output_pairs != NULL) {
-				            RDEBUG("rlm_eap_tls: Moving script value pairs to the reply");
-				            pairmove(output_pairs, &answer);
-		    	        }
-		    	        else {
-				            RDEBUG("rlm_eap_tls: output_pairs==NULL");
-		    	        }
-		    	        pairfree(&answer);
-		    	    }
-		    	    else {
-			            RDEBUG("rlm_eap_tls: request->reply==NULL");
-		    	    }
+			    	tls_session->output_pairs = answer;
 		        }
 		        else {
 			        RDEBUG("rlm_eap_tls: answer==NULL");

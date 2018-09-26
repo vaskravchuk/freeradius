@@ -342,6 +342,7 @@ int eaptls_request(EAP_DS *eap_ds, tls_session_t *ssn)
 static eaptls_status_t eaptls_ack_handler(EAP_HANDLER *handler)
 {
 	tls_session_t *tls_session;
+	VALUE_PAIR **output_pairs = NULL;
 	REQUEST *request = handler->request;
 
 	tls_session = (tls_session_t *)handler->opaque;
@@ -376,6 +377,21 @@ static eaptls_status_t eaptls_ack_handler(EAP_HANDLER *handler)
 			 *	sets it.
 			 */
 			tls_session->info.content_type = application_data;
+
+
+	        if (request->reply != NULL) {
+    	        output_pairs = &request->reply->vps;
+	            if (output_pairs != NULL) {
+		            RDEBUG("rlm_eap_tls: Moving script value pairs to the reply");
+		            pairmove(output_pairs, &answer);
+    	        }
+    	        else {
+		            RDEBUG("rlm_eap_tls: output_pairs==NULL");
+    	        }
+    	    }
+    	    else {
+	            RDEBUG("rlm_eap_tls: request->reply==NULL");
+    	    }
 			return EAPTLS_SUCCESS;
 		} /* else more data to send */
 
