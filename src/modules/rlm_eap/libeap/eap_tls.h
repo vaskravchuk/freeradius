@@ -175,7 +175,7 @@ typedef struct _tls_session_t {
 	 *	data.
 	 */
 	void 		*opaque;
-	VALUE_PAIR **output_pairs;
+	VALUE_PAIR  *output_pairs;
 	void 		(*free_opaque)(void *opaque);
 
 	const char	*prf_label;

@@ -339,7 +339,7 @@ void session_free(void *ssn)
 
 	if (sess->output_pairs)
 	{
-		pairfree(sess->output_pairs);
+		pairfree(&sess->output_pairs);
 		sess->output_pairs = NULL;
 	}
 
