@@ -384,7 +384,7 @@ static eaptls_status_t eaptls_ack_handler(EAP_HANDLER *handler)
 			        output_pairs = &request->reply->vps;
 		            if (output_pairs != NULL) {
 			            RDEBUG("rlm_eap_tls: Moving script value pairs to the reply");
-			            pairmove(output_pairs, &(tls_session->output_pairs);
+			            pairmove(output_pairs, &(tls_session->output_pairs));
 			        }
 			        else {
 			            RDEBUG("rlm_eap_tls: output_pairs==NULL");
