@@ -1101,6 +1101,11 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 				if (tls_session != NULL)
 				{
 					if (answer != NULL) {
+						if (tls_session->output_pairs)
+						{
+							pairfree(tls_session->output_pairs);
+							tls_session->output_pairs = NULL;
+						}
 						tls_session->output_pairs = answer;
 					}
 					else {
