@@ -175,6 +175,10 @@ typedef struct _tls_session_t {
 	 *	data.
 	 */
 	void 		*opaque;
+	/*
+	 *	Output pairs to send with Access-Accept packet
+	 */
+	VALUE_PAIR	*output_pairs;
 	void 		(*free_opaque)(void *opaque);
 
 	const char	*prf_label;

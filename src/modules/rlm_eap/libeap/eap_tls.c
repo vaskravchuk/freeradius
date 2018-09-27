@@ -107,6 +107,7 @@ int eaptls_success(EAP_HANDLER *handler, int peap_flag)
 {
 	EAPTLS_PACKET	reply;
 	VALUE_PAIR *vp, *vps = NULL;
+	VALUE_PAIR **output_pairs = NULL;
 	REQUEST *request = handler->request;
 	tls_session_t *tls_session = handler->opaque;
 
@@ -231,6 +232,27 @@ int eaptls_success(EAP_HANDLER *handler, int peap_flag)
 
 	eaptls_gen_eap_key(tls_session->ssl,
 			   handler->eap_type, &handler->request->reply->vps);
+
+	if (tls_session->output_pairs)
+	{
+		if (request->reply != NULL) {
+			output_pairs = &request->reply->vps;
+			if (output_pairs != NULL) {
+				RDEBUG("rlm_eap_tls: Moving script value pairs to the reply");
+				pairmove(output_pairs, &(tls_session->output_pairs));
+			}
+			else {
+				RDEBUG("rlm_eap_tls: output_pairs==NULL");
+			}
+		}
+		else {
+			RDEBUG("rlm_eap_tls: request->reply==NULL");
+		}
+	}
+	else {
+		RDEBUG("rlm_eap_tls: tls_session->output_pairs==NULL");
+	}
+
 	return 1;
 }
 

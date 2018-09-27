@@ -337,6 +337,12 @@ void session_free(void *ssn)
 		sess->opaque = NULL;
 	}
 
+	if (sess->output_pairs)
+	{
+		pairfree(&sess->output_pairs);
+		sess->output_pairs = NULL;
+	}
+
 	session_close(sess);
 
 	free(sess);
