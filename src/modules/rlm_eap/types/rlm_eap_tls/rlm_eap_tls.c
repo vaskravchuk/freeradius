@@ -1100,17 +1100,17 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 				 */ 
 				if (tls_session != NULL)
 				{
-				    if (answer != NULL) {
-				    	tls_session->output_pairs = answer;
-			        }
-			        else {
-				        RDEBUG("rlm_eap_tls: answer==NULL");
-			        }
-			    }
-			    else 
-			    {
-				        RDEBUG("rlm_eap_tls: tls_session==NULL");
-			    }
+					if (answer != NULL) {
+						tls_session->output_pairs = answer;
+					}
+					else {
+						RDEBUG("rlm_eap_tls: answer==NULL");
+					}
+				}
+				else 
+				{
+					RDEBUG("rlm_eap_tls: tls_session==NULL");
+				}
 				my_ok = 1;
 				handler->validation_status = HANDER_VALIDATION_SUCCESS;
 				RDEBUG("Client certificate CN %s passed external validation", common_name);

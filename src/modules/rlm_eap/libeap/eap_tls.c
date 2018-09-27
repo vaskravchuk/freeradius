@@ -398,7 +398,6 @@ static eaptls_status_t eaptls_ack_handler(EAP_HANDLER *handler)
 			 *	sets it.
 			 */
 			tls_session->info.content_type = application_data;
-
 			return EAPTLS_SUCCESS;
 		} /* else more data to send */
 
