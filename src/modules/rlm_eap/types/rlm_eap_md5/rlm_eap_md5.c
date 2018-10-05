@@ -210,7 +210,9 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	// }
 
     // MD5 Chalange should be trimmed to MD5_CHALLENGE_LEN
-    char *challenge = malloc(MD5_CHALLENGE_LEN);
+    int challenge_size = MD5_CHALLENGE_LEN+1;
+    char *challenge = malloc(challenge_size);
+    memset(challenge, 0, challenge_size);
     if (!challenge) {
             eapmd5_free(&packet);
             DEBUG2("rlm_eap_md5: !challenge");
@@ -225,7 +227,9 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 
     // MD5 Chalange Response should containes packet id as first byte
     DEBUG2("rlm_eap_md5: packet->id %u", packet->id);
-    char *response = malloc(packet->value_size + 1);
+    int response_size = packet->value_size + 1 + 1;
+    char *response = malloc(response_size);
+    memset(response, 0, response_size);
     if (!response) {
             eapmd5_free(&packet);
             DEBUG2("rlm_eap_md5: !response");
