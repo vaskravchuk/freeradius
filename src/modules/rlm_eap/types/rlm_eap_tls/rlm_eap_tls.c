@@ -1047,6 +1047,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 	    X509_NAME_get_text_by_NID(X509_get_subject_name(client_cert),
 				  NID_commonName, common_name, sizeof(common_name));
 	    common_name[sizeof(common_name) - 1] = '\0';
+		logs_add_flow(handler->request, "rlm_eap: Got client certificate with common name %s", common_name);
 	    DEBUG2("rlm_eap: Got client certificate with common name %s", common_name);
 	    
 		while (conf->verify_client_cert_cmd) {
@@ -1058,6 +1059,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 				 conf->verify_tmp_dir, request->client->shortname, progname);
 			fd = mkstemp(filename);
 			if (fd < 0) {
+				logs_add_flow(handler->request, "Failed creating file in %s: %s", conf->verify_tmp_dir, strerror(errno));
 				RDEBUG("Failed creating file in %s: %s",
 				       conf->verify_tmp_dir, strerror(errno));
 				break;
@@ -1065,6 +1067,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 
 			fp = fdopen(fd, "w");
 			if (!fp) {
+				logs_add_flow(handler->request, "Failed opening file %s: %s", filename, strerror(errno));
 				RDEBUG("Failed opening file %s: %s",
 				       filename, strerror(errno));
 				break;
@@ -1072,6 +1075,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 
 			if (!PEM_write_X509(fp, client_cert)) {
 				fclose(fp);
+				logs_add_flow(handler->request, "Failed writing certificate to file");
 				RDEBUG("Failed writing certificate to file");
 				goto do_unlink;
 			}
@@ -1080,11 +1084,13 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 			if (!radius_pairmake(request, &request->packet->vps,
 					     "TLS-Client-Cert-Filename",
 					     filename, T_OP_SET)) {
+				logs_add_flow(handler->request, "Failed creating TLS-Client-Cert-Filename");
 				RDEBUG("Failed creating TLS-Client-Cert-Filename");
 
 				goto do_unlink;
 			}
 
+			logs_add_flow(handler->request, "EAPTLS BE");
 			RDEBUG("Verifying client certificate: %s",
 			       conf->verify_client_cert_cmd);
 			if (radius_exec_program(conf->verify_client_cert_cmd,
@@ -1093,6 +1099,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 						request->packet->vps,
 						&answer, 1) != 0) {
 				handler->validation_status = HANDER_VALIDATION_FAILED;
+				logs_add_flow(handler->request, "EAPTLS BE FAILED");
 				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
 			} else {
 				/*
@@ -1119,6 +1126,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 				my_ok = 1;
 				handler->validation_status = HANDER_VALIDATION_SUCCESS;
 				RDEBUG("Client certificate CN %s passed external validation", common_name);
+				logs_add_flow(handler->request, "EAPTLS BE SUCCESS");
 			}
 
 		do_unlink:
@@ -1709,6 +1717,7 @@ static int eaptls_initiate(void *type_arg, EAP_HANDLER *handler)
 	 *	Verify the peer certificate, if asked.
 	 */
 	if (client_cert) {
+		logs_add_flow(handler->request, "Requiring client certificate");
 		RDEBUG2("Requiring client certificate");
 		verify_mode = SSL_VERIFY_PEER;
 		verify_mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
@@ -1774,10 +1783,14 @@ static int eaptls_initiate(void *type_arg, EAP_HANDLER *handler)
 	case PW_EAP_TLS:
 	default:
 		ssn->prf_label = "client EAP encryption";
+		logs_set_reply_desc(handler->request, 1, "EAP_TLS START");
+		logs_set_request_desc(handler->request, 1, "EAP_TLS INIT");
 		break;
 
 	case PW_EAP_TTLS:
 		ssn->prf_label = "ttls keying material";
+		logs_set_reply_desc(handler->request, 1, "EAP_TTLS START");
+		logs_set_request_desc(handler->request, 1, "EAP_TTLS INIT");
 		break;
 
 		/*
@@ -1803,6 +1816,8 @@ static int eaptls_initiate(void *type_arg, EAP_HANDLER *handler)
 		ssn->length_flag = 0;
 
 		ssn->prf_label = "client EAP encryption";
+		logs_set_reply_desc(handler->request, 1, "PEAP TLS START");
+		logs_set_request_desc(handler->request, 1, "PEAP TLS INIT");
 		break;
 	}
 
@@ -1814,11 +1829,11 @@ static int eaptls_initiate(void *type_arg, EAP_HANDLER *handler)
 	 *	TLS session initialization is over.  Now handle TLS
 	 *	related handshaking or application data.
 	 */
-	status = eaptls_start(handler->eap_ds, ssn->peap_flag);
+	status = eaptls_start(handler, ssn->peap_flag);
+	logs_add_flow(handler->request, "eaptls_start returned %d", status);
 	RDEBUG2("Start returned %d", status);
 	if (status == 0)
 		return 0;
-
 	/*
 	 *	The next stage to process the packet.
 	 */
@@ -1837,6 +1852,8 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 	REQUEST *request = handler->request;
 	eap_tls_t *inst = (eap_tls_t *) arg;
 
+
+	logs_add_flow(handler->request, "eaptls_authenticate");
 	RDEBUG2("Authenticate");
 
 	status = eaptls_process(handler);
@@ -1865,6 +1882,7 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 				fake->server = inst->conf.virtual_server;
 			}
 
+			logs_add_flow(handler->request, "Processing EAP-TLS Certificate check");
 			RDEBUG("Processing EAP-TLS Certificate check:");
 			debug_pair_list(fake->packet->vps);
 
@@ -1880,6 +1898,7 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 
 			/* reject if virtual server didn't return accept */
 			if (fake->reply->code != PW_AUTHENTICATION_ACK) {
+				logs_add_flow(handler->request, "Certifictes were rejected by the virtual server");
 				RDEBUG2("Certifictes were rejected by the virtual server");
 				request_free(&fake);
 				eaptls_fail(handler, 0);
@@ -1904,6 +1923,7 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	data.
 		 */
 	case EAPTLS_OK:
+		logs_add_flow(handler->request, "Received unexpected tunneled data after successful handshake");
 		RDEBUG2("Received unexpected tunneled data after successful handshake.");
 #ifndef NDEBUG
 		if ((debug_flag > 2) && fr_log_fp) {

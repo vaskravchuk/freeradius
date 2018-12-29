@@ -193,7 +193,7 @@ eaptls_status_t eaptls_process(EAP_HANDLER *handler);
 
 int 		eaptls_success(EAP_HANDLER *handler, int peap_flag);
 int 		eaptls_fail(EAP_HANDLER *handler, int peap_flag);
-int 		eaptls_request(EAP_DS *eap_ds, tls_session_t *ssn);
+int 		eaptls_request(EAP_HANDLER *handler, tls_session_t *ssn);
 
 
 /* MPPE key generation */
@@ -355,7 +355,7 @@ typedef struct tls_packet {
 /* EAP-TLS framework */
 EAPTLS_PACKET 	*eaptls_alloc(void);
 void 		eaptls_free(EAPTLS_PACKET **eaptls_packet_ptr);
-int 		eaptls_start(EAP_DS *eap_ds, int peap);
+int 		eaptls_start(EAP_HANDLER *handler, int peap);
 int 		eaptls_compose(EAP_DS *eap_ds, EAPTLS_PACKET *reply);
 
 /* Callbacks */

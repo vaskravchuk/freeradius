@@ -253,6 +253,11 @@ void radlog_request(int lvl, int priority, REQUEST *request, const char *msg, ..
 	}
 
 	if (request && filename) {
+		if (request && request->context_id[0]) {
+			snprintf(buffer + len, sizeof(buffer) - len, "%s ", request->context_id);
+			len = strlen(buffer);
+		}
+
 		char *p;
 		radlog_func_t rl = request->radlog;
 

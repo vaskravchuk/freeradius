@@ -264,6 +264,10 @@ void request_free(REQUEST **request_ptr)
 #ifdef WITH_PROXY
 	request->home_server = NULL;
 #endif
+
+	free(request->logs);
+	request->logs = NULL;
+
 	free(request);
 
 	*request_ptr = NULL;
@@ -495,6 +499,15 @@ REQUEST *request_alloc(void)
 	request->component = "<core>";
 	if (debug_flag) request->radlog = radlog_request;
 
+	request->logs = rad_malloc(sizeof(LOG_DESC));
+	
+	memset(request->logs->flow, 0, sizeof(request->logs->flow));
+	memset(request->logs->tls, 0, sizeof(request->logs->tls));
+	memset(request->logs->request_desc, 0, sizeof(request->logs->request_desc));
+	memset(request->logs->reply_desc, 0, sizeof(request->logs->reply_desc));
+	memset(request->logs->eap_type, 0, sizeof(request->logs->eap_type));
+	request->logs->trips = -1;
+
 	return request;
 }
 
@@ -582,6 +595,12 @@ REQUEST *request_alloc_fake(REQUEST *request)
    */
   fake->options = request->options;
   fake->radlog = request->radlog;
+
+  memcpy(fake->context_id, request->context_id, sizeof(request->context_id));
+  memcpy(fake->request_id, request->request_id, sizeof(request->request_id));
+
+  fake->logs = rad_malloc(sizeof(LOG_DESC));
+  memcpy(fake->logs, request->logs, sizeof(LOG_DESC));
 
   return fake;
 }

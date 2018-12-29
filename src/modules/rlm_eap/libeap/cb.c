@@ -39,20 +39,23 @@ void cbtls_info(const SSL *s, int where, int ret)
 	if (handler) request = handler->request;
 
 	w = where & ~SSL_ST_MASK;
-	if (w & SSL_ST_CONNECT) str="    TLS_connect";
-	else if (w & SSL_ST_ACCEPT) str="    TLS_accept";
-	else str="    (other)";
+	if (w & SSL_ST_CONNECT) str="TLS_connect";
+	else if (w & SSL_ST_ACCEPT) str="TLS_accept";
+	else str="(other)";
 
 	state = SSL_state_string_long(s);
 	state = state ? state : "NULL";
 	buffer[0] = '\0';
 
 	if (where & SSL_CB_LOOP) {
-		RDEBUG2("%s: %s", str, state);
+		if (handler) logs_add_tls(handler->request, "%s: %s", str, state);
+		RDEBUG2("    %s: %s", str, state);
 	} else if (where & SSL_CB_HANDSHAKE_START) {
-		RDEBUG2("%s: %s", str, state);
+		if (handler) logs_add_tls(handler->request, "%s: %s", str, state);
+		RDEBUG2("    %s: %s", str, state);
 	} else if (where & SSL_CB_HANDSHAKE_DONE) {
-		RDEBUG2("%s: %s", str, state);
+		if (handler) logs_add_tls(handler->request, "%s: %s", str, state);
+		RDEBUG2("    %s: %s", str, state);
 	} else if (where & SSL_CB_ALERT) {
 		str=(where & SSL_CB_READ)?"read":"write";
 
@@ -67,6 +70,7 @@ void cbtls_info(const SSL *s, int where, int ret)
 
 		} else if (ret < 0) {
 			if (SSL_want_read(s)) {
+				if (handler) logs_add_tls(handler->request, "%s: Need to read more data: %s", str, state);
 				RDEBUG2("%s: Need to read more data: %s",
 				       str, state);
 			} else {
@@ -77,6 +81,7 @@ void cbtls_info(const SSL *s, int where, int ret)
 	}
 
 	if (buffer[0]) {
+		if (handler) logs_add_tls(handler->request, "%s", buffer);
 		radlog(L_ERR, "%s", buffer);
 		
 		if (request) {

@@ -2961,7 +2961,7 @@ static int can_handle_new_request(RADIUS_PACKET *packet,
 
 int received_request(rad_listen_t *listener,
 		     RADIUS_PACKET *packet, REQUEST **prequest,
-		     RADCLIENT *client)
+		     RADCLIENT *client, char* uuid)
 {
 	RADIUS_PACKET **packet_p;
 	REQUEST *request = NULL;
@@ -3139,6 +3139,12 @@ int received_request(rad_listen_t *listener,
 	tv_add(&request->when, request->delay);
 
 	INSERT_EVENT(wait_a_bit, request);
+
+
+	if (uuid) {
+		memcpy(request->request_id, uuid, UUID_SIZE);
+		memcpy(request->context_id, uuid, UUID_SIZE);
+	}
 
 	*prequest = request;
 	return 1;

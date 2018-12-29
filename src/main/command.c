@@ -1182,7 +1182,7 @@ static int command_inject_from(rad_listen_t *listener, int argc, char *argv[])
 	}
 
 	client = client_listener_find(sock->inject_listener, &sock->src_ipaddr,
-				      0);
+				      0, NULL);
 	if (!client) {
 		cprintf(listener, "ERROR: No such client %s\n", argv[0]);
 		return 0;
@@ -1275,7 +1275,7 @@ static int command_inject_file(rad_listen_t *listener, int argc, char *argv[])
 #endif
 	}
 
-	if (!received_request(fake, packet, &request, sock->inject_client)) {
+	if (!received_request(fake, packet, &request, sock->inject_client, NULL)) {
 		cprintf(listener, "ERROR: Failed to inject request.  See log file for details\n");
 		rad_free(&packet);
 		free(fake);

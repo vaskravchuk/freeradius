@@ -375,6 +375,12 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 					strlcpy(out, "<UNKNOWN-CLIENT>", outlen);
 				}
 				return strlen(out);
+			case PW_CONTEXT_ID:
+				if (request->context_id[0] == 0) {
+					return 0;
+				}
+				strlcpy(out, request->context_id, outlen);
+				return strlen(out);
 
 			case PW_CLIENT_IP_ADDRESS: /* the same as below */
 			case PW_PACKET_SRC_IP_ADDRESS:

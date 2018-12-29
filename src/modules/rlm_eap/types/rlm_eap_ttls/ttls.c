@@ -55,7 +55,8 @@ static int diameter_verify(REQUEST *request,
 		hdr_len = 12;
 
 		if (remaining < hdr_len) {
-		  RDEBUG2(" Diameter attribute is too small (%u) to contain a Diameter header", remaining);
+			log_request(request, "EAPTTLS FAILED (Diameter attribute is too small (%u) to contain a Diameter header)", remaining);
+			RDEBUG2(" Diameter attribute is too small (%u) to contain a Diameter header", remaining);
 			return 0;
 		}
 
@@ -66,6 +67,7 @@ static int diameter_verify(REQUEST *request,
 
 		if ((data[4] & 0x80) != 0) {
 			if (remaining < 16) {
+				log_request(request, "EAPTTLS FAILED (Diameter attribute is too small to contain a Diameter header with Vendor-Id)");
 				RDEBUG2(" Diameter attribute is too small to contain a Diameter header with Vendor-Id");
 				return 0;
 			}
@@ -79,6 +81,7 @@ static int diameter_verify(REQUEST *request,
 		 *	Too short or too long is bad.
 		 */
 		if (length <= (hdr_len - 4)) {
+			log_request(request, "EAPTTLS FAILED (Tunneled attribute %u is too short (%u < %u) to contain anything useful)", attr, length, hdr_len);
 			RDEBUG2("Tunneled attribute %u is too short (%u < %u) to contain anything useful.", attr, length, hdr_len);
 			return 0;
 		}
@@ -110,6 +113,7 @@ static int diameter_verify(REQUEST *request,
 		 *	of the packet, die.
 		 */
 		if (remaining < length) {
+			log_request(request, "EAPTTLS FAILED (ERROR! Diameter attribute overflows packet)");
 			RDEBUG2("ERROR! Diameter attribute overflows packet!");
 			return 0;
 		}
@@ -214,6 +218,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 		 */
 		vp = paircreate(attr, PW_TYPE_OCTETS);
 		if (!vp) {
+			log_request(request, "EAPTTLS FAILED (diameter2vp: Failed creating attribute)");
 			RDEBUG2("diameter2vp: Failed creating attribute %u", attr);
 			pairfree(&first);
 			return NULL;
@@ -312,6 +317,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 
 					vp = paircreate(attr, PW_TYPE_OCTETS);
 					if (!vp) {
+						log_request(request, "EAPTTLS FAILED (Failed creating EAP-Message)");
 						RDEBUG2("Failed creating EAP-Message");
 						pairfree(&first);
 						return NULL;
@@ -373,6 +379,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 		case PW_MSCHAP_CHALLENGE:
 			if ((vp->length < 8) ||
 			    (vp->length > 16)) {
+				log_request(request, "EAPTTLS FAILED (Tunneled challenge has invalid length)");
 				RDEBUG("Tunneled challenge has invalid length");
 				pairfree(&first);
 				pairfree(&vp);
@@ -386,6 +393,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 
 				if (memcmp(challenge, vp->vp_octets,
 					   vp->length) != 0) {
+					log_request(request, "EAPTTLS FAILED (Tunneled challenge is incorrect)");
 					RDEBUG("Tunneled challenge is incorrect");
 					pairfree(&first);
 					pairfree(&vp);
@@ -460,6 +468,7 @@ static int vp2diameter(REQUEST *request, tls_session_t *tls_session, VALUE_PAIR 
 		 *	Too much data: die.
 		 */
 		if ((total + vp->length + 12) >= sizeof(buffer)) {
+			log_request(request, "EAPTTLS FAILED (output buffer is full)");
 			RDEBUG2("output buffer is full!");
 			return 0;
 		}
@@ -599,8 +608,6 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 	VALUE_PAIR *vp;
 	ttls_tunnel_t *t = tls_session->opaque;
 
-	handler = handler;	/* -Wunused */
-
 	/*
 	 *	If the response packet was Access-Accept, then
 	 *	we're OK.  If not, die horribly.
@@ -624,6 +631,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 	 */
 	switch (reply->code) {
 	case PW_AUTHENTICATION_ACK:
+		logs_add_flow(handler->request, "Got tunneled Access-Accept");
 		RDEBUG("Got tunneled Access-Accept");
 
 		rcode = RLM_MODULE_OK;
@@ -648,6 +656,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		vp = NULL;
 		pairmove2(&vp, &reply->vps, PW_MSCHAP2_SUCCESS);
 		if (vp) {
+			logs_add_flow(handler->request, "Got MS-CHAP2-Success, tunneling it to the client in a challenge");
 			RDEBUG("Got MS-CHAP2-Success, tunneling it to the client in a challenge.");
 			rcode = RLM_MODULE_HANDLED;
 			t->authenticated = TRUE;
@@ -699,6 +708,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 
 
 	case PW_AUTHENTICATION_REJECT:
+		logs_add_flow(handler->request, "Got tunneled Access-Reject");
 		RDEBUG("Got tunneled Access-Reject");
 		rcode = RLM_MODULE_REJECT;
 		break;
@@ -710,6 +720,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		 *	a Reply-Message to the client.
 		 */
 	case PW_ACCESS_CHALLENGE:
+		logs_add_flow(handler->request, "Got tunneled Access-Challenge");
 		RDEBUG("Got tunneled Access-Challenge");
 
 		/*
@@ -752,6 +763,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		break;
 
 	default:
+		logs_add_flow(handler->request, "Unknown RADIUS packet type %d: rejecting tunneled user", reply->code);
 		RDEBUG("Unknown RADIUS packet type %d: rejecting tunneled user", reply->code);
 		rcode = RLM_MODULE_INVALID;
 		break;
@@ -770,6 +782,10 @@ static int eapttls_postproxy(EAP_HANDLER *handler, void *data)
 	int rcode;
 	tls_session_t *tls_session = (tls_session_t *) data;
 	REQUEST *fake, *request = handler->request;
+	
+	logs_add_flow(handler->request, "eapttls_postproxy");
+	
+	logs_add_flow(handler->request, "Passing reply from proxy back into the tunnel");
 
 	RDEBUG("Passing reply from proxy back into the tunnel.");
 
@@ -811,6 +827,7 @@ static int eapttls_postproxy(EAP_HANDLER *handler, void *data)
 		fake->options &= ~RAD_REQUEST_OPTION_PROXY_EAP;
 		rcode = rad_postauth(fake);
 		RDEBUG2("post-auth returns %d", rcode);
+		logs_add_flow(handler->request, "post-auth returns %d", rcode);
 
 		if ((debug_flag > 0) && fr_log_fp) {
 			fprintf(fr_log_fp, "} # server %s\n",
@@ -864,14 +881,17 @@ static int eapttls_postproxy(EAP_HANDLER *handler, void *data)
 	switch (rcode) {
 	case RLM_MODULE_REJECT:
 		RDEBUG("Reply was rejected");
+		logs_add_flow(handler->request, "Reply was rejected");
 		break;
 
 	case RLM_MODULE_HANDLED:
+		logs_add_flow(handler->request, "Reply was handled");
 		RDEBUG("Reply was handled");
-		eaptls_request(handler->eap_ds, tls_session);
+		eaptls_request(handler, tls_session);
 		return 1;
 
 	case RLM_MODULE_OK:
+		logs_add_flow(handler->request, "Reply was OK");
 		RDEBUG("Reply was OK");
 
 		/*
@@ -880,6 +900,7 @@ static int eapttls_postproxy(EAP_HANDLER *handler, void *data)
 		return eaptls_success(handler, 0);
 
 	default:
+		logs_add_flow(handler->request, "Reply was unknown");
 		RDEBUG("Reply was unknown.");
 		break;
 	}
@@ -913,6 +934,8 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	size_t data_len;
 	REQUEST *request = handler->request;
 
+	logs_add_flow(handler->request, "eapttls_process");
+
 	/*
 	 *	Just look at the buffer directly, without doing
 	 *	record_minus.
@@ -929,6 +952,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 */
 	if (data_len == 0) {
 		if (t->authenticated) {
+			logs_add_flow(handler->request, "Got ACK, and the user was already authenticated");
 			RDEBUG("Got ACK, and the user was already authenticated.");
 			return PW_AUTHENTICATION_ACK;
 		} /* else no session, no data, die. */
@@ -937,6 +961,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		 *	FIXME: Call SSL_get_error() to see what went
 		 *	wrong.
 		 */
+		logs_add_flow(handler->request, "SSL_read Error");
 		RDEBUG2("SSL_read Error");
 		return PW_AUTHENTICATION_REJECT;
 	}
@@ -985,6 +1010,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	}
 
 	if ((debug_flag > 0) && fr_log_fp) {
+		logs_add_flow(handler->request, "Got tunneled request");
 		RDEBUG("Got tunneled request");
 
 		debug_pair_list(fake->packet->vps);
@@ -1022,6 +1048,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 				t->username->length = vp->length - 5;
 				t->username->vp_strvalue[t->username->length] = 0;
 
+				logs_add_flow(handler->request, "Got tunneled identity of %s", t->username->vp_strvalue);
 				RDEBUG("Got tunneled identity of %s",
 				       t->username->vp_strvalue);
 
@@ -1030,6 +1057,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 				 *	set it here.
 				 */
 				if (t->default_eap_type != 0) {
+					logs_add_flow(handler->request, "Setting default EAP type for tunneled EAP session");
 					RDEBUG("Setting default EAP type for tunneled EAP session.");
 					vp = paircreate(PW_EAP_TYPE,
 							PW_TYPE_INTEGER);
@@ -1044,6 +1072,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 				 *	as it's permitted to do EAP without
 				 *	user-name.
 				 */
+				logs_add_flow(handler->request, "WARNING! No EAP-Identity found to start EAP conversation");
 				RDEBUG2("WARNING! No EAP-Identity found to start EAP conversation.");
 			}
 		} /* else there WAS a t->username */
@@ -1142,6 +1171,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 
 
 	if ((debug_flag > 0) && fr_log_fp) {
+		logs_add_flow(handler->request, "Sending tunneled request");
 		RDEBUG("Sending tunneled request");
 
 		debug_pair_list(fake->packet->vps);
@@ -1164,6 +1194,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		fprintf(fr_log_fp, "} # server %s\n",
 			(fake->server == NULL) ? "" : fake->server);
 
+		logs_add_flow(handler->request, "Got tunneled reply code %s", fr_packet_codes[fake->reply->code]);
 		RDEBUG("Got tunneled reply code %s",
 		       fr_packet_codes[fake->reply->code]);
 		
@@ -1179,6 +1210,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		vp = pairfind(fake->config_items, PW_PROXY_TO_REALM);
 		if (vp) {
 			eap_tunnel_data_t *tunnel;
+			logs_add_flow(handler->request, "Tunneled authentication will be proxied");
 			RDEBUG("Tunneled authentication will be proxied to %s", vp->vp_strvalue);
 
 			/*
@@ -1246,6 +1278,7 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		} else
 #endif	/* WITH_PROXY */
 		  {
+			logs_add_flow(handler->request, "No tunneled reply was found for request, and the request was not proxied: rejecting the user");
 			RDEBUG("No tunneled reply was found for request %d , and the request was not proxied: rejecting the user.",
 			       request->number);
 			rcode = PW_AUTHENTICATION_REJECT;

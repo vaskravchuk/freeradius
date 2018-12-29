@@ -117,6 +117,8 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 	mschapv2_header_t *hdr;
 	EAP_DS *eap_ds = handler->eap_ds;
 
+	logs_add_flow(handler->request, "eapmschapv2_compose");
+
 	eap_ds->request->code = PW_EAP_REQUEST;
 	eap_ds->request->type.type = PW_EAP_MSCHAPV2;
 
@@ -143,6 +145,7 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 		 *	Allocate room for the EAP-MS-CHAPv2 data.
 		 */
 		if (eap_ds->request->type.data == NULL) {
+			logs_add_flow(handler->request, "rlm_eap_mschapv2: out of memory");
 			radlog(L_ERR, "rlm_eap_mschapv2: out of memory");
 			return 0;
 		}
@@ -179,12 +182,14 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 		 *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 		 */
 		DEBUG2("MSCHAP Success\n");
+		logs_add_flow(handler->request, "MSCHAP Success");
 		length = 46;
 		eap_ds->request->type.data = malloc(length);
 		/*
 		 *	Allocate room for the EAP-MS-CHAPv2 data.
 		 */
 		if (eap_ds->request->type.data == NULL) {
+			logs_add_flow(handler->request, "rlm_eap_mschapv2: out of memory");
 			radlog(L_ERR, "rlm_eap_mschapv2: out of memory");
 			return 0;
 		}
@@ -199,6 +204,7 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 		break;
 
 	case PW_MSCHAP_ERROR:
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED");
 		DEBUG2("MSCHAP Failure\n");
 		length = 4 + reply->length - 1;
 		eap_ds->request->type.data = malloc(length);
@@ -207,6 +213,7 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 		 *	Allocate room for the EAP-MS-CHAPv2 data.
 		 */
 		if (eap_ds->request->type.data == NULL) {
+			logs_add_flow(handler->request, "rlm_eap_mschapv2: out of memory");
 			radlog(L_ERR, "rlm_eap_mschapv2: out of memory");
 			return 0;
 		}
@@ -225,6 +232,7 @@ static int eapmschapv2_compose(EAP_HANDLER *handler, VALUE_PAIR *reply)
 		break;
 
 	default:
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (Internal sanity check failed)");
 		radlog(L_ERR, "rlm_eap_mschapv2: Internal sanity check failed");
 		return 0;
 		break;
@@ -242,11 +250,14 @@ static int mschapv2_initiate(void *type_data, EAP_HANDLER *handler)
 	int		i;
 	VALUE_PAIR	*challenge;
 	mschapv2_opaque_t *data;
+		
+	logs_add_flow(handler->request, "mschapv2_initiate");
 
 	type_data = type_data;	/* -Wunused */
 
 	challenge = pairmake("MS-CHAP-Challenge", "0x00", T_OP_EQ);
 	if (!challenge) {
+		logs_add_flow(handler->request, "rlm_eap_mschapv2: out of memory");
 		radlog(L_ERR, "rlm_eap_mschapv2: out of memory");
 		return 0;
 	}
@@ -258,6 +269,10 @@ static int mschapv2_initiate(void *type_data, EAP_HANDLER *handler)
 	for (i = 0; i < MSCHAPV2_CHALLENGE_LEN; i++) {
 		challenge->vp_strvalue[i] = fr_rand();
 	}
+
+	logs_set_request_desc(handler->request, 1, "MSCHAPV2 ISSUING CHALLENGE");
+	logs_set_reply_desc(handler->request, 1, "MSCHAPV2 CHALLENGE");
+	logs_add_flow(handler->request, "Issuing Challenge");
 	DEBUG2("rlm_eap_mschapv2: Issuing Challenge");
 
 	/*
@@ -314,6 +329,7 @@ static int mschapv2_initiate(void *type_data, EAP_HANDLER *handler)
  */
 static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
 {
+	logs_add_flow(handler->request, "mschap_postproxy");
 	VALUE_PAIR *response = NULL;
 	mschapv2_opaque_t *data;
 
@@ -322,6 +338,7 @@ static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
 
 	tunnel_data = tunnel_data; /* -Wunused */
 
+	logs_add_flow(handler->request, "Passing reply from proxy back into the tunnel");
 	DEBUG2("  rlm_eap_mschapv2: Passing reply from proxy back into the tunnel %p %d.",
 	       handler->request, handler->request->reply->code);
 
@@ -330,6 +347,7 @@ static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
 	 */
 	switch (handler->request->reply->code) {
 	case PW_AUTHENTICATION_ACK:
+		logs_add_flow(handler->request, "Authentication succeeded");
 		DEBUG("  rlm_eap_mschapv2: Authentication succeeded.");
 		/*
 		 *	Move the attribute, so it doesn't go into
@@ -342,6 +360,7 @@ static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
 
 	default:
 	case PW_AUTHENTICATION_REJECT:
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (Authentication did not succeed)");
 		DEBUG("  rlm_eap_mschapv2: Authentication did not succeed.");
 		return 0;
 	}
@@ -350,6 +369,7 @@ static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
 	 *	No response, die.
 	 */
 	if (!response) {
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (No MS-CHAPv2-Success or MS-CHAP-Error was found)");
 		radlog(L_ERR, "rlm_eap_mschapv2: No MS-CHAPv2-Success or MS-CHAP-Error was found.");
 		return 0;
 	}
@@ -391,6 +411,7 @@ static int mschap_postproxy(EAP_HANDLER *handler, void *tunnel_data)
  */
 static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 {
+	logs_add_flow(handler->request, "mschapv2_authenticate");
 	int rcode;
 	mschapv2_opaque_t *data;
 	EAP_DS *eap_ds = handler->eap_ds;
@@ -401,11 +422,12 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 	rad_assert(handler->stage == AUTHENTICATE);
 
 	data = (mschapv2_opaque_t *) handler->opaque;
-
+	
 	/*
 	 *	Sanity check the response.
 	 */
 	if (eap_ds->response->length <= 5) {
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (corrupted data)");
 		radlog(L_ERR, "rlm_eap_mschapv2: corrupted data");
 		return 0;
 	}
@@ -419,7 +441,9 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	sent them a SUCCESS packet.
 		 */
 		case PW_EAP_MSCHAPV2_ACK:
+			logs_set_request_desc(handler->request, 1, "MSCHAPV2 ACK");
 		if (data->code != PW_EAP_MSCHAPV2_SUCCESS) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Unexpected ACK received)");
 			radlog(L_ERR, "rlm_eap_mschapv2: Unexpected ACK received");
 			return 0;
 		}
@@ -442,9 +466,11 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	a challenge.
 		 */
 	case PW_EAP_MSCHAPV2_RESPONSE:
+		logs_set_request_desc(handler->request, 1, "MSCHAPV2 AUTHENTICATE");
 		if (data->code == PW_EAP_MSCHAPV2_FAILURE) goto failure;
 
 		if (data->code != PW_EAP_MSCHAPV2_CHALLENGE) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Unexpected response received)");
 			radlog(L_ERR, "rlm_eap_mschapv2: Unexpected response received");
 			return 0;
 		}
@@ -458,6 +484,7 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	MS-CHAP value length.
 		 */
 		if (eap_ds->response->length < (4 + 1 + 1 + 1 + 2 + 1)) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Response is too short)");
 			radlog(L_ERR, "rlm_eap_mschapv2: Response is too short");
 			return 0;
 		}
@@ -468,6 +495,7 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	bytes) plus 1 byte of flags at the end.
 		 */
 		if (eap_ds->response->type.data[4] != 49) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Response is of incorrect length)", eap_ds->response->type.data[4]);
 			radlog(L_ERR, "rlm_eap_mschapv2: Response is of incorrect length %d", eap_ds->response->type.data[4]);
 			return 0;
 		}
@@ -478,6 +506,9 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 */
 		if (((eap_ds->response->type.data[2] << 8) |
 		     eap_ds->response->type.data[3]) < (5 + 49)) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Response contains contradictory length %d %d)", 
+				(eap_ds->response->type.data[2] << 8) | eap_ds->response->type.data[3], 
+				5 + 49);
 			radlog(L_ERR, "rlm_eap_mschapv2: Response contains contradictory length %d %d",
 			      (eap_ds->response->type.data[2] << 8) |
 			       eap_ds->response->type.data[3], 5 + 49);
@@ -486,7 +517,9 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		break;
 
 	case PW_EAP_MSCHAPV2_SUCCESS:
+		logs_set_request_desc(handler->request, 1, "MSCHAPV2 SUCCESS");
 		if (data->code != PW_EAP_MSCHAPV2_SUCCESS) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Unexpected success received)");
 			radlog(L_ERR, "rlm_eap_mschapv2: Unexpected success received");
 			return 0;
 		}
@@ -511,7 +544,9 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	Ack of a failure message
 		 */
         case PW_EAP_MSCHAPV2_FAILURE:
+		logs_set_request_desc(handler->request, 1, "MSCHAPV2 FAILED");
 		if (data->code != PW_EAP_MSCHAPV2_FAILURE) {
+			logs_add_flow(handler->request, "MSCHAPV2 FAILED (Unexpected FAILURE received)");
 			radlog(L_ERR, "rlm_eap_mschapv2: Unexpected FAILURE received");
 			return 0;
 		}
@@ -525,6 +560,7 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	Something else, we don't know what it is.
 		 */
 	default:
+		logs_set_request_desc(handler->request, 1, "MSCHAPV2 UNEXPECTED");
 		radlog(L_ERR, "rlm_eap_mschapv2: Invalid response type %d",
 		       eap_ds->response->type.data[0]);
 		return 0;
@@ -564,6 +600,7 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 	if (!name) {
 		pairfree(&challenge);
 		pairfree(&response);
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (Failed creating MS-CHAP-User-Name: %s)", fr_strerror());
 		radlog(L_ERR, "rlm_eap_mschapv2: Failed creating MS-CHAP-User-Name: %s", fr_strerror());
 		return 0;
 	}
@@ -701,6 +738,7 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 	 *	No response, die.
 	 */
 	if (!response) {
+		logs_add_flow(handler->request, "MSCHAPV2 FAILED (No MS-CHAPv2-Success or MS-CHAP-Error was found)");
 		radlog(L_ERR, "rlm_eap_mschapv2: No MS-CHAPv2-Success or MS-CHAP-Error was found.");
 		return 0;
 	}

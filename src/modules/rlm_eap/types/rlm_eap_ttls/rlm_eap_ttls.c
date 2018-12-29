@@ -187,6 +187,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 	ttls_tunnel_t *t = (ttls_tunnel_t *) tls_session->opaque;
 	REQUEST *request = handler->request;
 
+	logs_add_flow(handler->request, "eapttls_authenticate");
 	RDEBUG2("Authenticate");
 
 	tls_session->length_flag = inst->include_length;
@@ -205,12 +206,15 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	an EAP-TLS-Success packet here.
 		 */
 	case EAPTLS_SUCCESS:
+		logs_add_flow(handler->request, "EAPTTLS SUCCESS");
 		if (SSL_session_reused(tls_session->ssl)) {
+			logs_add_flow(handler->request, "Skipping Phase2 due to session resumption");
 			RDEBUG("Skipping Phase2 due to session resumption");
 			goto do_keys;
 		}
 
 		if (t && t->authenticated) {
+			logs_add_flow(handler->request, "Using saved attributes from the original Access-Accept");
 			RDEBUG2("Using saved attributes from the original Access-Accept");
 			debug_pair_list(t->accept_vps);
 			pairadd(&handler->request->reply->vps,
@@ -222,7 +226,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 			 */
 			return eaptls_success(handler, 0);
 		} else {
-			eaptls_request(handler->eap_ds, tls_session);
+			eaptls_request(handler, tls_session);
 		}
 		return 1;
 
@@ -232,6 +236,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	do nothing.
 		 */
 	case EAPTLS_HANDLED:
+		logs_add_flow(handler->request, "EAPTTLS HANDLED");
 		return 1;
 
 		/*
@@ -239,12 +244,14 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	data.
 		 */
 	case EAPTLS_OK:
+		logs_add_flow(handler->request, "EAPTTLS OK");
 		break;
 
 		/*
 		 *	Anything else: fail.
 		 */
 	default:
+		logs_add_flow(handler->request, "EAPTTLS FAILED");
 		return 0;
 	}
 
@@ -252,6 +259,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 	 *	Session is established, proceed with decoding
 	 *	tunneled data.
 	 */
+	logs_add_flow(handler->request, "Session established.  Proceeding to decode tunneled attributes");
 	RDEBUG2("Session established.  Proceeding to decode tunneled attributes.");
 
 	/*
@@ -269,6 +277,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 	rcode = eapttls_process(handler, tls_session);
 	switch (rcode) {
 	case PW_AUTHENTICATION_REJECT:
+		logs_add_flow(handler->request, "EAPTTLS REJECT");
 		eaptls_fail(handler, 0);
 		return 0;
 
@@ -276,13 +285,15 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	Access-Challenge, continue tunneled conversation.
 		 */
 	case PW_ACCESS_CHALLENGE:
-		eaptls_request(handler->eap_ds, tls_session);
+		logs_add_flow(handler->request, "EAPTTLS CHALLENGE");
+		eaptls_request(handler, tls_session);
 		return 1;
 
 		/*
 		 *	Success: Automatically return MPPE keys.
 		 */
 	case PW_AUTHENTICATION_ACK:
+		logs_add_flow(handler->request, "EAPTTLS ACK");
 		return eaptls_success(handler, 0);
 
 		/*
@@ -292,6 +303,7 @@ static int eapttls_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	will proxy it, rather than returning an EAP packet.
 		 */
 	case PW_STATUS_CLIENT:
+		logs_add_flow(handler->request, "EAPTTLS STATUS");
 #ifdef WITH_PROXY
 		rad_assert(handler->request->proxy != NULL);
 #endif

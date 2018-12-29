@@ -95,6 +95,8 @@ static int md5_initiate(void *type_data, EAP_HANDLER *handler)
 
 	type_data = type_data;	/* -Wunused */
 
+	logs_add_flow(handler->request, "md5_initiate");
+
 	/*
 	 *	Allocate an EAP-MD5 packet.
 	 */
@@ -127,6 +129,9 @@ static int md5_initiate(void *type_data, EAP_HANDLER *handler)
 	for (i = 0; i < reply->value_size; i++) {
 		reply->value[i] = fr_rand();
 	}
+	logs_set_request_desc(handler->request, 1, "MD5 ISSUING CHALLENGE");
+	logs_set_reply_desc(handler->request, 1, "MD5 CHALLENGE");
+	logs_add_flow(handler->request, "Issuing Challenge");
 	DEBUG2("rlm_eap_md5: Issuing Challenge");
 
 	/*
@@ -165,6 +170,9 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	MD5_PACKET	*reply;
 	VALUE_PAIR	*password;
 
+	logs_set_request_desc(handler->request, 1, "MD5 AUTHENTICATE");
+	logs_add_flow(handler->request, "md5_authenticate");
+
 	/*
 	 *	Get the Cleartext-Password for this user.
 	 */
@@ -180,6 +188,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	 *	Extract the EAP-MD5 packet.
 	 */
 	if (!(packet = eapmd5_extract(handler->eap_ds))) {
+		logs_add_flow(handler->request, "EAPMD5 FAILED (eapmd5_extract failed)");
 		DEBUG2("rlm_eap_md5: !eapmd5_extract");
 		return 0;
 	}
@@ -188,6 +197,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	 */
 	reply = eapmd5_alloc();
 	if (!reply) {
+		logs_add_flow(handler->request, "EAPMD5 FAILED (eapmd5_alloc failed)");
 		eapmd5_free(&packet);
 		DEBUG2("rlm_eap_md5: !reply");
 		return 0;
@@ -214,13 +224,15 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
     char *challenge = malloc(challenge_size);
     memset(challenge, 0, challenge_size);
     if (!challenge) {
-            eapmd5_free(&packet);
-            DEBUG2("rlm_eap_md5: !challenge");
-            return 0;
+        eapmd5_free(&packet);
+		logs_add_flow(handler->request, "EAPMD5 FAILED (challenge alloc failed)");
+        DEBUG2("rlm_eap_md5: !challenge");
+        return 0;
     }
     memcpy(challenge, handler->opaque, MD5_CHALLENGE_LEN);
     if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Challenge", challenge, PW_TYPE_OCTETS)) {
-            radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Challenge");
+		logs_add_flow(handler->request, "[EAPMD5 FAILED (Failed creating MD5-Challenge)]");
+        radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Challenge");
     }
     free(challenge);
     challenge = NULL;
@@ -231,16 +243,18 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
     char *response = malloc(response_size);
     memset(response, 0, response_size);
     if (!response) {
-            eapmd5_free(&packet);
-            DEBUG2("rlm_eap_md5: !response");
-            return 0;
+        eapmd5_free(&packet);
+		logs_add_flow(handler->request, "EAPMD5 FAILED (response alloc failed)");
+        DEBUG2("rlm_eap_md5: !response");
+        return 0;
     }
     *response = packet->id;
     ++response;
     memcpy(response, packet->value, packet->value_size);
     --response;
     if (!radius_pairmake(handler->request, &handler->request->packet->vps, "MD5-Password", response, PW_TYPE_OCTETS)) {
-            radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Password");
+		logs_add_flow(handler->request, "EAPMD5 FAILED (Failed creating MD5-Password)");
+        radlog(L_ERR, "rlm_eap_md5: Failed creating MD5-Password");
     }
     free(response);
     response = NULL;
@@ -253,6 +267,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	if (reply->code != PW_MD5_FAILURE &&
 		(inst && inst->md5_auth))
 	{
+		logs_add_flow(handler->request, "EAPMD5 BE");
 		int result = radius_exec_program_centrale(inst->md5_auth, handler->request,
 			TRUE, /* wait */
 			buffer, sizeof(buffer),
@@ -260,8 +275,10 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 			handler->request->packet->vps, &answer, 1, 60040);
 
 		if (result != 0) {
+			logs_add_flow(handler->request, "EAPMD5 DENY (External script '%s' failed)", inst->md5_auth);
 			DEBUG2("rlm_eap_md5: 60041 rlm_eap_md5: External script '%s' failed", inst->md5_auth);
 			radius_exec_logger_centrale(handler->request, "60041", "rlm_eap_md5: External script '%s' failed", inst->md5_auth);
+			logs_set_reply_desc(handler->request, 1, "MD5 FAILED");
 			reply->code = PW_MD5_FAILURE;
 		} else {
 		    if (answer != NULL) {
@@ -284,12 +301,15 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 		        DEBUG2("rlm_eap_md5: answer==NULL");
 	        }
 
+			logs_set_reply_desc(handler->request, 1, "MD5 SUCCESS");
 			reply->code = PW_MD5_SUCCESS;
 
+			logs_add_flow(handler->request, "EAPMD5 BE SUCCESS");
 			DEBUG2("rlm_eap_md5: PW_MD5_SUCCESS");
 		}
 	}
 	else {
+		logs_add_flow(handler->request, "EAPMD5 FAILED (PW_MD5_FAILURE)");
 		reply->code = PW_MD5_FAILURE;
 	}
 
