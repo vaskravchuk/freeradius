@@ -92,15 +92,15 @@ typedef struct rlm_eap_t {
 
 /* function definitions */
 /* EAP-Type */
-int      	eaptype_load(EAP_TYPES **type, int eap_type, CONF_SECTION *cs);
-int       	eaptype_select(rlm_eap_t *inst, EAP_HANDLER *h);
-void		eaptype_free(EAP_TYPES *tl);
+int      		eaptype_load(EAP_TYPES **type, int eap_type, CONF_SECTION *cs);
+int       		eaptype_select(rlm_eap_t *inst, EAP_HANDLER *h);
+void			eaptype_free(EAP_TYPES *tl);
 
 /* EAP */
-int  		eap_start(rlm_eap_t *inst, REQUEST *request);
-void 		eap_fail(EAP_HANDLER *handler);
-void 		eap_success(EAP_HANDLER *handler);
-int 		eap_compose(EAP_HANDLER *handler);
+int  			eap_start(rlm_eap_t *inst, REQUEST *request);
+void 			eap_fail(EAP_HANDLER *handler);
+void 			eap_success(EAP_HANDLER *handler);
+int 			eap_compose(EAP_HANDLER *handler);
 EAP_HANDLER 	*eap_handler(rlm_eap_t *inst, eap_packet_t **eap_msg, REQUEST *request);
 
 /* Memory Management */
@@ -121,6 +121,8 @@ void			eaplist_free(rlm_eap_t *inst);
 /* State */
 void	    	generate_key(void);
 VALUE_PAIR  	*generate_state(time_t timestamp);
-int	    	verify_state(VALUE_PAIR *state, time_t timestamp);
+int	    		verify_state(VALUE_PAIR *state, time_t timestamp);
+
+void 			radlog_eaphandler_portnox(EAP_HANDLER *handler, const char * msg, ...);
 
 #endif /*_RLM_EAP_H*/

@@ -20378,6 +20378,10 @@ _ACEOF
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid_generate_random in -luuid" >&5
+$as_echo "checking for uuid_generate_random in -luuid..." >&6; }
+LIBS="-luuid $LIBS"
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_aton in -lresolv" >&5
 $as_echo_n "checking for inet_aton in -lresolv... " >&6; }
 if ${ac_cv_lib_resolv_inet_aton+:} false; then :

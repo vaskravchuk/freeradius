@@ -304,7 +304,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	inst = (rlm_eap_t *) instance;
 
 	if (!pairfind(request->packet->vps, PW_EAP_MESSAGE)) {
-		RDEBUG("ERROR: You set 'Auth-Type = EAP' for a request that does not contain an EAP-Message attribute!");
+		log_request(request, "EAP_FAIL (ERROR: You set 'Auth-Type = EAP' for a request that does not contain an EAP-Message attribute!)");
 		return RLM_MODULE_INVALID;
 	}
 
@@ -313,7 +313,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	 */
 	eap_packet = eap_vp2packet(request->packet->vps);
 	if (eap_packet == NULL) {
-		radlog_request(L_ERR, 0, request, "Malformed EAP Message");
+		log_request(request, "EAP_FAIL (Malformed EAP Message)");
 		return RLM_MODULE_FAIL;
 	}
 
@@ -329,7 +329,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	}
 
 	/*
-	 *	Safe rlm_eap_t to pass settings next
+	 *	Save rlm_eap_t to pass settings next
 	 */
 	handler->inst_holder = inst;
 
@@ -343,6 +343,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	 *	If it wrong type -> log.
 	 */
 	if (rcode == EAP_INVALID) {
+		radlog_eaphandler_portnox(handler, "EAP FAILED (EAP_INVALID)");
 		/*
 		 * wrong eap type logging
 		 */
@@ -357,6 +358,9 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	 *	If it failed or invalid, die.
 	 */
 	if (rcode == EAP_INVALID || rcode == EAP_FAIL) {
+		if (rcode == EAP_FAIL) {
+			radlog_eaphandler_portnox(handler, "EAP FAILED (EAP_FAIL)");
+		}
 		eap_fail(handler);
 		eap_handler_free(inst, handler);
 		RDEBUG2("Failed in EAP select");
@@ -369,6 +373,8 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	 *	If we're doing horrible tunneling work, remember it.
 	 */
 	if ((request->options & RAD_REQUEST_OPTION_PROXY_EAP) != 0) {
+
+		radlog_eaphandler_portnox(handler, "Not-EAP proxy set.  Not composing EAP");
 		RDEBUG2("  Not-EAP proxy set.  Not composing EAP");
 		/*
 		 *	Add the handle to the proxied list, so that we
@@ -428,6 +434,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 		 */
 		pairdelete(&request->proxy->vps, PW_FREERADIUS_PROXIED_TO);
 
+		radlog_eaphandler_portnox(handler, "Tunneled session will be proxied.  Not doing EAP");
 		RDEBUG2("  Tunneled session will be proxied.  Not doing EAP.");
 		return RLM_MODULE_HANDLED;
 	}
@@ -470,13 +477,16 @@ static int eap_authenticate(void *instance, REQUEST *request)
 		 *	to accidentally failing it.
 		 */
 		if (!eaplist_add(inst, handler)) {
-			RDEBUG("Failed adding handler to the list");
+			radlog_eaphandler_portnox(handler, "EAP FAILED (Failed adding handler to the list)");
 			eap_fail(handler);
 			eap_handler_free(inst, handler);
 			return RLM_MODULE_FAIL;
 		}
+		
+		radlog_eaphandler_portnox(handler, "EAP PROCESS");
 
 	} else {
+		radlog_eaphandler_portnox(handler, "EAP FINISHED");
 		RDEBUG2("Freeing handler");
 		/* handler is not required any more, free it now */
 		eap_handler_free(inst, handler);
@@ -556,6 +566,7 @@ static int eap_authorize(void *instance, REQUEST *request)
 	case EAP_NOOP:
                 return RLM_MODULE_NOOP;
 	case EAP_FAIL:
+		log_request(request, "EAP_FAIL (eap_authorize RLM_MODULE_FAIL)");
 		return RLM_MODULE_FAIL;
 	case EAP_FOUND:
 		return RLM_MODULE_HANDLED;
@@ -579,6 +590,7 @@ static int eap_authorize(void *instance, REQUEST *request)
 	    (vp->vp_integer != PW_AUTHTYPE_REJECT)) {
 		vp = pairmake("Auth-Type", inst->xlat_name, T_OP_EQ);
 		if (!vp) {
+			log_request(request, "EAP_FAIL (eap_authorize Failed to create Auth-Type)");
 			RDEBUG2("Failed to create Auth-Type %s: %s\n",
 				inst->xlat_name, fr_strerror());
 			return RLM_MODULE_FAIL;

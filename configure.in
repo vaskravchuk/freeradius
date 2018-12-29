@@ -580,6 +580,9 @@ fi
 dnl Check if we need -lsocket
 AC_CHECK_LIB(socket, getsockname)
 
+dnl Check if we need -luuid
+AC_CHECK_LIB(uuid, uuid_generate_random)
+
 dnl Check for -lresolv
 dnl This library may be needed later.
 AC_CHECK_LIB(resolv, inet_aton)

@@ -90,7 +90,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         return RLM_MODULE_FAIL; 
     }
 
-    if (!snprintf(cmdline, sizeof(cmdline), "%s %s %d %s", inst->program, hostname, request->packet->dst_port, buffer)) {
+    if (!snprintf(cmdline, sizeof(cmdline), "%s %s %d %s %s", inst->program, hostname, request->packet->dst_port, buffer, request->context_id)) {
         radius_exec_logger_centrale(request, "60021", "rlm_dynamic_centrale_clients: Unable to make cmd line");
         return RLM_MODULE_FAIL; 
     }

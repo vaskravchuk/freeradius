@@ -201,6 +201,7 @@ static peap_tunnel_t *peap_alloc(rlm_eap_peap_t *inst)
  */
 static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 {
+	logs_add_flow(handler->request, "eappeap_authenticate");
 	int rcode;
 	eaptls_status_t status;
 	rlm_eap_peap_t *inst = (rlm_eap_peap_t *) arg;
@@ -228,6 +229,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	an EAP-TLS-Success packet here.
 		 */
 	case EAPTLS_SUCCESS:
+		logs_add_flow(handler->request, "EAPTLS_SUCCESS");
 		RDEBUG2("EAPTLS_SUCCESS");
 		peap->status = PEAP_STATUS_TUNNEL_ESTABLISHED;
 		break;
@@ -243,6 +245,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 	   *	and EAP id from the inner tunnel, and update it with
 	   *	the expected EAP id!
 	   */
+		logs_add_flow(handler->request, "EAPTLS_HANDLED");
 		RDEBUG2("EAPTLS_HANDLED");
 		return 1;
 
@@ -251,6 +254,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	data.
 		 */
 	case EAPTLS_OK:
+		logs_add_flow(handler->request, "EAPTLS_OK");
 		RDEBUG2("EAPTLS_OK");
 		break;
 
@@ -258,6 +262,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 		 *	Anything else: fail.
 		 */
 	default:
+		logs_add_flow(handler->request, "EAPTLS_FAIL");
 		RDEBUG2("EAPTLS_OTHERS");
 
 		/*
@@ -281,6 +286,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 	 *	Session is established, proceed with decoding
 	 *	tunneled data.
 	 */
+	logs_add_flow(handler->request, "Session established");
 	RDEBUG2("Session established.  Decoding tunneled attributes.");
 
 	/*
@@ -302,7 +308,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 		return 0;
 
 	case RLM_MODULE_HANDLED:
-		eaptls_request(handler->eap_ds, tls_session);
+		eaptls_request(handler, tls_session);
 		return 1;
 
 	case RLM_MODULE_OK:

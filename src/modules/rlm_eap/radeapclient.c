@@ -37,7 +37,7 @@ RCSID("$Id$")
 #include <freeradius-devel/radpaths.h>
 #include <freeradius-devel/md5.h>
 
-#include "eap_types.h"
+#include "eap.h"
 #include "eap_sim.h"
 
 extern int sha1_data_problems;
@@ -133,6 +133,72 @@ void radlog_request(UNUSED int lvl, UNUSED int priority,
 	vfprintf(stderr, msg, ap);
 	va_end(ap);
 	fputc('\n', stderr);
+}
+
+void log_request(UNUSED REQUEST *request, const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fputc('\n', stderr);
+}
+
+void log_response(REQUEST *request, const char *msg, ...) 
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fputc('\n', stderr);
+}
+
+void radlog_eaphandler_portnox(UNUSED EAP_HANDLER *handler, const char * msg, ...) 
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	vfprintf(stderr, msg, ap);
+	va_end(ap);
+	fputc('\n', stderr);
+}
+
+
+void logs_add_flow(UNUSED REQUEST *request, const char *msg, ...) 
+{
+	// no need
+}
+
+void logs_add_tls(UNUSED REQUEST *request, const char *msg, ...) 
+{
+	// no need
+}
+
+void logs_set_request_desc(UNUSED REQUEST *request, int overwrite, const char *msg, ...) 
+{
+	// no need
+}
+
+void logs_set_reply_desc(UNUSED REQUEST *request, int overwrite, const char *msg, ...)
+{
+	// no need
+}
+
+void logs_set_eaptype(REQUEST *request, const char *msg, ...)
+{
+	// no need
+}
+
+void logs_set_trips(REQUEST *request, int trips)
+{
+	// no need
+}
+
+void reset_logs(REQUEST *request)
+{
+	// no need
 }
 
 static int getport(const char *name)

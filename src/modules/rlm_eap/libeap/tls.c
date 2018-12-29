@@ -413,7 +413,7 @@ void tls_session_information(tls_session_t *tls_session)
 	 *	operations.
 	 */
 	if (debug_flag == 0) {
-		return;
+	//	return;
 	}
 
 	str_write_p = tls_session->info.origin ? ">>>" : "<<<";
@@ -606,6 +606,8 @@ void tls_session_information(tls_session_t *tls_session)
 
 	handler = (EAP_HANDLER *)SSL_get_ex_data(tls_session->ssl, 0);
 	if (handler) {
+		logs_add_tls(handler->request, "%s", tls_session->info.info_description);
+
 		request = handler->request;
 	} else {
 		request = NULL;

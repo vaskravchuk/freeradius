@@ -354,10 +354,10 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 		 *	They should be the oldest ones.
 		 */
 		if ((timestamp - handler->timestamp) > inst->timer_limit) {
+			radlog_eaphandler_portnox(handler, "EAP HANDLER_EXPIRE");
 			/* 
 			 * send additional log
 			 */
-			radlog(L_ERR, "***eaplist_expire started");
 			if (handler->cached_request == NULL) {
 				radlog(L_ERR, "eaplist_expire: handler->cached_request == NULL");
 			}
@@ -368,10 +368,9 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				if (handler->cached_request->packet->vps == NULL) {
 					radlog(L_ERR, "eaplist_expire: handler->cached_request->packet->vps == NULL");
 				}
-
-				radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
+				// not need to send to backend
+				//radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
 			}
-			radlog(L_ERR, "***eaplist_expire last_logged");
 			/*
 			 * clear all 
 			 */
@@ -381,7 +380,6 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 			    rad_assert(node != NULL);
 			    rbtree_delete(inst->session_tree, node);
 		    }
-			radlog(L_ERR, "***eaplist_expire deleted");
 
 			/*
 			 *	handler == inst->session_head
@@ -394,7 +392,6 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				inst->session_tail = NULL;
 			}
 			eap_handler_free(inst, handler);
-			radlog(L_ERR, "***eaplist_expire free");
 		}
 	}
 }
@@ -438,6 +435,8 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 	rad_assert(handler != NULL);
 	rad_assert(request != NULL);
+
+	logs_add_flow(handler->request, "eaplist_add");
 
 	/*
 	 *	Generate State, since we've been asked to add it to
@@ -503,7 +502,6 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 	 *	and copy the state back again.
 	 */
 	memcpy(handler->state, state->vp_octets, sizeof(handler->state));
-
 	/*
 	 *	Big-time failure.
 	 */
@@ -573,10 +571,10 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 			if (last_logged < handler->timestamp) {
 				last_logged = handler->timestamp;
-				radlog(L_ERR, "rlm_eap: Too many open sessions.  Try increasing \"max_sessions\" in the EAP module configuration");
+				logs_add_flow(handler->request, "EAP_FAIL (Too many open sessions.  Try increasing \"max_sessions\" in the EAP module configuration)");
 			}				       
 		} else {
-			radlog(L_ERR, "rlm_eap: Internal error: failed to store handler");
+			logs_add_flow(handler->request, "EAP_FAIL (rlm_eap: Internal error: failed to store handler)");
 		}
 		return 0;
 	}
@@ -631,11 +629,12 @@ EAP_HANDLER *eaplist_find(rlm_eap_t *inst, REQUEST *request,
 	 *	Might not have been there.
 	 */
 	if (!handler) {
-		radlog(L_ERR, "rlm_eap: No EAP session matching the State variable.");
+		log_request(request, "EAP_FAIL (rlm_eap: No EAP session matching the State variable.)");
 		return NULL;
 	}
 
 	if (handler->trips >= 50) {
+		log_request(request, "EAP_FAIL (More than 50 authentication packets for this EAP session.  Aborted.)");
 		RDEBUG2("More than 50 authentication packets for this EAP session.  Aborted.");
 		eap_handler_free(inst, handler);
 		return NULL;

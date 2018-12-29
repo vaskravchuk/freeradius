@@ -49,6 +49,7 @@ RCSID("$Id$")
 #include <fcntl.h>
 #endif
 
+#include <uuid/uuid.h>
 
 /*
  *	We'll use this below.
@@ -111,7 +112,7 @@ static size_t xlat_listen(UNUSED void *instance, REQUEST *request,
  *	Find a per-socket client.
  */
 RADCLIENT *client_listener_find(const rad_listen_t *listener,
-				const fr_ipaddr_t *ipaddr, int src_port)
+				const fr_ipaddr_t *ipaddr, int src_port, char* uuid)
 {
 #ifdef WITH_DYNAMIC_CLIENTS
 	int rcode;
@@ -236,6 +237,11 @@ RADCLIENT *client_listener_find(const rad_listen_t *listener,
 	request = request_alloc();
 	if (!request) goto unknown;
 
+	if (uuid) {
+		memcpy(request->request_id, uuid, UUID_SIZE);
+		memcpy(request->context_id, uuid, UUID_SIZE);
+	}
+
 	request->listener = listener;
 	request->client = client;
 	request->packet = rad_recv(listener->fd, 0x02); /* MSG_PEEK */
@@ -253,6 +259,12 @@ RADCLIENT *client_listener_find(const rad_listen_t *listener,
 	request->priority = listener->type;
 	request->server = client->client_server;
 	request->root = &mainconfig;
+
+	if (uuid) {
+		request->module = "listen";
+		// need only when context_id exists
+		log_request(request, "RECEIVED");
+	}
 
 	/*
 	 *	Run a fake request through the given virtual server.
@@ -657,6 +669,12 @@ static int auth_socket_send(rad_listen_t *listener, REQUEST *request)
 	rad_assert(request->listener == listener);
 	rad_assert(listener->send == auth_socket_send);
 
+	// not log for statistics
+	if (!request->packet || (request->packet && request->packet->code != 12)) {
+		request->module = "listen";
+		log_response(request, "REPLY");
+	}
+
 	return rad_send(request->reply, request->packet,
 			request->client->secret);
 }
@@ -732,7 +750,7 @@ static int stats_socket_recv(rad_listen_t *listener,
 	}
 
 	if ((client = client_listener_find(listener,
-					   &src_ipaddr, src_port)) == NULL) {
+					   &src_ipaddr, src_port, NULL)) == NULL) {
 		rad_recv_discard(listener->fd);
 		RAD_STATS_TYPE_INC(listener, total_invalid_requests);
 		return 0;
@@ -761,7 +779,7 @@ static int stats_socket_recv(rad_listen_t *listener,
 		return 0;
 	}
 
-	if (!received_request(listener, packet, prequest, client)) {
+	if (!received_request(listener, packet, prequest, client, NULL)) {
 		RAD_STATS_TYPE_INC(listener, total_packets_dropped);
 		RAD_STATS_CLIENT_INC(listener, client, total_packets_dropped);
 		rad_free(&packet);
@@ -789,6 +807,7 @@ static int auth_socket_recv(rad_listen_t *listener,
 	RAD_REQUEST_FUNP fun = NULL;
 	RADCLIENT	*client;
 	fr_ipaddr_t	src_ipaddr;
+	char request_id[UUID_SIZE];
 
 	rcode = rad_recv_header(listener->fd, &src_ipaddr, &src_port, &code);
 	if (rcode < 0) return 0;
@@ -800,10 +819,14 @@ static int auth_socket_recv(rad_listen_t *listener,
 		return 0;
 	}
 
+	// generate unique id
+    uuid_t uuid;
+    uuid_generate_random(uuid);
+    uuid_unparse_lower(uuid, request_id);
+
 	if ((client = client_listener_find(listener,
-					   &src_ipaddr, src_port)) == NULL) {
+					   &src_ipaddr, src_port, request_id)) == NULL) {
 		rad_recv_discard(listener->fd);
-		RAD_STATS_TYPE_INC(listener, total_invalid_requests);
 		return 0;
 	}
 
@@ -849,7 +872,7 @@ static int auth_socket_recv(rad_listen_t *listener,
 		return 0;
 	}
 
-	if (!received_request(listener, packet, prequest, client)) {
+	if (!received_request(listener, packet, prequest, client, request_id)) {
 		RAD_STATS_TYPE_INC(listener, total_packets_dropped);
 		RAD_STATS_CLIENT_INC(listener, client, total_packets_dropped);
 		rad_free(&packet);
@@ -886,7 +909,7 @@ static int acct_socket_recv(rad_listen_t *listener,
 	}
 
 	if ((client = client_listener_find(listener,
-					   &src_ipaddr, src_port)) == NULL) {
+					   &src_ipaddr, src_port, NULL)) == NULL) {
 		rad_recv_discard(listener->fd);
 		RAD_STATS_TYPE_INC(listener, total_invalid_requests);
 		return 0;
@@ -937,7 +960,7 @@ static int acct_socket_recv(rad_listen_t *listener,
 	/*
 	 *	There can be no duplicate accounting packets.
 	 */
-	if (!received_request(listener, packet, prequest, client)) {
+	if (!received_request(listener, packet, prequest, client, NULL)) {
 		RAD_STATS_TYPE_INC(listener, total_packets_dropped);
 		RAD_STATS_CLIENT_INC(listener, client, total_packets_dropped);
 		rad_free(&packet);
@@ -1169,7 +1192,7 @@ static int coa_socket_recv(rad_listen_t *listener,
 	}
 
 	if ((client = client_listener_find(listener,
-					   &src_ipaddr, src_port)) == NULL) {
+					   &src_ipaddr, src_port, NULL)) == NULL) {
 		rad_recv_discard(listener->fd);
 		RAD_STATS_TYPE_INC(listener, total_invalid_requests);
 
@@ -1219,7 +1242,7 @@ static int coa_socket_recv(rad_listen_t *listener,
 		return 0;
 	}
 
-	if (!received_request(listener, packet, prequest, client)) {
+	if (!received_request(listener, packet, prequest, client, NULL)) {
 		rad_free(&packet);
 		return 0;
 	}

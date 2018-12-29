@@ -382,6 +382,7 @@ static int pap_authorize(void *instance, REQUEST *request)
 
 			attr = fr_str2int(header_names, buffer, 0);
 			if (!attr) {
+				log_request(request, "PAP FAILED (Found unknown header {%s}: Not doing anything)", buffer);
 				RDEBUG2("Found unknown header {%s}: Not doing anything", buffer);
 				break;
 			}
@@ -484,6 +485,7 @@ static int pap_authorize(void *instance, REQUEST *request)
 			return RLM_MODULE_NOOP;
 		}
 
+		log_request(request, "PAP FAILED (WARNING! No \"known good\" password found for the user. Authentication may fail because of this)");
 		RDEBUG("WARNING! No \"known good\" password found for the user.  Authentication may fail because of this.");
 		return RLM_MODULE_NOOP;
 	}
@@ -492,6 +494,7 @@ static int pap_authorize(void *instance, REQUEST *request)
 	 *	Don't touch existing Auth-Types.
 	 */
 	if (auth_type) {
+		log_request(request, "PAP FAILED (WARNING: Auth-Type already set. Not setting to PAP)");
 		RDEBUG2("WARNING: Auth-Type already set.  Not setting to PAP");
 		return RLM_MODULE_NOOP;
 	}
@@ -509,6 +512,7 @@ static int pap_authorize(void *instance, REQUEST *request)
 			return RLM_MODULE_NOOP;
 		}
 
+		log_request(request, "PAP FAILED (No User-Password attribute in the request. Cannot do PAP)");
 		RDEBUG2("No User-Password attribute in the request.   Cannot do PAP.");
 		return RLM_MODULE_NOOP;
 	}

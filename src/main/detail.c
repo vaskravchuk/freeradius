@@ -737,7 +737,7 @@ int detail_recv(rad_listen_t *listener,
 	 *	Try again later...
 	 */
 	if (!received_request(listener, packet, prequest,
-			      &data->detail_client)) {
+			      &data->detail_client, NULL)) {
 		rad_free(&packet);
 		data->state = STATE_NO_REPLY;	/* try again later */
 		return 0;

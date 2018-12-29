@@ -95,38 +95,41 @@ typedef enum operation_t {
  */
 #define EAP_STATE_LEN (AUTH_VECTOR_LEN)
 typedef struct _eap_handler {
-	struct _eap_handler *prev, *next;
-	uint8_t		state[EAP_STATE_LEN];
-	fr_ipaddr_t	src_ipaddr;
+	struct 			_eap_handler *prev, *next;
+	uint8_t			state[EAP_STATE_LEN];
+	fr_ipaddr_t		src_ipaddr;
 	unsigned int	eap_id;
 	unsigned int	eap_type;
 
-	time_t		timestamp;
+	time_t			timestamp;
 
-	REQUEST		*request;
+	REQUEST			*request;
 
-	REQUEST		*cached_request;
+	REQUEST			*cached_request;
 
-	char		*identity; /* User name from EAP-Identity */
+	char			*identity; /* User name from EAP-Identity */
 
-	EAP_DS 		*prev_eapds;
-	EAP_DS 		*eap_ds;
+	EAP_DS 			*prev_eapds;
+	EAP_DS 			*eap_ds;
 
-	void 		*opaque;
-	void 		(*free_opaque)(void *opaque);
-	void		*inst_holder;
+	void 			*opaque;
+	void 			(*free_opaque)(void *opaque);
+	void			*inst_holder;
 
-	int		validation_status;
+	int				validation_status;
 
-	int		status;
+	int				status;
 
-	int		stage;
+	int				stage;
 
-	int		trips;
+	int				trips;
 
-	int		tls;
-	int		finished;
-	VALUE_PAIR	*certs;
+	int				tls;
+	int				finished;
+
+	VALUE_PAIR		*certs;
+
+	char 			context_id[UUID_SIZE]; /* max unique id for every session */
 } EAP_HANDLER;
 
 /*

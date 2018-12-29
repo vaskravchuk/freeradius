@@ -63,6 +63,7 @@ char *request_log_file = NULL;
 char *debug_condition = NULL;
 char *current_server = NULL;
 const char *STR_VIRTUAL_SERVER = "Virtual server";
+int allow_portnox_request_log = 0;
 
 #ifdef HAVE_GMTIME_R
 extern int log_dates_utc;
@@ -222,6 +223,8 @@ static const CONF_PARSER log_config_nodest[] = {
 #ifdef HAVE_GMTIME_R
 	{ "use_utc", PW_TYPE_BOOLEAN, 0, &log_dates_utc, NULL },
 #endif
+
+	{ "allow_portnox_request_log", PW_TYPE_BOOLEAN, 0, &allow_portnox_request_log, "yes" },
 
 	{ NULL, -1, 0, NULL, NULL }
 };

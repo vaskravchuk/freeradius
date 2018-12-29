@@ -112,7 +112,6 @@ int map_eapsim_basictypes(RADIUS_PACKET *r, EAP_PACKET *ep)
 		eapcode = vp->vp_integer;
 	}
 
-
 	/*
 	 * take a walk through the attribute list to see how much space
 	 * that we need to encode all of this.

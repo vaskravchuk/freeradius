@@ -241,6 +241,8 @@
 
 #define PW_EAP_MD5_CHALLENGE		1195
 
+#define PW_CONTEXT_ID 9105
+
 /*
  *	Integer Translations
  */

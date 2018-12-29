@@ -698,6 +698,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		 *	No password: can't do authentication.
 		 */
 		if (!password) {
+			log_request(request, "MSCHAPV2 FAILED (FAILED: No NT/LM-Password.  Cannot perform authentication)");
 			RDEBUG2("FAILED: No NT/LM-Password.  Cannot perform authentication.");
 			return -1;
 		}
@@ -780,6 +781,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		 *	NT_KEY: 000102030405060708090a0b0c0d0e0f
 		 */
 		if (memcmp(buffer, "NT_KEY: ", 8) != 0) {
+			log_request(request, "MSCHAPV2 FAILED (Invalid output from ntlm_auth: expecting NT_KEY)");
 			RDEBUG2("Invalid output from ntlm_auth: expecting NT_KEY");
 			return -1;
 		}
@@ -789,6 +791,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		 *	with an LF at the end.
 		 */
 		if (strlen(buffer + 8) < 32) {
+			log_request(request, "MSCHAPV2 FAILED (Invalid output from ntlm_auth: NT_KEY has unexpected length)");
 			RDEBUG2("Invalid output from ntlm_auth: NT_KEY has unexpected length");
 			return -1;
 		}
@@ -797,6 +800,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		 *	Update the NT hash hash, from the NT key.
 		 */
 		if (fr_hex2bin(buffer + 8, nthashhash, 16) != 16) {
+			log_request(request, "MSCHAPV2 FAILED (Invalid output from ntlm_auth: NT_KEY has non-hex values)");
 			RDEBUG2("Invalid output from ntlm_auth: NT_KEY has non-hex values");
 			return -1;
 		}
@@ -955,11 +959,13 @@ static int mschap_authorize(void * instance, REQUEST *request)
 	 *	Nothing we recognize.  Don't do anything.
 	 */
 	if (!response) {
+		log_request(request, "MSCHAPV2 FAILED (Found MS-CHAP-Challenge, but no MS-CHAP-Response)");
 		RDEBUG2("Found MS-CHAP-Challenge, but no MS-CHAP-Response.");
 		return RLM_MODULE_NOOP;
 	}
 
 	if (pairfind(request->config_items, PW_AUTH_TYPE)) {
+		log_request(request, "MSCHAPV2 FAILED (WARNING: Auth-Type already set.  Not setting to MS-CHAP)");
 		RDEBUG2("WARNING: Auth-Type already set.  Not setting to MS-CHAP");
 		return RLM_MODULE_NOOP;
 	}
@@ -1134,6 +1140,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 
 	challenge = pairfind(request->packet->vps, PW_MSCHAP_CHALLENGE);
 	if (!challenge) {
+		log_request(request, "MSCHAPV2 FAILED (ERROR: You set 'Auth-Type = MS-CHAP' for a request that does not contain any MS-CHAP attributes)");
 		RDEBUG("ERROR: You set 'Auth-Type = MS-CHAP' for a request that does not contain any MS-CHAP attributes!");
 		return RLM_MODULE_REJECT;
 	}
@@ -1153,6 +1160,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		 *	MS-CHAPv1 challenges are 8 octets.
 		 */
 		if (challenge->length < 8) {
+			log_request(request, "MSCHAPV2 FAILED (MS-CHAP-Challenge has the wrong format)");
 			radlog_request(L_AUTH, 0, request, "MS-CHAP-Challenge has the wrong format.");
 			return RLM_MODULE_INVALID;
 		}
@@ -1161,6 +1169,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		 *	Responses are 50 octets.
 		 */
 		if (response->length < 50) {
+			log_request(request, "MSCHAPV2 FAILED (MS-CHAP-Response has the wrong format)");
 			radlog_request(L_AUTH, 0, request, "MS-CHAP-Response has the wrong format.");
 			return RLM_MODULE_INVALID;
 		}
@@ -1199,6 +1208,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		 *	MS-CHAPv2 challenges are 16 octets.
 		 */
 		if (challenge->length < 16) {
+			log_request(request, "MSCHAPV2 FAILED (MS-CHAP-Challenge has the wrong format)");
 			radlog_request(L_AUTH, 0, request, "MS-CHAP-Challenge has the wrong format.");
 			return RLM_MODULE_INVALID;
 		}
@@ -1207,6 +1217,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		 *	Responses are 50 octets.
 		 */
 		if (response->length < 50) {
+			log_request(request, "MSCHAPV2 FAILED (MS-CHAP-Response has the wrong format)");
 			radlog_request(L_AUTH, 0, request, "MS-CHAP-Response has the wrong format.");
 			return RLM_MODULE_INVALID;
 		}
@@ -1216,6 +1227,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		 */
 		username = pairfind(request->packet->vps, PW_USER_NAME);
 		if (!username) {
+			log_request(request, "MSCHAPV2 FAILED (We require a User-Name for MS-CHAPv2)");
 			radlog_request(L_AUTH, 0, request, "We require a User-Name for MS-CHAPv2");
 			return RLM_MODULE_INVALID;
 		}
@@ -1340,6 +1352,7 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 		chap = 2;
 
 	} else {		/* Neither CHAPv1 or CHAPv2 response: die */
+		log_request(request, "MSCHAPV2 FAILED (ERROR: You set 'Auth-Type = MS-CHAP' for a request that does not contain any MS-CHAP attributes)");
 		RDEBUG("ERROR: You set 'Auth-Type = MS-CHAP' for a request that does not contain any MS-CHAP attributes!");
 		return RLM_MODULE_INVALID;
 	}

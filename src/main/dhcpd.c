@@ -682,7 +682,7 @@ static int dhcp_socket_recv(rad_listen_t *listener,
 	}
 
 	sock = listener->data;
-	if (!received_request(listener, packet, prequest, &sock->dhcp_client)) {
+	if (!received_request(listener, packet, prequest, &sock->dhcp_client, NULL)) {
 		rad_free(&packet);
 		return 0;
 	}

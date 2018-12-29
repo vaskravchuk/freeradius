@@ -145,9 +145,12 @@ static int eaptype_call(EAP_TYPES *atype, EAP_HANDLER *handler)
 {
 	int rcode = 1;
 	REQUEST *request = handler->request;
+
 	const char *module = request->module;
 
 	RDEBUG2("processing type %s", atype->typename);
+	logs_add_flow(handler->request, "processing type %s", atype->typename);
+
 	request->module = atype->typename;
 
 	rad_assert(atype != NULL);
@@ -178,6 +181,7 @@ static int eaptype_call(EAP_TYPES *atype, EAP_HANDLER *handler)
 
 	default:
 		/* Should never enter here */
+		logs_add_flow(handler->request, "EAP FAILED (Internal sanity check failed on eap_type)", atype->typename);
 		RDEBUG("Internal sanity check failed on eap_type");
 		rcode = 0;
 		break;
@@ -209,6 +213,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 	 */
 	if ((eaptype->type == 0) ||
 	    (eaptype->type > PW_EAP_MAX_TYPES)) {
+		logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Asked to select bad type)");
 		RDEBUG2("Asked to select bad type");
 		return EAP_INVALID;
 	}
@@ -219,6 +224,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 	if (handler->request->parent 
 		&& handler->request->parent->parent
 		&& !handler->request->parent->parent->home_server) {
+		logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Multiple levels of TLS nesting is invalid)");
 		RDEBUG2("Multiple levels of TLS nesting is invalid.");
 		return EAP_INVALID;
 	}
@@ -244,6 +250,8 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 		if ((default_eap_type < PW_EAP_MD5) ||
 		    (default_eap_type > PW_EAP_MAX_TYPES) ||
 		    (inst->types[default_eap_type] == NULL)) {
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (No such EAP type %s)", 
+												eaptype_type2name(default_eap_type, namebuf, sizeof(namebuf)));
 			RDEBUG2("No such EAP type %s",
 			       eaptype_type2name(default_eap_type,
 						 namebuf, sizeof(namebuf)));
@@ -268,12 +276,15 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 		if ((default_eap_type == PW_EAP_TNC) &&
 		    !handler->request->parent) {
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (ERROR: EAP-TNC must be run inside of a TLS method)");
 			RDEBUG2("ERROR: EAP-TNC must be run inside of a TLS method.");
 			return EAP_INVALID;
 		}
 
 		if (eaptype_call(inst->types[default_eap_type],
 				 handler) == 0) {
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Default EAP type %s failed in initiate)", 
+													eaptype_type2name(default_eap_type, namebuf, sizeof(namebuf)));
 			RDEBUG2("Default EAP type %s failed in initiate",
 			       eaptype_type2name(default_eap_type,
 						 namebuf, sizeof(namebuf)));
@@ -302,6 +313,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 		}
 
 		if (eaptype->data == NULL) {
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Empty NAK packet, cannot decide what EAP type the client wants)");
 			RDEBUG2("Empty NAK packet, cannot decide what EAP type the client wants.");
 			return EAP_INVALID;
 		}
@@ -322,6 +334,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 *	common choices.
 			 */
 			if (eaptype->data[i] < PW_EAP_MD5) {
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (NAK asked for bad type %d)", eaptype->data[i]);
 				RDEBUG2("NAK asked for bad type %d",
 				       eaptype->data[i]);
 				return EAP_INVALID;
@@ -333,9 +346,11 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 				dv = dict_valbyattr(PW_EAP_TYPE, eaptype->data[i]);
 				if (dv) {
+					logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (NAK asked for unsupported type %s)", dv->name);
 					RDEBUG2("NAK asked for unsupported type %s",
 						dv->name);
 				} else {
+					logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (NAK asked for bad type %d)", eaptype->data[i]);
 					RDEBUG2("NAK asked for unsupported type %d",
 						eaptype->data[i]);
 				}
@@ -350,6 +365,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 *	Prevent a firestorm if the client is confused.
 			 */
 			if (handler->eap_type == eaptype->data[i]) {
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (ERROR! Our request for %s was NAK'd with a request for %s.  Skipping the requested type)", eaptype_name, eaptype_name);
 				RDEBUG2("ERROR! Our request for %s was NAK'd with a request for %s.  Skipping the requested type.",
 				       eaptype_name, eaptype_name);
 				continue;
@@ -361,6 +377,8 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 */
 			if (vp && (vp->vp_integer != eaptype->data[i])) {
 				char	mynamebuf[64];
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Client wants %s, while we require %s.  Skipping the requested type)", 
+														eaptype_name, eaptype_type2name(vp->vp_integer, mynamebuf, sizeof(mynamebuf)));
 				RDEBUG2("Client wants %s, while we require %s.  Skipping the requested type.",
 				       eaptype_name,
 				       eaptype_type2name(vp->vp_integer,
@@ -377,6 +395,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 		 *	We probably want to return 'fail' here...
 		 */
 		if (!default_eap_type) {
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (No common EAP types found)");
 			RDEBUG2("No common EAP types found.");
 			return EAP_INVALID;
 		}
@@ -401,6 +420,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 *	We haven't configured it, it doesn't exit.
 			 */
 			if (!inst->types[eaptype->type]) {
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (EAP type %d is unsupported)", eaptype->type);
 				RDEBUG2("EAP type %d is unsupported",
 				       eaptype->type);
 				return EAP_INVALID;
@@ -415,6 +435,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 				eaptype->type != PW_EAP_PEAP &&
 				eaptype->type != PW_EAP_MSCHAPV2 &&
 				eaptype->type != PW_EAP_CISCO_MSCHAPV2) {
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (EAP type %d-%s is unsupported by Portnox)", eaptype->type, eaptype_name);
 				RDEBUG2("EAP type %d-%s is unsupported by Portnox",
 				       eaptype->type, eaptype_name);
 				return EAP_INVALID;
@@ -424,6 +445,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			handler->eap_type = eaptype->type;
 			if (eaptype_call(inst->types[eaptype->type],
 					 handler) == 0) {
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Handler failed in EAP/%s)", eaptype_name);
 				RDEBUG2("Handler failed in EAP/%s",
 				       eaptype_name);
 				return EAP_FAIL;
@@ -577,6 +599,7 @@ int eap_compose(EAP_HANDLER *handler)
 		}
 
 		/* Should never enter here */
+		radlog_eaphandler_portnox(handler, "EAP FAILED (rlm_eap: reply code %d is unknown, Rejecting the request)", reply->code);
 		radlog(L_ERR, "rlm_eap: reply code %d is unknown, Rejecting the request.", reply->code);
 		request->reply->code = PW_AUTHENTICATION_REJECT;
 		reply->code = PW_EAP_FAILURE;
@@ -598,6 +621,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 
 	eap_msg = pairfind(request->packet->vps, PW_EAP_MESSAGE);
 	if (eap_msg == NULL) {
+		log_request(request, "EAP FAILED (No EAP-Message, not doing EAP)");
 		RDEBUG2("No EAP-Message, not doing EAP");
 		return EAP_NOOP;
 	}
@@ -608,6 +632,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	vp = pairfind(request->packet->vps, PW_EAP_TYPE);
 	if (vp && vp->vp_integer == 0) {
+		log_request(request, "EAP FAILED (Found EAP-Message, but EAP-Type = None, so we're not doing EAP)");
 		RDEBUG2("Found EAP-Message, but EAP-Type = None, so we're not doing EAP.");
 		return EAP_NOOP;
 	}
@@ -656,12 +681,14 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 		 */
 		if (proxy) {
 		do_proxy:
+			log_request(request, "EAP FAILED (Request is supposed to be proxied to Realm %s.  Not doing EAP)", proxy->vp_strvalue);
 			RDEBUG2("Request is supposed to be proxied to Realm %s.  Not doing EAP.", proxy->vp_strvalue);
 			return EAP_NOOP;
 		}
 
 		RDEBUG2("Got EAP_START message");
 		if ((eap_ds = eap_ds_alloc()) == NULL) {
+			log_request(request, "EAP FAILED (EAP Start failed in allocation)");
 			RDEBUG2("EAP Start failed in allocation");
 			return EAP_FAIL;
 		}
@@ -698,6 +725,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	if (eap_msg->length < (EAP_HEADER_LEN + 1)) {
 		if (proxy) goto do_proxy;
 
+		log_request(request, "EAP FAILED (Ignoring EAP-Message which is too short to be meaningful)");
 		RDEBUG2("Ignoring EAP-Message which is too short to be meaningful.");
 		return EAP_FAIL;
 	}
@@ -732,6 +760,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	if ((eap_msg->vp_octets[0] == 0) ||
 	    (eap_msg->vp_octets[0] > PW_EAP_MAX_CODES)) {
+		log_request(request, "EAP FAILED (Unknown EAP packet)");
 		RDEBUG2("Unknown EAP packet");
 	} else {
 		RDEBUG2("EAP packet type %s id %d length %d",
@@ -748,6 +777,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	if ((eap_msg->vp_octets[0] != PW_EAP_REQUEST) &&
 	    (eap_msg->vp_octets[0] != PW_EAP_RESPONSE)) {
+		log_request(request, "EAP FAILED (Ignoring EAP packet which we don't know how to handle)");
 		RDEBUG2("Ignoring EAP packet which we don't know how to handle.");
 		return EAP_FAIL;
 	}
@@ -765,6 +795,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	    ((eap_msg->vp_octets[4] == 0) ||
 	     (eap_msg->vp_octets[4] > PW_EAP_MAX_TYPES) ||
 	     (inst->types[eap_msg->vp_octets[4]] == NULL))) {
+		log_request(request, "EAP FAILED (Ignoring Unknown EAP type)");
 		RDEBUG2(" Ignoring Unknown EAP type");
 		return EAP_NOOP;
 	}
@@ -790,6 +821,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	    ((eap_msg->vp_octets[5] == 0) ||
 	     (eap_msg->vp_octets[5] > PW_EAP_MAX_TYPES) ||
 	     (inst->types[eap_msg->vp_octets[5]] == NULL))) {
+		log_request(request, "EAP FAILED (Ignoring NAK with request for unknown EAP type)");
 		RDEBUG2("Ignoring NAK with request for unknown EAP type");
 		return EAP_NOOP;
 	}
@@ -857,6 +889,7 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
  	     (eap_packet->code != PW_EAP_REQUEST)) ||
 	    (eap_packet->data[0] <= 0) ||
 	    (eap_packet->data[0] > PW_EAP_MAX_TYPES)) {
+		log_request(request, "EAP FAILED (Badly formatted EAP Message: Ignoring the packet)");
 
 		radlog_request(L_AUTH, 0, request, 
 			       "Badly formatted EAP Message: Ignoring the packet");
@@ -865,6 +898,7 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
 
 	/* we don't expect notification, but we send it */
 	if (eap_packet->data[0] == PW_EAP_NOTIFICATION) {
+		log_request(request, "EAP FAILED (Got NOTIFICATION, Ignoring the packet)");
 		radlog_request(L_AUTH, 0, request, "Got NOTIFICATION, "
 			       "Ignoring the packet");
 		return EAP_INVALID;
@@ -872,7 +906,6 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
 
 	return EAP_VALID;
 }
-
 
 /*
  *  Get the user Identity only from EAP-Identity packets
@@ -904,7 +937,6 @@ static char *eap_identity(REQUEST *request, eap_packet_t *eap_packet)
 
 	return identity;
 }
-
 
 /*
  *	Create our Request-Response data structure with the eap packet
@@ -972,6 +1004,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 	EAP_HANDLER	*handler = NULL;
 	eap_packet_t	*eap_packet = *eap_packet_p;
 	VALUE_PAIR	*vp;
+	int is_new_handler = 0;
 
 	/*
 	 *	Ensure it's a valid EAP-Request, or EAP-Response.
@@ -989,6 +1022,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 	if (eap_packet->data[0] != PW_EAP_IDENTITY) {
 		handler = eaplist_find(inst, request, eap_packet);
 		if (handler == NULL) {
+			log_request(request, "EAP FAILED (Either EAP-request timed out OR EAP-response to an unknown EAP-request)");
 			/* Either send EAP_Identity or EAP-Fail */
 			RDEBUG("Either EAP-request timed out OR"
 			       " EAP-response to an unknown EAP-request");
@@ -1007,6 +1041,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		if ((eap_packet->data[0] != PW_EAP_NAK) &&
 		    (eap_packet->data[0] != handler->eap_type)) {
+			log_request(request, "EAP FAILED (Response appears to match, but EAP type is wrong)");
 			RDEBUG("Response appears to match, but EAP type is wrong.");
 			free(*eap_packet_p);
 			*eap_packet_p = NULL;
@@ -1022,16 +1057,16 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
                         *	request vps so that autz's work
                         *	correctly
 			*/
-		       RDEBUG2("Broken NAS did not set User-Name, setting from EAP Identity");
-                       vp = pairmake("User-Name", handler->identity, T_OP_EQ);
-                       if (vp == NULL) {
-			       RDEBUG("Out of memory");
-                               free(*eap_packet_p);
-                               *eap_packet_p = NULL;
-                               return NULL;
-                       }
-                       vp->next = request->packet->vps;
-                       request->packet->vps = vp;
+		       			RDEBUG2("Broken NAS did not set User-Name, setting from EAP Identity");
+                       	vp = pairmake("User-Name", handler->identity, T_OP_EQ);
+                       	if (vp == NULL) {
+			       				RDEBUG("Out of memory");
+                            	free(*eap_packet_p);
+                            	*eap_packet_p = NULL;
+                            	return NULL;
+                       	}
+                       	vp->next = request->packet->vps;
+                       	request->packet->vps = vp;
 
                } else {
                        /*
@@ -1043,10 +1078,9 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
                         *      request as the NAS is doing something
                         *      funny.
 			*/
-                       if (strncmp(handler->identity, vp->vp_strvalue,
-				   MAX_STRING_LEN) != 0) {
+                       if (strncmp(handler->identity, vp->vp_strvalue, MAX_STRING_LEN) != 0) {
                                RDEBUG("Identity (%s) does not match User-Name (%s).  Authentication failed.",
-				      handler->identity, vp->vp_strvalue);
+				      					handler->identity, vp->vp_strvalue);
                                free(*eap_packet_p);
                                *eap_packet_p = NULL;
                                return NULL;
@@ -1060,12 +1094,14 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 			*eap_packet_p = NULL;
 			return NULL;
 		}
+		is_new_handler = 1;
 
 		/*
 		 *	All fields in the handler are set to zero.
 		 */
 		handler->identity = eap_identity(request, eap_packet);
 		if (handler->identity == NULL) {
+			log_request(request, "EAP FAILED (Identity Unknown, authentication failed)");
 			RDEBUG("Identity Unknown, authentication failed");
 			free(*eap_packet_p);
 			*eap_packet_p = NULL;
@@ -1099,9 +1135,11 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
                         *      User-Name, and it doesn't match the
                         *      identity, the NAS is doing something
                         *      funny, so reject the request.
-			*/
+						*/
                        if (strncmp(handler->identity, vp->vp_strvalue,
 				   MAX_STRING_LEN) != 0) {
+								log_request(request, "EAP FAILED (Identity (%s) does not match User-Name (%s).  Authentication failed)", 
+																	handler->identity, vp->vp_strvalue);
                                RDEBUG("Identity (%s) does not match User-Name (%s).  Authentication failed.",
 				      handler->identity, vp->vp_strvalue);
                                free(*eap_packet_p);
@@ -1122,5 +1160,23 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 
 	handler->timestamp = request->timestamp;
 	handler->request = request; /* LEAP needs this */
+
+	if (is_new_handler)
+	{
+	   /*
+	    * if we need new eap handler -> new session, 
+	    * so we push eap context id from requests (Access-Request)
+	    */
+		memcpy(handler->context_id, request->context_id, sizeof(request->context_id));
+	}
+	else 
+	{
+	   /*
+	    * if we already initiated eap session
+	    * replace request context id from eap session one
+	    */
+		memcpy(request->context_id, handler->context_id, sizeof(handler->context_id));
+	}
+
 	return handler;
 }

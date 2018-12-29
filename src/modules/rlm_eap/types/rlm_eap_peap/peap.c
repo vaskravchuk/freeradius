@@ -58,6 +58,7 @@ static int eappeap_failure(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 *	FIXME: Check the return code.
 	 */
 	tls_handshake_send(request, tls_session);
+	logs_set_reply_desc(handler->request, 1, "TLV FAILED");
 
 	return 1;
 }
@@ -94,6 +95,8 @@ static int eappeap_success(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 */
 	tls_handshake_send(request, tls_session);
 
+	logs_set_reply_desc(handler->request, 0, "PEAP SUCCESS");
+
 	return 1;
 }
 
@@ -113,6 +116,7 @@ static int eappeap_identity(EAP_HANDLER *handler, tls_session_t *tls_session)
 
 	tls_handshake_send(handler->request, tls_session);
 	(tls_session->record_init)(&tls_session->clean_in);
+	logs_set_reply_desc(handler->request, 1, "PEAP IDENTITY REQUEST");
 
 	return 1;
 }
@@ -428,6 +432,8 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 
 	switch (reply->code) {
 	case PW_AUTHENTICATION_ACK:
+		logs_set_request_desc(handler->request, 1, "PEAP AUTHENTICATION ACK");
+		logs_set_reply_desc(handler->request, 1, "PEAP AUTHENTICATION SUCCESS");
 		RDEBUG2("Tunneled authentication was successful.");
 		t->status = PEAP_STATUS_SENT_TLV_SUCCESS;
 		eappeap_success(handler, tls_session);
@@ -468,6 +474,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		break;
 
 	case PW_AUTHENTICATION_REJECT:
+		logs_set_reply_desc(handler->request, 0, "PEAP AUTHENTICATION FAILED");
 		RDEBUG2("Tunneled authentication was rejected.");
 		t->status = PEAP_STATUS_SENT_TLV_FAILURE;
 		eappeap_failure(handler, tls_session);
@@ -475,6 +482,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		break;
 
 	case PW_ACCESS_CHALLENGE:
+		logs_set_reply_desc(handler->request, 0, "PEAP ACCESS-CHALLENGE");
 		RDEBUG2("Got tunneled Access-Challenge");
 
 		/*
@@ -533,6 +541,7 @@ static int process_reply(EAP_HANDLER *handler, tls_session_t *tls_session,
 		break;
 
 	default:
+		logs_set_reply_desc(handler->request, 1, "PEAP UNKNOWN");
 		RDEBUG2("Unknown RADIUS packet type %d: rejecting tunneled user", reply->code);
 		rcode = RLM_MODULE_REJECT;
 		break;
@@ -552,6 +561,7 @@ static int eappeap_postproxy(EAP_HANDLER *handler, void *data)
 	REQUEST *fake, *request = handler->request;
 
 	RDEBUG2("Passing reply from proxy back into the tunnel.");
+	logs_add_flow(handler->request, "Passing reply from proxy back into the tunnel");
 
 	/*
 	 *	If there was a fake request associated with the proxied
@@ -590,6 +600,7 @@ static int eappeap_postproxy(EAP_HANDLER *handler, void *data)
 		 *	handler, too...
 		 */
 		fake->options &= ~RAD_REQUEST_OPTION_PROXY_EAP;
+		logs_add_flow(handler->request, "Passing reply back for EAP-MS-CHAP-V2");
 		RDEBUG2("Passing reply back for EAP-MS-CHAP-V2");
 		rcode = module_post_proxy(0, fake);
 
@@ -655,16 +666,19 @@ static int eappeap_postproxy(EAP_HANDLER *handler, void *data)
 
 	switch (rcode) {
 	case RLM_MODULE_REJECT:
+		logs_add_flow(handler->request, "Reply was rejected");
 		RDEBUG2("Reply was rejected");
 		eaptls_fail(handler, 0);
 		return 0;
 
 	case RLM_MODULE_HANDLED:
+		logs_add_flow(handler->request, "Reply was handled");
 		RDEBUG2("Reply was handled");
-		eaptls_request(handler->eap_ds, tls_session);
+		eaptls_request(handler, tls_session);
 		return 1;
 
 	case RLM_MODULE_OK:
+		logs_add_flow(handler->request, "Reply was OK");
 		RDEBUG2("Reply was OK");
 
 		/*
@@ -760,8 +774,12 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 
 	RDEBUG2("Peap state %s", peap_state(t));
 
+	logs_add_flow(handler->request, "Peap state %s", peap_state(t));
+	logs_set_request_desc(handler->request, 1, "PEAP REQUEST");
+
 	if ((t->status != PEAP_STATUS_TUNNEL_ESTABLISHED) &&
 	    !eapmessage_verify(request, data, data_len)) {
+		logs_add_flow(handler->request, "FAILED processing PEAP: Tunneled data is invalid");
 		RDEBUG2("FAILED processing PEAP: Tunneled data is invalid.");
 		if (debug_flag > 2) print_tunneled_data(data, data_len);
 		return RLM_MODULE_REJECT;
@@ -769,9 +787,12 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 
 	switch (t->status) {
 	case PEAP_STATUS_TUNNEL_ESTABLISHED:
+		logs_add_flow(handler->request, "PEAP_STATUS_TUNNEL_ESTABLISHED");
+		logs_set_request_desc(handler->request, 1, "PEAP TUNNEL ESTABLISHED");
 		/* FIXME: should be no data in the buffer here, check & assert? */
 		
 		if (reuse_tls_session && SSL_session_reused(tls_session->ssl)) {
+			logs_add_flow(handler->request, "Skipping Phase2 because of session resumption");
 			RDEBUG2("Skipping Phase2 because of session resumption");
 			t->session_resumption_state = PEAP_RESUMPTION_YES;
 			if (t->soh) {
@@ -793,13 +814,16 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		return RLM_MODULE_HANDLED;
 
 	case PEAP_STATUS_INNER_IDENTITY_REQ_SENT:
+		logs_add_flow(handler->request, "PEAP_STATUS_INNER_IDENTITY_REQ_SENT");
 		/* we're expecting an identity response */
 		if (data[0] != PW_EAP_IDENTITY) {
+			logs_add_flow(handler->request, "Expected EAP-Identity, got something else");
 			RDEBUG("Expected EAP-Identity, got something else.");
 			return RLM_MODULE_REJECT;
 		}
 
 		if (data_len >= sizeof(t->username->vp_strvalue)) {
+			logs_add_flow(handler->request, "EAP-Identity is too long");
 			RDEBUG("EAP-Identity is too long");
 			return RLM_MODULE_REJECT;
 		}
@@ -868,6 +892,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 *	If we authenticated the user, then it's OK.
 	 */
 	case PEAP_STATUS_SENT_TLV_SUCCESS:
+		logs_set_request_desc(handler->request, 1, "TLV SUCCESS");
+		logs_add_flow(handler->request, "PEAP_STATUS_SENT_TLV_SUCCESS");
 		if (eappeap_check_tlv(request, data, data_len)) {
 			RDEBUG2("Success");
 			return RLM_MODULE_OK;
@@ -882,6 +908,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		 *	inside of the PEAP tunnel.
 		 */
 		if (t->session_resumption_state == PEAP_RESUMPTION_YES) {
+			logs_add_flow(handler->request, "Client rejected session resumption.  Re-starting full authentication");
 			RDEBUG2("Client rejected session resumption.  Re-starting full authentication");
 			
 			/*
@@ -894,6 +921,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 			return RLM_MODULE_HANDLED;
 		}
 
+		logs_add_flow(handler->request, "We sent a success, but received something weird in return");
 		RDEBUG2("We sent a success, but received something weird in return.");
 		return RLM_MODULE_REJECT;
 
@@ -902,6 +930,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 *	packets after we told them to f*ck off.
 	 */
 	case PEAP_STATUS_SENT_TLV_FAILURE:
+		logs_set_reply_desc(handler->request, 1, "TLV FAILED");
+		logs_add_flow(handler->request, "PEAP_STATUS_SENT_TLV_FAILURE");
 		RDEBUG(" The users session was previously rejected: returning reject (again.)");
 		RDEBUG(" *** This means you need to read the PREVIOUS messages in the debug output");
 		RDEBUG(" *** to find out the reason why the user was rejected.");
@@ -910,6 +940,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		return RLM_MODULE_REJECT;
 
 		case PEAP_STATUS_PHASE2_INIT:
+			logs_add_flow(handler->request, "In state machine in phase2 init");
 			RDEBUG("In state machine in phase2 init?");
 
 		case PEAP_STATUS_PHASE2:
@@ -921,6 +952,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	}
 
 	fake = request_alloc_fake(request);
+	reset_logs(fake);
+	logs_add_flow(fake, "tunnel");
 
 	rad_assert(fake->packet->vps == NULL);
 
@@ -932,6 +965,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		 */
 		
 	case PEAP_STATUS_PHASE2_INIT: {
+		logs_set_request_desc(handler->request, 1, "PEAP PHASE2 INIT");
+		logs_add_flow(handler->request, "PEAP_STATUS_PHASE2_INIT");
 		int len = t->username->length + EAP_HEADER_LEN + 1;
 
 		t->status = PEAP_STATUS_PHASE2;
@@ -960,6 +995,8 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		break; }
 
 	case PEAP_STATUS_PHASE2:
+		logs_set_request_desc(handler->request, 1, "PEAP PHASE2 AUTHENTICATION");
+		logs_add_flow(handler->request, "PEAP_STATUS_PHASE2");
 		fake->packet->vps = eap2vp(request, eap_ds, data, data_len);
 		if (!fake->packet->vps) {
 			request_free(&fake);
@@ -969,6 +1006,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		break;
 
 	default:
+		logs_add_flow(handler->request, "Invalid state change in PEAP");
 		RDEBUG("Invalid state change in PEAP.");
 		return PW_AUTHENTICATION_REJECT;
 	}
@@ -1202,6 +1240,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 		} else
 #endif	/* WITH_PROXY */
 		  {
+			logs_add_flow(handler->request, "PEAP: Unknown RADIUS packet type %d", fake->reply->code);
 			DEBUG2("  PEAP: Unknown RADIUS packet type %d: rejecting tunneled user", fake->reply->code);
 			rcode = RLM_MODULE_REJECT;
 		  }
