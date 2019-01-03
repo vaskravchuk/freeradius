@@ -263,7 +263,7 @@ RADCLIENT *client_listener_find(const rad_listen_t *listener,
 	if (uuid) {
 		request->module = "listen";
 		// need only when context_id exists
-		log_request(request, "RECEIVED");
+		log_request(request, 1, "RECEIVED");
 	}
 
 	/*

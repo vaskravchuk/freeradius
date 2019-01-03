@@ -704,7 +704,7 @@ static EAPTLS_PACKET *eaptls_extract(EAP_HANDLER *handler, EAP_DS *eap_ds, eaptl
 	    (tlspacket->length < 5)) { /* flags + TLS message length */
 		RDEBUG("Invalid EAP-TLS packet received.  (Length bit is set, but no length was found.)");
 		eaptls_free(&tlspacket);
-		logs_add_flow(handler->request, "EAPTLS FAILED LBIT_WITHOUT_LENGTH (Length bit is set, but no length was found.)");
+		logs_add_flow(handler->request, "EAPTLS FAILED LBIT_WITHOUT_LENGTH");
 		return NULL;
 	}
 
@@ -724,7 +724,7 @@ static EAPTLS_PACKET *eaptls_extract(EAP_HANDLER *handler, EAP_DS *eap_ds, eaptl
 		if (data_len > MAX_RECORD_SIZE) {
 			RDEBUG("The EAP-TLS packet will contain more data than we can process.");
 			eaptls_free(&tlspacket);
-			logs_add_flow(handler->request, "EAPTLS FAILED MORE_DATA (The EAP-TLS packet will contain more data than we can process.)");
+			logs_add_flow(handler->request, "EAPTLS FAILED MORE_DATA");
 			return NULL;
 		}
 
@@ -755,7 +755,7 @@ static EAPTLS_PACKET *eaptls_extract(EAP_HANDLER *handler, EAP_DS *eap_ds, eaptl
 		if (tlspacket->length < 5) { /* flags + TLS message length */
 			RDEBUG("Invalid EAP-TLS packet received.  (Expected length, got none.)");
 			eaptls_free(&tlspacket);
-			logs_add_flow(handler->request, "EAPTLS FAILED EXCPECTED_LENGTH (Expected length, got none.)");
+			logs_add_flow(handler->request, "EAPTLS FAILED EXCPECTED_LENGTH");
 			return NULL;
 		}
 
@@ -789,7 +789,7 @@ static EAPTLS_PACKET *eaptls_extract(EAP_HANDLER *handler, EAP_DS *eap_ds, eaptl
 	default:
 		RDEBUG("Invalid EAP-TLS packet received");
 		eaptls_free(&tlspacket);
-		logs_add_flow(handler->request, "EAPTLS FAILED INVALID_PACKET (Invalid EAP-TLS packet received)");
+		logs_add_flow(handler->request, "EAPTLS FAILED INVALID_PACKET");
 		return NULL;
 	}
 
@@ -877,7 +877,7 @@ static eaptls_status_t eaptls_operation(eaptls_status_t status,
 	}
 
 	if (!hs_result) {
-		logs_add_flow(handler->request, "EAPTLS FAILED HANDSHAKE (TLS receive handshake failed during operation)");
+		logs_add_flow(handler->request, "EAPTLS FAILED HANDSHAKE");
 		DEBUG2("TLS receive handshake failed during operation");
 		SSL_CTX_remove_session(tls_session->ctx, tls_session->ssl->session);
 		return EAPTLS_FAIL;
@@ -1099,10 +1099,10 @@ eaptls_status_t eaptls_process(EAP_HANDLER *handler)
 
 			switch (SSL_get_error(tls_session->ssl, err)) {
 			case SSL_ERROR_WANT_READ:
-				logs_add_flow(handler->request, "EAPTLS FAILED SSL_ERROR_WANT_READ (Error in fragmentation logic)");
+				logs_add_flow(handler->request, "EAPTLS FAILED SSL_ERROR_WANT_READ");
 				break;
 			case SSL_ERROR_WANT_WRITE:
-				logs_add_flow(handler->request, "EAPTLS FAILED SSL_ERROR_WANT_WRITE (Error in fragmentation logic)");
+				logs_add_flow(handler->request, "EAPTLS FAILED SSL_ERROR_WANT_WRITE");
 				RDEBUG("Error in fragmentation logic");
 				break;
 			default:
@@ -1116,7 +1116,7 @@ eaptls_status_t eaptls_process(EAP_HANDLER *handler)
 		}
 
 		if (err == 0) {
-			logs_add_flow(handler->request, "WARNING: No data inside of the tunnel");
+			logs_add_flow(handler->request, "No data inside of the tunnel");
 			RDEBUG("WARNING: No data inside of the tunnel.");
 		}
 	

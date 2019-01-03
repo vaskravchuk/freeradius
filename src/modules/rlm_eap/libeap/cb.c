@@ -82,7 +82,7 @@ void cbtls_info(const SSL *s, int where, int ret)
 
 	if (buffer[0]) {
 		if (handler) logs_add_tls(handler->request, "%s", buffer);
-		radlog(L_ERR, "%s", buffer);
+		radlog(L_DBG, "%s", buffer);
 		
 		if (request) {
 			VALUE_PAIR *vp;

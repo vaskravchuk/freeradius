@@ -135,7 +135,7 @@ void radlog_request(UNUSED int lvl, UNUSED int priority,
 	fputc('\n', stderr);
 }
 
-void log_request(UNUSED REQUEST *request, const char *msg, ...)
+void log_request(UNUSED REQUEST *request, UNUSED int full_info, const char *msg, ...)
 {
 	va_list ap;
 
@@ -155,7 +155,7 @@ void log_response(REQUEST *request, const char *msg, ...)
 	fputc('\n', stderr);
 }
 
-void radlog_eaphandler_portnox(UNUSED EAP_HANDLER *handler, const char * msg, ...) 
+void radlog_eaphandler_portnox(UNUSED EAP_HANDLER *handler, int full_info, const char * msg, ...) 
 {
 	va_list ap;
 

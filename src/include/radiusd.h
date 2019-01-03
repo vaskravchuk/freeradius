@@ -583,7 +583,7 @@ void radlog_request(int lvl, int priority, REQUEST *request, const char *msg, ..
 		__attribute__ ((format (printf, 4, 5)))
 #endif
 ;
-void log_request(REQUEST *request, const char *msg, ...);
+void log_request(REQUEST *request, int full_info, const char *msg, ...);
 void log_response(REQUEST *request, const char *msg, ...);
 void logs_add_flow(REQUEST *request, const char *msg, ...);
 void logs_add_tls(REQUEST *request, const char *msg, ...);

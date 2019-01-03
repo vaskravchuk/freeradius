@@ -354,7 +354,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 		 *	They should be the oldest ones.
 		 */
 		if ((timestamp - handler->timestamp) > inst->timer_limit) {
-			radlog_eaphandler_portnox(handler, "EAP HANDLER_EXPIRE");
+			radlog_eaphandler_portnox(handler, 1, "EAP HANDLER_EXPIRE");
 			/* 
 			 * send additional log
 			 */
@@ -435,8 +435,6 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 	rad_assert(handler != NULL);
 	rad_assert(request != NULL);
-
-	logs_add_flow(handler->request, "eaplist_add");
 
 	/*
 	 *	Generate State, since we've been asked to add it to
@@ -571,7 +569,7 @@ int eaplist_add(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 			if (last_logged < handler->timestamp) {
 				last_logged = handler->timestamp;
-				logs_add_flow(handler->request, "EAP_FAIL (Too many open sessions.  Try increasing \"max_sessions\" in the EAP module configuration)");
+				logs_add_flow(handler->request, "EAP FAILED (Too many open sessions)");
 			}				       
 		} else {
 			logs_add_flow(handler->request, "EAP_FAIL (rlm_eap: Internal error: failed to store handler)");
@@ -629,12 +627,12 @@ EAP_HANDLER *eaplist_find(rlm_eap_t *inst, REQUEST *request,
 	 *	Might not have been there.
 	 */
 	if (!handler) {
-		log_request(request, "EAP_FAIL (rlm_eap: No EAP session matching the State variable.)");
+		log_request(request, 1, "EAP_FAIL (rlm_eap: No EAP session matching the State variable.)");
 		return NULL;
 	}
 
 	if (handler->trips >= 50) {
-		log_request(request, "EAP_FAIL (More than 50 authentication packets for this EAP session.  Aborted.)");
+		log_request(request, 1, "EAP_FAIL (More than 50 authentication packets for this EAP session.  Aborted.)");
 		RDEBUG2("More than 50 authentication packets for this EAP session.  Aborted.");
 		eap_handler_free(inst, handler);
 		return NULL;

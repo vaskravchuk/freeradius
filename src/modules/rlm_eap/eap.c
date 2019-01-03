@@ -599,7 +599,7 @@ int eap_compose(EAP_HANDLER *handler)
 		}
 
 		/* Should never enter here */
-		radlog_eaphandler_portnox(handler, "EAP FAILED (rlm_eap: reply code %d is unknown, Rejecting the request)", reply->code);
+		radlog_eaphandler_portnox(handler, 1, "EAP FAILED (rlm_eap: reply code %d is unknown, Rejecting the request)", reply->code);
 		radlog(L_ERR, "rlm_eap: reply code %d is unknown, Rejecting the request.", reply->code);
 		request->reply->code = PW_AUTHENTICATION_REJECT;
 		reply->code = PW_EAP_FAILURE;
@@ -621,7 +621,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 
 	eap_msg = pairfind(request->packet->vps, PW_EAP_MESSAGE);
 	if (eap_msg == NULL) {
-		log_request(request, "EAP FAILED (No EAP-Message, not doing EAP)");
+		log_request(request, 1, "EAP FAILED (No EAP-Message, not doing EAP)");
 		RDEBUG2("No EAP-Message, not doing EAP");
 		return EAP_NOOP;
 	}
@@ -632,7 +632,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	vp = pairfind(request->packet->vps, PW_EAP_TYPE);
 	if (vp && vp->vp_integer == 0) {
-		log_request(request, "EAP FAILED (Found EAP-Message, but EAP-Type = None, so we're not doing EAP)");
+		log_request(request, 1, "EAP FAILED (Found EAP-Message, but EAP-Type = None, so we're not doing EAP)");
 		RDEBUG2("Found EAP-Message, but EAP-Type = None, so we're not doing EAP.");
 		return EAP_NOOP;
 	}
@@ -681,14 +681,14 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 		 */
 		if (proxy) {
 		do_proxy:
-			log_request(request, "EAP FAILED (Request is supposed to be proxied to Realm %s.  Not doing EAP)", proxy->vp_strvalue);
+			log_request(request, 1, "EAP FAILED (Request is supposed to be proxied to Realm %s.  Not doing EAP)", proxy->vp_strvalue);
 			RDEBUG2("Request is supposed to be proxied to Realm %s.  Not doing EAP.", proxy->vp_strvalue);
 			return EAP_NOOP;
 		}
 
 		RDEBUG2("Got EAP_START message");
 		if ((eap_ds = eap_ds_alloc()) == NULL) {
-			log_request(request, "EAP FAILED (EAP Start failed in allocation)");
+			log_request(request, 1, "EAP FAILED (EAP Start failed in allocation)");
 			RDEBUG2("EAP Start failed in allocation");
 			return EAP_FAIL;
 		}
@@ -725,7 +725,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	if (eap_msg->length < (EAP_HEADER_LEN + 1)) {
 		if (proxy) goto do_proxy;
 
-		log_request(request, "EAP FAILED (Ignoring EAP-Message which is too short to be meaningful)");
+		log_request(request, 1, "EAP FAILED (Ignoring EAP-Message which is too short to be meaningful)");
 		RDEBUG2("Ignoring EAP-Message which is too short to be meaningful.");
 		return EAP_FAIL;
 	}
@@ -760,7 +760,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	if ((eap_msg->vp_octets[0] == 0) ||
 	    (eap_msg->vp_octets[0] > PW_EAP_MAX_CODES)) {
-		log_request(request, "EAP FAILED (Unknown EAP packet)");
+		log_request(request, 1, "EAP FAILED (Unknown EAP packet)");
 		RDEBUG2("Unknown EAP packet");
 	} else {
 		RDEBUG2("EAP packet type %s id %d length %d",
@@ -777,7 +777,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	 */
 	if ((eap_msg->vp_octets[0] != PW_EAP_REQUEST) &&
 	    (eap_msg->vp_octets[0] != PW_EAP_RESPONSE)) {
-		log_request(request, "EAP FAILED (Ignoring EAP packet which we don't know how to handle)");
+		log_request(request, 1, "EAP FAILED (Ignoring EAP packet which we don't know how to handle)");
 		RDEBUG2("Ignoring EAP packet which we don't know how to handle.");
 		return EAP_FAIL;
 	}
@@ -795,7 +795,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	    ((eap_msg->vp_octets[4] == 0) ||
 	     (eap_msg->vp_octets[4] > PW_EAP_MAX_TYPES) ||
 	     (inst->types[eap_msg->vp_octets[4]] == NULL))) {
-		log_request(request, "EAP FAILED (Ignoring Unknown EAP type)");
+		log_request(request, 1, "EAP FAILED (Ignoring Unknown EAP type)");
 		RDEBUG2(" Ignoring Unknown EAP type");
 		return EAP_NOOP;
 	}
@@ -821,7 +821,7 @@ int eap_start(rlm_eap_t *inst, REQUEST *request)
 	    ((eap_msg->vp_octets[5] == 0) ||
 	     (eap_msg->vp_octets[5] > PW_EAP_MAX_TYPES) ||
 	     (inst->types[eap_msg->vp_octets[5]] == NULL))) {
-		log_request(request, "EAP FAILED (Ignoring NAK with request for unknown EAP type)");
+		log_request(request, 1, "EAP FAILED (Ignoring NAK with request for unknown EAP type)");
 		RDEBUG2("Ignoring NAK with request for unknown EAP type");
 		return EAP_NOOP;
 	}
@@ -889,7 +889,7 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
  	     (eap_packet->code != PW_EAP_REQUEST)) ||
 	    (eap_packet->data[0] <= 0) ||
 	    (eap_packet->data[0] > PW_EAP_MAX_TYPES)) {
-		log_request(request, "EAP FAILED (Badly formatted EAP Message: Ignoring the packet)");
+		log_request(request, 1, "EAP FAILED (Badly formatted EAP Message: Ignoring the packet)");
 
 		radlog_request(L_AUTH, 0, request, 
 			       "Badly formatted EAP Message: Ignoring the packet");
@@ -898,7 +898,7 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
 
 	/* we don't expect notification, but we send it */
 	if (eap_packet->data[0] == PW_EAP_NOTIFICATION) {
-		log_request(request, "EAP FAILED (Got NOTIFICATION, Ignoring the packet)");
+		log_request(request, 1, "EAP FAILED (Got NOTIFICATION, Ignoring the packet)");
 		radlog_request(L_AUTH, 0, request, "Got NOTIFICATION, "
 			       "Ignoring the packet");
 		return EAP_INVALID;
@@ -1022,7 +1022,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 	if (eap_packet->data[0] != PW_EAP_IDENTITY) {
 		handler = eaplist_find(inst, request, eap_packet);
 		if (handler == NULL) {
-			log_request(request, "EAP FAILED (Either EAP-request timed out OR EAP-response to an unknown EAP-request)");
+			log_request(request, 1, "EAP FAILED (Either EAP-request timed out OR EAP-response to an unknown EAP-request)");
 			/* Either send EAP_Identity or EAP-Fail */
 			RDEBUG("Either EAP-request timed out OR"
 			       " EAP-response to an unknown EAP-request");
@@ -1041,7 +1041,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		if ((eap_packet->data[0] != PW_EAP_NAK) &&
 		    (eap_packet->data[0] != handler->eap_type)) {
-			log_request(request, "EAP FAILED (Response appears to match, but EAP type is wrong)");
+			log_request(request, 1, "EAP FAILED (Response appears to match, but EAP type is wrong)");
 			RDEBUG("Response appears to match, but EAP type is wrong.");
 			free(*eap_packet_p);
 			*eap_packet_p = NULL;
@@ -1101,7 +1101,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		handler->identity = eap_identity(request, eap_packet);
 		if (handler->identity == NULL) {
-			log_request(request, "EAP FAILED (Identity Unknown, authentication failed)");
+			log_request(request, 1, "EAP FAILED (Identity Unknown, authentication failed)");
 			RDEBUG("Identity Unknown, authentication failed");
 			free(*eap_packet_p);
 			*eap_packet_p = NULL;
@@ -1138,7 +1138,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 						*/
                        if (strncmp(handler->identity, vp->vp_strvalue,
 				   MAX_STRING_LEN) != 0) {
-								log_request(request, "EAP FAILED (Identity (%s) does not match User-Name (%s).  Authentication failed)", 
+								log_request(request, 1, "EAP FAILED (Identity (%s) does not match User-Name (%s).  Authentication failed)", 
 																	handler->identity, vp->vp_strvalue);
                                RDEBUG("Identity (%s) does not match User-Name (%s).  Authentication failed.",
 				      handler->identity, vp->vp_strvalue);

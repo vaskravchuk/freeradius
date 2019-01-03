@@ -30,243 +30,382 @@ RCSID("$Id$")
 
 extern int allow_portnox_request_log;
 
-void vp_to_string(char *out, size_t outlen, VALUE_PAIR *vp)
-{
-	size_t		len;
-	const char	*name;
-	char		namebuf[128];
-
-	out[0] = 0;
-	if (!vp) return 0;
-
-	name = vp->name;
-	len = 0;
-
-	if (!name || !*name) {
-		if (!vp_print_name(namebuf, sizeof(namebuf), vp->attribute)) {
-			return 0;
+int is_contains(char **arr, size_t size, char* str) {
+	int found = 0;
+	for (int i = 0; i < size; ++i) {
+		char* item = arr[i];
+		if (strcmp(item, str) == 0) {
+			found = 1;
+			break;
 		}
-		name = namebuf;
 	}
 
-	if( vp->flags.has_tag ) {
-		snprintf(out, outlen, "%s:%d:", name, vp->flags.tag);
-		len = strlen(out);
-
-	} else {
-	    snprintf(out, outlen, "%s:", name);
-		len = strlen(out);
-	}
-	if (outlen - len > 0) out[len++]='\"';
-	vp_prints_value(out + len, outlen - len, vp, 0);
-	len = strlen(out);
-	if (outlen - len > 0) out[len++]='\"';
+	return found;
 }
 
-void request_struct_to_string(char *out, size_t outlen, REQUEST *request, int full_info, int reply)
-{
+int json_escape(char* str, char* out, size_t outlen) {
+	int offset = 0;
+	int len = 0;
+	char* rep = NULL;
+	int i = 0;
+	char chr = 0;
+
+	for(;(chr = str[i]) && (i < outlen); i++) {
+		switch (chr) {
+            case '\\': rep = "\\\\"; break;
+            case '"': rep = "\\\""; break;
+            case '/': rep = "\\/"; break;
+            case '\b': rep = "\\b"; break;
+            case '\f': rep = "\\f"; break;
+            case '\n': rep = "\\n"; break;
+            case '\r': rep = "\\r"; break;
+            case '\t': rep = "\\t"; break;
+            default: rep = NULL; break;
+        }
+
+		if (rep != NULL) {
+			len = snprintf(out + offset, outlen - offset, "%s", rep);
+			len = len < 0 ? 0 : len;
+			offset += len;
+        }
+		else {
+			out[offset++] = chr;
+        }
+	}
+
+	return offset;
+}
+
+int replace_char(char *str, char orig, char rep) {
+    char *ix = str;
+    int n = 0;
+    while((ix = strchr(ix, orig)) != NULL) {
+        *ix++ = rep;
+        n++;
+    }
+    return n;
+}
+
+int lower(char *str) {
+	for(int i = 0; str[i]; i++) {
+		str[i] = tolower(str[i]);
+	}
+}
+
+int log_add_json_string(char *out, size_t outlen, const char *key, const char *value) {
+	int len = 0;
+
+	len = snprintf(out, outlen, "\"%s\":\"", key);
+	len = len < 0 ? 0 : len;
+
+	len += json_escape(value, out + len, outlen - len);
+
+	if (outlen - len > 0) out[len++] = '\"';
+	if (outlen - len > 0) out[len++] = ',';
+
+	return len < 0 ? 0 : len;
+}
+
+int log_add_json_int(char *out, size_t outlen, const char *key, const int value) {
+	int len = snprintf(out, outlen, "\"%s\":\"%d\",", key, value);
+	return len < 0 ? 0 : len;
+}
+
+int log_add_json_mac(char *out, size_t outlen, const char *key, VALUE_PAIR *vps) {
+	static char *mac_attrs[] = { "Calling-Station-Id" };
+	static char *mac_attrs_size = sizeof(mac_attrs) / sizeof(mac_attrs[0]);
+
+	int len = 0;
+	char mac_buffer[24];
+	memset(mac_buffer, 0, sizeof(mac_buffer));
+
+	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
+		if (!vp->name || !(*vp->name)) return;
+		if (is_contains(mac_attrs, mac_attrs_size, vp->name)) {
+			vp_prints_value(mac_buffer, sizeof(mac_buffer), vp, 0);
+			break;	
+		}
+	}
+
+	if (mac_buffer[0]) {
+		replace_char(mac_buffer, '-', ':');
+		lower(mac_buffer);
+		len += log_add_json_string(out + len, outlen - len, key, mac_buffer);
+	}
+
+	return len;
+}
+
+int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps, int full_info, int reply) {
 	/* 
 	 * Remove not interested attributes
 	 * skip nt-key as password
 	 */
-	static char *except_attrs[] = { "EAP-Message", "Message-Authenticator", "Tmp-String-0" };
+	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "User-Password", "Tmp-String-0" };
+	static char *must_attrs[] = { "State", "User-Name", "NAS-IP-Address", "EAP-Type" };
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
+	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);
+
+	char buf[1024];
+	size_t buf_offset = 0;
+	memset(buf, 0, sizeof(buf));
+	int len = 0;
+
+	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
+		if (!vp->name || !(*vp->name)) return;
+		
+		// Do not print except_attrs
+		if (is_contains(except_attrs, except_attrs_size, vp->name)) {
+			continue;	
+		}
+
+		if (!full_info && !is_contains(must_attrs, must_attrs_size, vp->name)) {
+			continue;
+		}
+
+		// print attribute
+		buf_offset += vp_to_string(buf + buf_offset, sizeof(buf) - buf_offset, vp);
+	}
+	if (buf[buf_offset-1] == ',') buf[buf_offset-1]=0;
+	if (buf[0]) {
+		len = snprintf(out + len, outlen - len, "\"%s\":{%s},", key, buf);
+	}
+
+	return len < 0 ? 0 : len;
+}
+
+int log_add_json_clt_addrs(char *out, size_t outlen, const char *key, RADIUS_PACKET *packet) {
+	int len = 0;
+
+	snprintf(out + len, outlen - len, "\"%s\":\"", key);
+	len = strlen(out);
+
+	// Source IP address
+	if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
+		inet_ntop(packet->src_ipaddr.af,
+				 &packet->src_ipaddr.ipaddr,
+				 out + len, outlen - len);
+		len = strlen(out);
+		snprintf(out + len, outlen - len, ":%d", packet->src_port);
+		len = strlen(out);
+	} else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
+		inet_ntop(packet->dst_ipaddr.af,
+				 &packet->dst_ipaddr.ipaddr,
+				 out + len, outlen - len);
+		len = strlen(out);
+		snprintf(out + len, outlen - len, ":%d", packet->dst_port);
+		len = strlen(out);
+	}
+	if (outlen - len > 0) out[len++] = '\"';
+	if (outlen - len > 0) out[len++] = ',';
+
+	return len;
+}
+
+int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *request) {
+	int len = 0;
+	RADIUS_PACKET *packet;
+
+	packet = request->packet;
+
+	snprintf(out + len, outlen - len, "\"%s\":\"", key);
+	len = strlen(out);
+
+	// Source IP address
+	if (packet && *((uint32_t*)&packet->src_ipaddr.ipaddr) == INADDR_ANY) {
+		if (packet->src_port == 0 && request->client) {
+			// can be in proxy or tunneld case 
+			snprintf(out + len, outlen - len, "%s", request->client->shortname);
+		}
+		else {
+			snprintf(out + len, outlen - len, "%d", packet->src_port);
+		}
+	} else if (request && *((uint32_t*)&packet->dst_ipaddr.ipaddr) == INADDR_ANY) {
+		if (packet->dst_port == 0 && request->client) {
+			// can be in proxy or tunneld case 
+			snprintf(out + len, outlen - len, "%s", request->client->shortname);
+		}
+		else {
+			snprintf(out + len, outlen - len, "%d", packet->dst_port);
+		}
+	}
+	else if (request->client) {
+		snprintf(out + len, outlen - len, "%s", request->client->shortname);
+	}
+	len = strlen(out);
+
+	if (outlen - len > 0) out[len++] = '\"';
+	if (outlen - len > 0) out[len++] = ',';
+
+	return len;
+}
+
+int vp_to_string(char *out, size_t outlen, VALUE_PAIR *vp) {
+	size_t len;
+	char namebuf[128];
+	char valuebuf[512];
+	memset(namebuf, 0, sizeof(namebuf));
+	memset(valuebuf, 0, sizeof(namebuf));
+
+	out[0] = 0;
+	if (!vp) return 0;
+
+	len = 0;
+
+	if (!vp->name || !*vp->name) {
+		if (!vp_print_name(namebuf, sizeof(namebuf), vp->attribute)) {
+			return 0;
+		}
+	}
+	else {
+		memcpy(namebuf, vp->name, strlen(vp->name));
+	}
+	if(vp->flags.has_tag) {
+		int buf_size = strlen(namebuf);
+		snprintf(namebuf + buf_size, sizeof(namebuf) - buf_size, ":%d", vp->flags.tag);
+	}
+
+	if (!vp_prints_value(valuebuf, sizeof(valuebuf), vp, 0)) {
+		return 0;
+	}
+
+	len += log_add_json_string(out + len, outlen - len, namebuf, valuebuf);
+
+	return len;
+}
+
+void request_struct_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info, int reply) {
 	size_t len = 0;
 	RADIUS_PACKET *packet = NULL;
 
-	packet = reply ? request->reply : request->packet;
+	if (outlen - len > 0) out[len++] = '{';
 
-	char *desc = reply ? request->logs->reply_desc : request->logs->request_desc;
-	if (desc[0]) {
-		snprintf(out + len, outlen - len, "STEP:\"%s\" ", desc);
-		len = strlen(out);
-	}
+	// print direction
+	len += log_add_json_string(out + len, outlen - len, "DIR", reply ? "out" : "in");
+	// print msg
+	len += log_add_json_string(out + len, outlen - len, "MSG", msg);
 
-	// Packet Type
-	if (packet) {
-		if ((packet->code > 0) && (packet->code < FR_MAX_PACKET_CODE)) {
-			snprintf(out + len, outlen - len, "TYPE:\"%s\" ", fr_packet_codes[packet->code]);
-		} else {
-			snprintf(out + len, outlen - len, "TYPE:\"%d\" ", packet->code);
-		}
-		len = strlen(out);
-	}
+	if (request) {
+		packet = reply ? request->reply : request->packet;
 
-	if (request->logs->eap_type[0]) {
-		snprintf(out + len, outlen - len, "EAP_TYPE:\"%s\" ", request->logs->eap_type);
-		len = strlen(out);	
-	}
+		// print step
+		char *desc = reply ? request->logs->reply_desc : request->logs->request_desc;
+		if (desc[0])
+			len += log_add_json_string(out + len, outlen - len, "STEP", desc);
 
-	if (request->logs->trips >= 0) {
-		snprintf(out + len, outlen - len, "TRIPS:\"%d\" ", request->logs->trips);
-		len = strlen(out);	
-	}
-
-	// print context_id
-	snprintf(out + len, outlen - len, "CID:\"%s\" ", request->context_id);
-	len = strlen(out);
-
-	// print request_id
-	snprintf(out + len, outlen - len, "RID:\"%s\" ", request->request_id);
-	len = strlen(out);	
-
-	if (packet) {
-		// Source IP address
-		if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
-			inet_ntop(packet->src_ipaddr.af,
-					 &packet->src_ipaddr.ipaddr,
-					 out + len, outlen - len);
-			len = strlen(out);
-		}
-		snprintf(out + len, outlen - len, ":%d", packet->src_port);
-		len = strlen(out);
-		snprintf(out + len, outlen - len, "->");
-		len += 2;
-
-		// Destination IP address
-		if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
-			inet_ntop(packet->dst_ipaddr.af,
-					 &packet->dst_ipaddr.ipaddr,
-					 out + len, outlen - len);
-			len = strlen(out);
-		}
-		if (request->packet->dst_port == 0) {
-			// can be in proxy or tunneld case 
-			snprintf(out + len, outlen - len, ":%s", request->client->shortname);
-		}
-		else {
-			snprintf(out + len, outlen - len, ":%d", packet->dst_port);
-		}
-		len = strlen(out);
-
-		// print attributes
-		if (packet->vps) {
-			if (outlen - len > 0) out[len++] = ' ';
-			snprintf(out + len, outlen - len, "AVP:[");
-			len = strlen(out);
-			for (VALUE_PAIR *vp = packet->vps; vp; vp = vp->next) {
-				int need_escape = 0;
-
-				// Do not print except_attrs
-				if (vp->name && *vp->name) {
-					for (int i = 0; i < except_attrs_size; ++i) {
-						char* esc_name = except_attrs[i];
-						if (strcmp(esc_name, vp->name) == 0) {
-							// escaped attr 
-							need_escape = 1;
-							break;
-						}
-					}
-				}
-
-				if (need_escape) {
-					continue;
-				}
-
-				// print attribute
-				vp_to_string(out + len, outlen - len, vp);
-				len = strlen(out);
-				if (outlen - len > 0) out[len++] = ' ';
+		// print packet Type
+		if (packet) {
+			if ((packet->code > 0) && (packet->code < FR_MAX_PACKET_CODE)) {
+				len += log_add_json_string(out + len, outlen - len, "TYPE", fr_packet_codes[packet->code]);
+			} else {
+				len += log_add_json_int(out + len, outlen - len, "TYPE", packet->code);
 			}
-			if (outlen - len > 0) out[len++] = ']';
 		}
+
+		// print current module name
+		if (full_info && request->logs->eap_type[0])
+			len += log_add_json_string(out + len, outlen - len, "MODULE", request->logs->eap_type);
+
+		// print packet number
+		if (!reply && request->logs->trips >= 0)
+			len += log_add_json_int(out + len, outlen - len, "N", request->logs->trips);
+
+
+		// print context_id
+		len += log_add_json_string(out + len, outlen - len, "CID", request->context_id);
+		// print request_id
+		len += log_add_json_string(out + len, outlen - len, "RID", request->request_id);
+		// print local port
+		len += log_add_json_port_addrs(out + len, outlen - len, "PORT", request);
+
+		// Mac inside input attrs
+		if (request->packet && request->packet->vps) {
+			len += log_add_json_mac(out + len, outlen - len, "MAC", request->packet->vps);
+		}
+
+		if (packet) {
+			// print address
+			len += log_add_json_clt_addrs(out + len, outlen - len, "CLT_ADDRS", packet);
+
+			// print attributes
+			if (packet->vps) {
+				len += log_add_json_vps(out + len, outlen - len, "ATTRS", packet->vps, full_info, reply);
+			}
+		}
+
+		// tls state
+		if (!reply && 
+			(full_info || !desc[0]) && 
+			request->logs && request->logs->tls[0])
+			len += log_add_json_string(out + len, outlen - len, "TLS", request->logs->tls);
+
+		// common state
+		if (!reply && 
+			(full_info || !desc[0]) && 
+			request->logs && request->logs->flow[0])
+			len += log_add_json_string(out + len, outlen - len, "FLOW", request->logs->flow);
 	}
-
-	// tls state
-	if (full_info && request->logs && request->logs->tls[0]) {
-		if (outlen - len > 0) out[len++] = ' ';
-		snprintf(out + len, outlen - len, "TLS:\"%s\"", request->logs->tls);
-		len = strlen(out);
-	}	
-
-	// common state
-	if (full_info && request->logs && request->logs->flow[0]) {
-		if (outlen - len > 0) out[len++] = ' ';
-		snprintf(out + len, outlen - len, "FLOW:\"%s\" ", request->logs->flow);
-		len = strlen(out);
-	}
+	if (out[len-1] == ',') --len;
+	if (outlen - len > 0) out[len++] = '}';
 }
 
-void request_to_string(char *out, size_t outlen, REQUEST *request, int full_info)
-{
-	request_struct_to_string(out, outlen, request, full_info, 0);
+void request_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info) {
+	request_struct_to_string(out, outlen, request, msg, full_info, 0);
 }
 
-void response_to_string(char *out, size_t outlen, REQUEST *request, int full_info) 
-{
-	request_struct_to_string(out, outlen, request, full_info, 1);
+void response_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info) {
+	request_struct_to_string(out, outlen, request, msg, full_info, 1);
 }
 
-void log_request(REQUEST *request, const char *msg, ...)
-{
+void log_request(REQUEST *request, int full_info, const char *msg, ...) {
 	if (!allow_portnox_request_log) {
 		return;
 	}
 	
 	size_t len = 0;
-	char buffer[2048];
+	char buffer[4096];
+	char msg_buffer[256];
 	memset(buffer, 0, sizeof(buffer));
-
-	// print direction
-	snprintf(buffer + len, sizeof(buffer) - len, "[%s] ", "IN");
-	len = strlen(buffer);
+	memset(msg_buffer, 0, sizeof(msg_buffer));
 
 	// print message
 	if (msg) {
-		snprintf(buffer + len, sizeof(buffer) - len, "MSG:\"");
-		len = strlen(buffer);
 		va_list ap;
 		va_start(ap, msg);
-		vsnprintf(buffer + len, sizeof(buffer) - len, msg, ap);
+		vsnprintf(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
-		len = strlen(buffer);
-		if (sizeof(buffer) - len > 0) buffer[len++] = '\"';
 	}
 
-	if (request) {
-		if (sizeof(buffer) - len > 0) buffer[len++] = ' ';
-		request_to_string(buffer + len, sizeof(buffer) - len, request, 1);
-	}
+	request_to_string(buffer + len, sizeof(buffer) - len, request, msg_buffer, full_info);
 
 	radlog(L_ERR, buffer);
 }
 
-void log_response(REQUEST *request, const char *msg, ...)
-{
+void log_response(REQUEST *request, const char *msg, ...) {
 	if (!allow_portnox_request_log) {
 		return;
 	}
 	
 	size_t len = 0;
-	char buffer[2048];
+	char buffer[4096];
+	char msg_buffer[64];
 	memset(buffer, 0, sizeof(buffer));
-
-	// print direction
-	snprintf(buffer + len, sizeof(buffer) - len, "[%s] ", "OUT");
-	len = strlen(buffer);
+	memset(msg_buffer, 0, sizeof(msg_buffer));
 
 	// print message
 	if (msg) {
-		snprintf(buffer + len, sizeof(buffer) - len, "MSG:\"");
-		len = strlen(buffer);
 		va_list ap;
 		va_start(ap, msg);
-		vsnprintf(buffer + len, sizeof(buffer) - len, msg, ap);
+		vsnprintf(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
-		len = strlen(buffer);
-		if (sizeof(buffer) - len > 0) buffer[len++] = '\"';
 	}
 
-	if (request) {
-		if (sizeof(buffer) - len > 0) buffer[len++] = ' ';
-		response_to_string(buffer + len, sizeof(buffer) - len, request, 0);
-	}
+	response_to_string(buffer + len, sizeof(buffer) - len, request, msg_buffer, 0);
 
 	radlog(L_ERR, buffer);
 }
 
-void logs_add_flow(REQUEST *request, const char *msg, ...) 
-{
+void logs_add_flow(REQUEST *request, const char *msg, ...) {
 	size_t len;
 
 	len = strlen(request->logs->flow); 
@@ -285,8 +424,7 @@ void logs_add_flow(REQUEST *request, const char *msg, ...)
 	request->logs->flow[len] = 0;
 }
 
-void logs_add_tls(REQUEST *request, const char *msg, ...) 
-{
+void logs_add_tls(REQUEST *request, const char *msg, ...) {
 	size_t len;
 
 	len = strlen(request->logs->tls); 
@@ -305,8 +443,7 @@ void logs_add_tls(REQUEST *request, const char *msg, ...)
 	request->logs->tls[len] = 0;
 }
 
-void logs_set_eaptype(REQUEST *request, const char *msg, ...) 
-{
+void logs_set_eaptype(REQUEST *request, const char *msg, ...) {
 	size_t len;
 
 	memset(request->logs->eap_type, 0, sizeof(request->logs->eap_type));
@@ -319,13 +456,11 @@ void logs_set_eaptype(REQUEST *request, const char *msg, ...)
 	request->logs->eap_type[len] = 0;
 }
 
-void logs_set_trips(REQUEST *request, int trips) 
-{
+void logs_set_trips(REQUEST *request, int trips) {
 	request->logs->trips = trips;
 }
 
-void logs_set_request_desc(REQUEST *request, int overwrite, const char *msg, ...) 
-{
+void logs_set_request_desc(REQUEST *request, int overwrite, const char *msg, ...) {
 	if (!overwrite && request->logs->request_desc[0]) {
 		return;
 	}
@@ -342,8 +477,7 @@ void logs_set_request_desc(REQUEST *request, int overwrite, const char *msg, ...
 	request->logs->request_desc[len] = 0;
 }
 
-void logs_set_reply_desc(REQUEST *request, int overwrite, const char *msg, ...) 
-{
+void logs_set_reply_desc(REQUEST *request, int overwrite, const char *msg, ...) {
 	if (!overwrite && request->logs->reply_desc[0]) {
 		return;
 	}
@@ -360,7 +494,6 @@ void logs_set_reply_desc(REQUEST *request, int overwrite, const char *msg, ...)
 	request->logs->reply_desc[len] = 0;
 }
 
-void reset_logs(REQUEST *request) 
-{
+void reset_logs(REQUEST *request) {
 	memset(request->logs, 0, sizeof(LOG_DESC));
 }

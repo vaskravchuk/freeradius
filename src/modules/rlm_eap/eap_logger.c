@@ -8,7 +8,7 @@
 
 extern int allow_portnox_request_log;
 
-void radlog_eaphandler_portnox(EAP_HANDLER *handler, const char *msg, ...) 
+void radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char *msg, ...) 
 {
 	if (!allow_portnox_request_log) {
 		return;
@@ -35,7 +35,7 @@ void radlog_eaphandler_portnox(EAP_HANDLER *handler, const char *msg, ...)
 		logs_set_eaptype(request, eaptype_name);
 		logs_set_trips(request, handler->trips);
 	
-		log_request(request, buffer);
+		log_request(request, full_info, buffer);
 	}
 	else {
 		radlog(L_ERR, buffer);

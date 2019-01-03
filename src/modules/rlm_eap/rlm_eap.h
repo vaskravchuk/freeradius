@@ -123,6 +123,6 @@ void	    	generate_key(void);
 VALUE_PAIR  	*generate_state(time_t timestamp);
 int	    		verify_state(VALUE_PAIR *state, time_t timestamp);
 
-void 			radlog_eaphandler_portnox(EAP_HANDLER *handler, const char * msg, ...);
+void 			radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char * msg, ...);
 
 #endif /*_RLM_EAP_H*/

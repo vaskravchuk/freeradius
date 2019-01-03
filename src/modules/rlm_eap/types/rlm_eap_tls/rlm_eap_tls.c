@@ -1100,7 +1100,7 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 						&answer, 1) != 0) {
 				handler->validation_status = HANDER_VALIDATION_FAILED;
 				logs_add_flow(handler->request, "EAPTLS BE FAILED");
-				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
+				radlog(L_INFO, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
 			} else {
 				/*
 				 * try save BE answer, for sending Portnox BE attributes with Access-Accept packet to NAS

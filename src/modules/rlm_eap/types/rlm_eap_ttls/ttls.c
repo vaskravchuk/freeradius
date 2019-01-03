@@ -55,7 +55,7 @@ static int diameter_verify(REQUEST *request,
 		hdr_len = 12;
 
 		if (remaining < hdr_len) {
-			log_request(request, "EAPTTLS FAILED (Diameter attribute is too small (%u) to contain a Diameter header)", remaining);
+			log_request(request, 1, "EAPTTLS FAILED (Diameter attribute is too small (%u) to contain a Diameter header)", remaining);
 			RDEBUG2(" Diameter attribute is too small (%u) to contain a Diameter header", remaining);
 			return 0;
 		}
@@ -67,7 +67,7 @@ static int diameter_verify(REQUEST *request,
 
 		if ((data[4] & 0x80) != 0) {
 			if (remaining < 16) {
-				log_request(request, "EAPTTLS FAILED (Diameter attribute is too small to contain a Diameter header with Vendor-Id)");
+				log_request(request, 1, "EAPTTLS FAILED (Diameter attribute is too small to contain a Diameter header with Vendor-Id)");
 				RDEBUG2(" Diameter attribute is too small to contain a Diameter header with Vendor-Id");
 				return 0;
 			}
@@ -81,7 +81,7 @@ static int diameter_verify(REQUEST *request,
 		 *	Too short or too long is bad.
 		 */
 		if (length <= (hdr_len - 4)) {
-			log_request(request, "EAPTTLS FAILED (Tunneled attribute %u is too short (%u < %u) to contain anything useful)", attr, length, hdr_len);
+			log_request(request, 1, "EAPTTLS FAILED (Tunneled attribute %u is too short (%u < %u) to contain anything useful)", attr, length, hdr_len);
 			RDEBUG2("Tunneled attribute %u is too short (%u < %u) to contain anything useful.", attr, length, hdr_len);
 			return 0;
 		}
@@ -113,7 +113,7 @@ static int diameter_verify(REQUEST *request,
 		 *	of the packet, die.
 		 */
 		if (remaining < length) {
-			log_request(request, "EAPTTLS FAILED (ERROR! Diameter attribute overflows packet)");
+			log_request(request, 1, "EAPTTLS FAILED (ERROR! Diameter attribute overflows packet)");
 			RDEBUG2("ERROR! Diameter attribute overflows packet!");
 			return 0;
 		}
@@ -218,7 +218,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 		 */
 		vp = paircreate(attr, PW_TYPE_OCTETS);
 		if (!vp) {
-			log_request(request, "EAPTTLS FAILED (diameter2vp: Failed creating attribute)");
+			log_request(request, 1, "EAPTTLS FAILED (diameter2vp: Failed creating attribute)");
 			RDEBUG2("diameter2vp: Failed creating attribute %u", attr);
 			pairfree(&first);
 			return NULL;
@@ -317,7 +317,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 
 					vp = paircreate(attr, PW_TYPE_OCTETS);
 					if (!vp) {
-						log_request(request, "EAPTTLS FAILED (Failed creating EAP-Message)");
+						log_request(request, 1, "EAPTTLS FAILED (Failed creating EAP-Message)");
 						RDEBUG2("Failed creating EAP-Message");
 						pairfree(&first);
 						return NULL;
@@ -379,7 +379,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 		case PW_MSCHAP_CHALLENGE:
 			if ((vp->length < 8) ||
 			    (vp->length > 16)) {
-				log_request(request, "EAPTTLS FAILED (Tunneled challenge has invalid length)");
+				log_request(request, 1, "EAPTTLS FAILED (Tunneled challenge has invalid length)");
 				RDEBUG("Tunneled challenge has invalid length");
 				pairfree(&first);
 				pairfree(&vp);
@@ -393,7 +393,7 @@ static VALUE_PAIR *diameter2vp(REQUEST *request, SSL *ssl,
 
 				if (memcmp(challenge, vp->vp_octets,
 					   vp->length) != 0) {
-					log_request(request, "EAPTTLS FAILED (Tunneled challenge is incorrect)");
+					log_request(request, 1, "EAPTTLS FAILED (Tunneled challenge is incorrect)");
 					RDEBUG("Tunneled challenge is incorrect");
 					pairfree(&first);
 					pairfree(&vp);
@@ -468,7 +468,7 @@ static int vp2diameter(REQUEST *request, tls_session_t *tls_session, VALUE_PAIR 
 		 *	Too much data: die.
 		 */
 		if ((total + vp->length + 12) >= sizeof(buffer)) {
-			log_request(request, "EAPTTLS FAILED (output buffer is full)");
+			log_request(request, 1, "EAPTTLS FAILED (output buffer is full)");
 			RDEBUG2("output buffer is full!");
 			return 0;
 		}
