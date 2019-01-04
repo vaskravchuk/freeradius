@@ -354,7 +354,7 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 		 *	They should be the oldest ones.
 		 */
 		if ((timestamp - handler->timestamp) > inst->timer_limit) {
-			radlog_eaphandler_portnox(handler, 1, "EAP HANDLER_EXPIRE");
+			radlog_eaphandler_portnox(handler, 1, "EAP FAILED (EXPIRED)");
 			/* 
 			 * send additional log
 			 */
@@ -627,12 +627,12 @@ EAP_HANDLER *eaplist_find(rlm_eap_t *inst, REQUEST *request,
 	 *	Might not have been there.
 	 */
 	if (!handler) {
-		log_request(request, 1, "EAP_FAIL (rlm_eap: No EAP session matching the State variable.)");
+		log_request(request, 1, "EAP FAILED (rlm_eap: No EAP session matching the State variable.)");
 		return NULL;
 	}
 
 	if (handler->trips >= 50) {
-		log_request(request, 1, "EAP_FAIL (More than 50 authentication packets for this EAP session.  Aborted.)");
+		log_request(request, 1, "EAP FAILED (More than 50 authentication packets for this EAP session.  Aborted.)");
 		RDEBUG2("More than 50 authentication packets for this EAP session.  Aborted.");
 		eap_handler_free(inst, handler);
 		return NULL;

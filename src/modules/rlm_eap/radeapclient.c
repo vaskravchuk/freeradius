@@ -145,7 +145,7 @@ void log_request(UNUSED REQUEST *request, UNUSED int full_info, const char *msg,
 	fputc('\n', stderr);
 }
 
-void log_response(REQUEST *request, const char *msg, ...) 
+void log_response(UNUSED REQUEST *request, const char *msg, ...) 
 {
 	va_list ap;
 

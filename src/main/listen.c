@@ -112,7 +112,7 @@ static size_t xlat_listen(UNUSED void *instance, REQUEST *request,
  *	Find a per-socket client.
  */
 RADCLIENT *client_listener_find(const rad_listen_t *listener,
-				const fr_ipaddr_t *ipaddr, int src_port, char* uuid)
+				const fr_ipaddr_t *ipaddr, int src_port, const char* uuid)
 {
 #ifdef WITH_DYNAMIC_CLIENTS
 	int rcode;

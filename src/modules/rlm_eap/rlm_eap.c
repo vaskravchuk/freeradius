@@ -304,7 +304,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	inst = (rlm_eap_t *) instance;
 
 	if (!pairfind(request->packet->vps, PW_EAP_MESSAGE)) {
-		log_request(request, 1, "EAP_FAIL (ERROR: You set 'Auth-Type = EAP' for a request that does not contain an EAP-Message attribute!)");
+		log_request(request, 1, "EAP FAILED (ERROR: You set 'Auth-Type = EAP' for a request that does not contain an EAP-Message attribute!)");
 		return RLM_MODULE_INVALID;
 	}
 
@@ -313,7 +313,7 @@ static int eap_authenticate(void *instance, REQUEST *request)
 	 */
 	eap_packet = eap_vp2packet(request->packet->vps);
 	if (eap_packet == NULL) {
-		log_request(request, 1, "EAP_FAIL (Malformed EAP Message)");
+		log_request(request, 1, "EAP FAILED (Malformed EAP Message)");
 		return RLM_MODULE_FAIL;
 	}
 
@@ -569,7 +569,7 @@ static int eap_authorize(void *instance, REQUEST *request)
 	case EAP_NOOP:
                 return RLM_MODULE_NOOP;
 	case EAP_FAIL:
-		log_request(request, 1, "EAP_FAIL (eap_authorize RLM_MODULE_FAIL)");
+		log_request(request, 1, "EAP FAILED (eap_authorize RLM_MODULE_FAIL)");
 		return RLM_MODULE_FAIL;
 	case EAP_FOUND:
 		return RLM_MODULE_HANDLED;
@@ -593,7 +593,7 @@ static int eap_authorize(void *instance, REQUEST *request)
 	    (vp->vp_integer != PW_AUTHTYPE_REJECT)) {
 		vp = pairmake("Auth-Type", inst->xlat_name, T_OP_EQ);
 		if (!vp) {
-			log_request(request, 1, "EAP_FAIL (eap_authorize Failed to create Auth-Type)");
+			log_request(request, 1, "EAP FAILED (eap_authorize Failed to create Auth-Type)");
 			RDEBUG2("Failed to create Auth-Type %s: %s\n",
 				inst->xlat_name, fr_strerror());
 			return RLM_MODULE_FAIL;

@@ -17,7 +17,6 @@ void radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char *
 	char namebuf[64];
 	char buffer[256];
 	const char *eaptype_name;
-	size_t len = 0;
 	REQUEST *request = NULL;
 
 	memset(namebuf, 0, sizeof(namebuf));
@@ -27,7 +26,7 @@ void radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char *
 
 	va_list ap;
 	va_start(ap, msg);
-	vsnprintf(buffer + len, sizeof(buffer) - len, msg, ap);
+	vsnprintf(buffer + len, sizeof(buffer), msg, ap);
 	va_end(ap);
 
 	if (request) {

@@ -501,11 +501,7 @@ REQUEST *request_alloc(void)
 
 	request->logs = rad_malloc(sizeof(LOG_DESC));
 	
-	memset(request->logs->flow, 0, sizeof(request->logs->flow));
-	memset(request->logs->tls, 0, sizeof(request->logs->tls));
-	memset(request->logs->request_desc, 0, sizeof(request->logs->request_desc));
-	memset(request->logs->reply_desc, 0, sizeof(request->logs->reply_desc));
-	memset(request->logs->eap_type, 0, sizeof(request->logs->eap_type));
+	memset(request->logs, 0, sizeof(LOG_DESC));
 	request->logs->trips = -1;
 
 	return request;
