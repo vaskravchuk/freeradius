@@ -26,7 +26,7 @@ void radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char *
 
 	va_list ap;
 	va_start(ap, msg);
-	vsnprintf(buffer + len, sizeof(buffer), msg, ap);
+	vsnprintf(buffer, sizeof(buffer), msg, ap);
 	va_end(ap);
 
 	if (request) {
