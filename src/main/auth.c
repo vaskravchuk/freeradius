@@ -825,14 +825,16 @@ autz_redo:
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
-			radius_exec_logger_centrale(request, "60054", "Authenticate status '%s'", "OK");
+			// Success event. Will be send to BE for success alerts
+			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
 	} else {
 		rad_authlog("Login OK", request, 1);
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
-			radius_exec_logger_centrale(request, "60055", "Authenticate status '%s'", "OK");
+			// Success event. Will be send to BE for success alerts
+			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
 	}
 
