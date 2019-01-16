@@ -140,12 +140,12 @@ int log_add_json_mac(char *out, size_t outlen, const char *key, VALUE_PAIR *vps)
 	return len;
 }
 
-int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps, int full_info, int reply) {
+int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps, int full_info) {
 	/* 
 	 * Remove not interested attributes
 	 * skip nt-key as password
 	 */
-	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "User-Password", "Tmp-String-0" };
+	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0" };
 	static char *must_attrs[] = { "State", "User-Name", "NAS-IP-Address", "EAP-Type" };
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
 	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);
@@ -324,7 +324,7 @@ void request_struct_to_string(char *out, size_t outlen, REQUEST *request, char *
 
 			// print attributes
 			if (packet->vps) {
-				len += log_add_json_vps(out + len, outlen - len, "ATTRS", packet->vps, full_info, reply);
+				len += log_add_json_vps(out + len, outlen - len, "ATTRS", packet->vps, full_info || reply);
 			}
 		}
 
