@@ -150,7 +150,7 @@ int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps,
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
 	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);
 
-	char buf[1024];
+	char buf[2048];
 	size_t buf_offset = 0;
 	memset(buf, 0, sizeof(buf));
 	size_t len = 0;
@@ -357,7 +357,7 @@ void log_request(REQUEST *request, int full_info, const char *msg, ...) {
 		return;
 	}
 	
-	char buffer[4096];
+	char buffer[6144];
 	char msg_buffer[256];
 	memset(buffer, 0, sizeof(buffer));
 	memset(msg_buffer, 0, sizeof(msg_buffer));
