@@ -283,7 +283,7 @@ struct auth_req {
 
 	const char 				request_id[UUID_SIZE]; /* max unique id for every request (per session can be unique) */
 	const char 				context_id[UUID_SIZE]; /* max unique id for every request (per session can be unique) */
-	const char 				client_shortname[CLIENT_NAME_SIZE]; /* client->shortname, Listening port */
+	char 					client_shortname[CLIENT_NAME_SIZE]; /* client->shortname, Listening port */
 
 	LOG_DESC 				*logs; /* state description */
 };				/* REQUEST typedef */
