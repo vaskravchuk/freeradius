@@ -510,8 +510,13 @@ REQUEST *request_alloc(void)
 void request_set_client(REQUEST *request, RADCLIENT *client)
 {
 	request->client = client;
-	if (client && client->shortname) {
-		size_t len = snprintf(request->client_shortname, sizeof(client->shortname), "%s", client->shortname);
+	if (!client || !client->shortname) {
+		return;
+	}
+
+	size_t len = snprintf(request->client_shortname, sizeof(client->shortname), "%s", client->shortname);
+	//if len < 0 -> error occurs 
+	if (len >= 0) {
 		request->client_shortname[len] = 0;
 	}
 }
