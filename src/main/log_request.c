@@ -212,7 +212,7 @@ int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *
 
 	// Source IP address
 	if (packet && *((uint32_t*)&packet->src_ipaddr.ipaddr) == INADDR_ANY) {
-		if (packet->src_port == 0 && request->client) {
+		if (packet->src_port == 0) {
 			// can be in proxy or tunneld case 
 			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
 		}
@@ -220,7 +220,7 @@ int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *
 			len += snprintf(out + len, outlen - len, "%d", packet->src_port);
 		}
 	} else if (request && *((uint32_t*)&packet->dst_ipaddr.ipaddr) == INADDR_ANY) {
-		if (packet->dst_port == 0 && request->client) {
+		if (packet->dst_port == 0) {
 			// can be in proxy or tunneld case 
 			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
 		}
