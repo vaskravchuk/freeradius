@@ -370,7 +370,7 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 
 			case PW_CLIENT_SHORTNAME:
 				if (request->client && request->client_shortname) {
-					strlcpy(out, client_shortname, outlen);
+					strlcpy(out, request->client_shortname, outlen);
 				} else {
 					strlcpy(out, "<UNKNOWN-CLIENT>", outlen);
 				}
