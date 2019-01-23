@@ -511,8 +511,8 @@ void request_set_client(REQUEST *request, RADCLIENT *client)
 {
 	request->client = client;
 	if (client && client->shortname) {
-		size_t len = snprintf(client->shortname, sizeof(client->shortname), "%s", client->shortname);
-		client->shortname[len] = 0;
+		size_t len = snprintf(request->client_shortname, sizeof(client->shortname), "%s", client->shortname);
+		request->client_shortname[len] = 0;
 	}
 }
 

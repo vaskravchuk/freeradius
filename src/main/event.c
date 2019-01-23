@@ -3064,7 +3064,6 @@ int received_request(rad_listen_t *listener,
 	}
 
 	request->listener = listener;
-	request->client = client;
 	request_set_client(request, client);
 	request->packet = packet;
 	request->packet->timestamp = request->timestamp;
