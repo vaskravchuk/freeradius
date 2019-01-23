@@ -33,6 +33,7 @@ RCSIDH(radiusd_h, "$Id$")
 #include <freeradius-devel/conffile.h>
 #include <freeradius-devel/event.h>
 
+#define CLIENT_NAME_SIZE 16
 #define UUID_SIZE 37
 typedef struct auth_req REQUEST;
 
@@ -282,6 +283,7 @@ struct auth_req {
 
 	const char 				request_id[UUID_SIZE]; /* max unique id for every request (per session can be unique) */
 	const char 				context_id[UUID_SIZE]; /* max unique id for every request (per session can be unique) */
+	const char 				client_shortname[CLIENT_NAME_SIZE]; /* client->shortname, Listening port */
 
 	LOG_DESC 				*logs; /* state description */
 };				/* REQUEST typedef */
@@ -522,6 +524,7 @@ void		*rad_malloc(size_t size); /* calls exit(1) on error! */
 REQUEST		*request_alloc(void);
 REQUEST		*request_alloc_fake(REQUEST *oldreq);
 REQUEST		*request_alloc_coa(REQUEST *request);
+void		request_set_client(REQUEST *request, RADCLIENT *client);
 int			request_data_add(REQUEST *request,
 					void *unique_ptr, int unique_int,
 					void *opaque, void (*free_opaque)(void *));

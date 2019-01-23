@@ -507,6 +507,14 @@ REQUEST *request_alloc(void)
 	return request;
 }
 
+void request_set_client(REQUEST *request, RADCLIENT *client)
+{
+	request->client = client;
+	if (client && client->shortname) {
+		size_t len = snprintf(client->shortname, sizeof(client->shortname), "%s", client->shortname);
+		client->shortname[len] = 0;
+	}
+}
 
 /*
  *	Create a new REQUEST, based on an old one.
@@ -594,6 +602,7 @@ REQUEST *request_alloc_fake(REQUEST *request)
 
   memcpy(fake->context_id, request->context_id, sizeof(request->context_id));
   memcpy(fake->request_id, request->request_id, sizeof(request->request_id));
+  memcpy(fake->client_shortname, request->client_shortname, sizeof(request->client_shortname));
 
   fake->logs = rad_malloc(sizeof(LOG_DESC));
   memcpy(fake->logs, request->logs, sizeof(LOG_DESC));

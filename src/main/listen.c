@@ -243,7 +243,7 @@ RADCLIENT *client_listener_find(const rad_listen_t *listener,
 	}
 
 	request->listener = listener;
-	request->client = client;
+	request_set_client(request, client);
 	request->packet = rad_recv(listener->fd, 0x02); /* MSG_PEEK */
 	if (!request->packet) {				/* badly formed, etc */
 		request_free(&request);

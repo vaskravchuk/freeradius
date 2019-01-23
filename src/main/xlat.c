@@ -369,8 +369,8 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 			break;
 
 			case PW_CLIENT_SHORTNAME:
-				if (request->client && request->client->shortname) {
-					strlcpy(out, request->client->shortname, outlen);
+				if (request->client && request->client_shortname) {
+					strlcpy(out, client_shortname, outlen);
 				} else {
 					strlcpy(out, "<UNKNOWN-CLIENT>", outlen);
 				}
@@ -1367,7 +1367,7 @@ int radius_xlat(char *out, int outlen, const char *fmt,
 				p++;
 				break;
 			case 'C': /* ClientName */
-				strlcpy(q,request->client->shortname,freespace);
+				strlcpy(q,request->client_shortname,freespace);
 				q += strlen(q);
 				p++;
 				break;

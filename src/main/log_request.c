@@ -214,7 +214,7 @@ int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *
 	if (packet && *((uint32_t*)&packet->src_ipaddr.ipaddr) == INADDR_ANY) {
 		if (packet->src_port == 0 && request->client) {
 			// can be in proxy or tunneld case 
-			len += snprintf(out + len, outlen - len, "%s", request->client->shortname);
+			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
 		}
 		else {
 			len += snprintf(out + len, outlen - len, "%d", packet->src_port);
@@ -222,14 +222,14 @@ int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *
 	} else if (request && *((uint32_t*)&packet->dst_ipaddr.ipaddr) == INADDR_ANY) {
 		if (packet->dst_port == 0 && request->client) {
 			// can be in proxy or tunneld case 
-			len += snprintf(out + len, outlen - len, "%s", request->client->shortname);
+			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
 		}
 		else {
 			len += snprintf(out + len, outlen - len, "%d", packet->dst_port);
 		}
 	}
 	else if (request->client) {
-		len += snprintf(out + len, outlen - len, "%s", request->client->shortname);
+		len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
 	}
 
 	len += close_str(out + len, outlen - len);

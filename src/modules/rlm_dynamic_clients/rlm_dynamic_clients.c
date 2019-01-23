@@ -85,7 +85,7 @@ static int dynamic_client_authorize(UNUSED void *instance, REQUEST *request)
 	 *	Replace the client.  This is more than a bit of a
 	 *	hack.
 	 */
-	request->client = c;
+	request_set_client(request, c);
 
 	return RLM_MODULE_OK;
 }

@@ -108,7 +108,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         return RLM_MODULE_FAIL;
     }
 
-    request->client = c;
+    request_set_client(request, c);
     return RLM_MODULE_OK;
 }
 
