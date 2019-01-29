@@ -28,9 +28,12 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 extern int allow_portnox_request_log;
 
-int is_contains(char **arr, size_t size, char* str) {
+int is_contains(char **arr, int size, char* str) {
 	int found = 0;
 	for (int i = 0; i < size; ++i) {
 		char* item = arr[i];
@@ -43,7 +46,28 @@ int is_contains(char **arr, size_t size, char* str) {
 	return found;
 }
 
-int json_escape(char* str, char* out, size_t outlen) {
+int vstr_format(char * s, int n, const char *format, va_list ap) {
+	int len = 0;
+
+	len = vsnprintf(s, n, format, ap);
+	len = MIN(len, n-1);
+	len = len < 0 ? 0 : len;
+
+	return len;
+}
+
+int str_format(char * s, int n, const char *format, ...) {
+	int len = 0;
+
+	va_list ap;
+	va_start(ap, format);
+	len = vstr_format(s, n, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int json_escape(char* str, char* out, int outlen) {
 	int offset = 0;
 	char* rep = NULL;
 	int i = 0;
@@ -63,7 +87,7 @@ int json_escape(char* str, char* out, size_t outlen) {
         }
 
 		if (rep != NULL) {
-			offset += snprintf(out + offset, outlen - offset, "%s", rep);
+			offset += str_format(out + offset, outlen - offset, "%s", rep);
         }
 		else {
 			out[offset++] = chr;
@@ -89,8 +113,8 @@ void lower(char *str) {
 	}
 }
 
-inline int close_str(char *out, size_t outlen) {
-	size_t l = 0;
+inline int close_str(char *out, int outlen) {
+	int l = 0;
 
 	if (outlen - l > 0) out[l++] = '\"';
 	if (outlen - l > 0) out[l++] = ',';
@@ -98,11 +122,10 @@ inline int close_str(char *out, size_t outlen) {
 	return l;
 }
 
-int log_add_json_string(char *out, size_t outlen, const char *key, const char *value) {
-	size_t len = 0;
+int log_add_json_string(char *out, int outlen, const char *key, const char *value) {
+	int len = 0;
 
-	len = snprintf(out, outlen, "\"%s\":\"", key);
-	len = len < 0 ? 0 : len;
+	len = str_format(out, outlen, "\"%s\":\"", key);
 
 	len += json_escape(value, out + len, outlen - len);
 
@@ -111,17 +134,16 @@ int log_add_json_string(char *out, size_t outlen, const char *key, const char *v
 	return len;
 }
 
-int log_add_json_int(char *out, size_t outlen, const char *key, const int value) {
-	return snprintf(out, outlen, "\"%s\":\"%d\",", key, value);
+int log_add_json_int(char *out, int outlen, const char *key, const int value) {
+	return str_format(out, outlen, "\"%s\":\"%d\",", key, value);
 }
 
-int log_add_json_mac(char *out, size_t outlen, const char *key, VALUE_PAIR *vps) {
+int log_add_json_mac(char *out, int outlen, const char *key, VALUE_PAIR *vps) {
 	static char *mac_attrs[] = { "Calling-Station-Id" };
 	static char *mac_attrs_size = sizeof(mac_attrs) / sizeof(mac_attrs[0]);
 
-	size_t len = 0;
+	int len = 0;
 	char mac_buffer[24];
-	memset(mac_buffer, 0, sizeof(mac_buffer));
 
 	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
 		if (!vp->name || !(*vp->name)) return;
@@ -136,24 +158,25 @@ int log_add_json_mac(char *out, size_t outlen, const char *key, VALUE_PAIR *vps)
 		lower(mac_buffer);
 		len += log_add_json_string(out + len, outlen - len, key, mac_buffer);
 	}
+	mac_buffer[len] = 0;
 
 	return len;
 }
 
-int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps, int full_info) {
+int log_add_json_vps(char *out, int outlen, const char *key, VALUE_PAIR *vps, int full_info) {
 	/* 
 	 * Remove not interested attributes
 	 * skip nt-key as password
 	 */
-	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK" };
+	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK", "EAP-EMSK" };
 	static char *must_attrs[] = { "State", "User-Name", "NAS-IP-Address", "EAP-Type" };
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
 	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);
 
 	char buf[2048];
-	size_t buf_offset = 0;
-	memset(buf, 0, sizeof(buf));
-	size_t len = 0;
+	int buf_size = sizeof(buf);
+	int buf_offset = 0;
+	int len = 0;
 
 	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
 		if (!vp->name || !(*vp->name)) return;
@@ -168,20 +191,21 @@ int log_add_json_vps(char *out, size_t outlen, const char *key, VALUE_PAIR *vps,
 		}
 
 		// print attribute
-		buf_offset += vp_to_string(buf + buf_offset, sizeof(buf) - buf_offset, vp);
+		buf_offset += vp_to_string(buf + buf_offset, buf_size - buf_offset, vp);
 	}
 	if (buf[buf_offset-1] == ',') buf[buf_offset-1]=0;
+	buf[buf_offset] = 0;
 	if (buf[0]) {
-		len += snprintf(out + len, outlen - len, "\"%s\":{%s},", key, buf);
+		len += str_format(out + len, outlen - len, "\"%s\":{%s},", key, buf);
 	}
 
 	return len;
 }
 
-int log_add_json_clt_addrs(char *out, size_t outlen, const char *key, RADIUS_PACKET *packet) {
-	size_t len = 0;
+int log_add_json_clt_addrs(char *out, int outlen, const char *key, RADIUS_PACKET *packet) {
+	int len = 0;
 
-	len += snprintf(out + len, outlen - len, "\"%s\":\"", key);
+	len += str_format(out + len, outlen - len, "\"%s\":\"", key);
 
 	// Source IP address
 	if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
@@ -189,47 +213,47 @@ int log_add_json_clt_addrs(char *out, size_t outlen, const char *key, RADIUS_PAC
 				 &packet->src_ipaddr.ipaddr,
 				 out + len, outlen - len);
 		len = strlen(out);
-		len += snprintf(out + len, outlen - len, ":%d", packet->src_port);
+		len += str_format(out + len, outlen - len, ":%d", packet->src_port);
 	} else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
 		inet_ntop(packet->dst_ipaddr.af,
 				 &packet->dst_ipaddr.ipaddr,
 				 out + len, outlen - len);
 		len = strlen(out);
-		len += snprintf(out + len, outlen - len, ":%d", packet->dst_port);
+		len += str_format(out + len, outlen - len, ":%d", packet->dst_port);
 	}
 	len += close_str(out + len, outlen - len);
 
 	return len;
 }
 
-int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *request) {
-	size_t len = 0;
+int log_add_json_port_addrs(char *out, int outlen, const char *key, REQUEST *request) {
+	int len = 0;
 	RADIUS_PACKET *packet;
 
 	packet = request->packet;
 
-	len += snprintf(out + len, outlen - len, "\"%s\":\"", key);
+	len += str_format(out + len, outlen - len, "\"%s\":\"", key);
 
 	// Source IP address
 	if (packet && *((uint32_t*)&packet->src_ipaddr.ipaddr) == INADDR_ANY) {
 		if (packet->src_port == 0) {
 			// can be in proxy or tunneld case 
-			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
+			len += str_format(out + len, outlen - len, "%s", request->client_shortname);
 		}
 		else {
-			len += snprintf(out + len, outlen - len, "%d", packet->src_port);
+			len += str_format(out + len, outlen - len, "%d", packet->src_port);
 		}
 	} else if (request && *((uint32_t*)&packet->dst_ipaddr.ipaddr) == INADDR_ANY) {
 		if (packet->dst_port == 0) {
 			// can be in proxy or tunneld case 
-			len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
+			len += str_format(out + len, outlen - len, "%s", request->client_shortname);
 		}
 		else {
-			len += snprintf(out + len, outlen - len, "%d", packet->dst_port);
+			len += str_format(out + len, outlen - len, "%d", packet->dst_port);
 		}
 	}
 	else if (request->client) {
-		len += snprintf(out + len, outlen - len, "%s", request->client_shortname);
+		len += str_format(out + len, outlen - len, "%s", request->client_shortname);
 	}
 
 	len += close_str(out + len, outlen - len);
@@ -237,15 +261,12 @@ int log_add_json_port_addrs(char *out, size_t outlen, const char *key, REQUEST *
 	return len;
 }
 
-int vp_to_string(char *out, size_t outlen, VALUE_PAIR *vp) {
-	size_t len = 0;
+int vp_to_string(char *out, int outlen, VALUE_PAIR *vp) {
+	int len = 0;
 	char namebuf[128];
-	char valuebuf[512];
+	char valuebuf[256];
 	memset(namebuf, 0, sizeof(namebuf));
 	memset(valuebuf, 0, sizeof(namebuf));
-
-	out[0] = 0;
-	if (!vp) return 0;
 
 	if (!vp->name || !*vp->name) {
 		if (!vp_print_name(namebuf, sizeof(namebuf), vp->attribute)) {
@@ -257,7 +278,7 @@ int vp_to_string(char *out, size_t outlen, VALUE_PAIR *vp) {
 	}
 	if(vp->flags.has_tag) {
 		int buf_size = strlen(namebuf);
-		snprintf(namebuf + buf_size, sizeof(namebuf) - buf_size, ":%d", vp->flags.tag);
+		str_format(namebuf + buf_size, sizeof(namebuf) - buf_size, ":%d", vp->flags.tag);
 	}
 
 	if (!vp_prints_value(valuebuf, sizeof(valuebuf), vp, 0)) {
@@ -269,8 +290,8 @@ int vp_to_string(char *out, size_t outlen, VALUE_PAIR *vp) {
 	return len;
 }
 
-void request_struct_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info, int reply) {
-	size_t len = 0;
+int request_struct_to_string(char *out, int outlen, REQUEST *request, char *msg, int full_info, int reply) {
+	int len = 0;
 	RADIUS_PACKET *packet = NULL;
 
 	if (outlen - len > 0) out[len++] = '{';
@@ -342,14 +363,15 @@ void request_struct_to_string(char *out, size_t outlen, REQUEST *request, char *
 	}
 	if (out[len-1] == ',') --len;
 	if (outlen - len > 0) out[len++] = '}';
+	return len;
 }
 
-void request_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info) {
-	request_struct_to_string(out, outlen, request, msg, full_info, 0);
+int request_to_string(char *out, int outlen, REQUEST *request, char *msg, int full_info) {
+	return request_struct_to_string(out, outlen, request, msg, full_info, 0);
 }
 
-void response_to_string(char *out, size_t outlen, REQUEST *request, char *msg, int full_info) {
-	request_struct_to_string(out, outlen, request, msg, full_info, 1);
+int response_to_string(char *out, int outlen, REQUEST *request, char *msg, int full_info) {
+	return request_struct_to_string(out, outlen, request, msg, full_info, 1);
 }
 
 void log_request(REQUEST *request, int full_info, const char *msg, ...) {
@@ -359,18 +381,19 @@ void log_request(REQUEST *request, int full_info, const char *msg, ...) {
 	
 	char buffer[6144];
 	char msg_buffer[256];
-	memset(buffer, 0, sizeof(buffer));
-	memset(msg_buffer, 0, sizeof(msg_buffer));
+	int len = 0;
 
 	// print message
 	if (msg) {
 		va_list ap;
 		va_start(ap, msg);
-		vsnprintf(msg_buffer, sizeof(msg_buffer), msg, ap);
+		len = vstr_format(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
+		msg_buffer[len] = 0;
 	}
 
-	request_to_string(buffer, sizeof(buffer), request, msg_buffer, full_info);
+	len = request_to_string(buffer, sizeof(buffer), request, msg_buffer, full_info);
+	buffer[len] = 0;
 
 	radlog(L_ERR, buffer);
 }
@@ -382,33 +405,34 @@ void log_response(REQUEST *request, const char *msg, ...) {
 	
 	char buffer[4096];
 	char msg_buffer[64];
-	memset(buffer, 0, sizeof(buffer));
-	memset(msg_buffer, 0, sizeof(msg_buffer));
+	int len = 0;
 
 	// print message
 	if (msg) {
 		va_list ap;
 		va_start(ap, msg);
-		vsnprintf(msg_buffer, sizeof(msg_buffer), msg, ap);
+		len = vstr_format(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
+		msg_buffer[len] = 0;
 	}
 
-	response_to_string(buffer, sizeof(buffer), request, msg_buffer, 0);
+	len = response_to_string(buffer, sizeof(buffer), request, msg_buffer, 0);
+	buffer[len] = 0;
 
 	radlog(L_ERR, buffer);
 }
 
 void logs_add_flow(REQUEST *request, const char *msg, ...) {
-	size_t len = 0;
+	int len = 0;
 
 	len = strlen(request->logs->flow); 
 	if (len > 0) {
-		len += snprintf(request->logs->flow + len, sizeof(request->logs->flow) - len, "->");
+		len += str_format(request->logs->flow + len, sizeof(request->logs->flow) - len, "->");
 	}
 	if (sizeof(request->logs->flow) - len > 0) request->logs->flow[len++] = '[';
 	va_list ap;
 	va_start(ap, msg);
-	len += vsnprintf(request->logs->flow + len, sizeof(request->logs->flow) - len, msg, ap);
+	len += vstr_format(request->logs->flow + len, sizeof(request->logs->flow) - len, msg, ap);
 	va_end(ap);
 	if (sizeof(request->logs->flow) - len > 0) request->logs->flow[len++] = ']';
 
@@ -416,16 +440,16 @@ void logs_add_flow(REQUEST *request, const char *msg, ...) {
 }
 
 void logs_add_tls(REQUEST *request, const char *msg, ...) {
-	size_t len = 0;
+	int len = 0;
 
 	len = strlen(request->logs->tls); 
 	if (len > 0) {
-		len += snprintf(request->logs->tls + len, sizeof(request->logs->tls) - len, "->");
+		len += str_format(request->logs->tls + len, sizeof(request->logs->tls) - len, "->");
 	}
 	if (sizeof(request->logs->tls) - len > 0) request->logs->tls[len++] = '[';
 	va_list ap;
 	va_start(ap, msg);
-	len += vsnprintf(request->logs->tls + len, sizeof(request->logs->tls) - len, msg, ap);
+	len += vstr_format(request->logs->tls + len, sizeof(request->logs->tls) - len, msg, ap);
 	va_end(ap);
 	if (sizeof(request->logs->tls) - len > 0) request->logs->tls[len++] = ']';
 
@@ -433,12 +457,12 @@ void logs_add_tls(REQUEST *request, const char *msg, ...) {
 }
 
 void logs_set_eaptype(REQUEST *request, const char *msg, ...) {
-	size_t len = 0;
+	int len = 0;
 
 	memset(request->logs->eap_type, 0, sizeof(request->logs->eap_type));
 	va_list ap;
 	va_start(ap, msg);
-	len += vsnprintf(request->logs->eap_type, sizeof(request->logs->eap_type), msg, ap);
+	len += vstr_format(request->logs->eap_type, sizeof(request->logs->eap_type), msg, ap);
 	va_end(ap);
 
 	request->logs->eap_type[len] = 0;
@@ -453,12 +477,12 @@ void logs_set_request_desc(REQUEST *request, int overwrite, const char *msg, ...
 		return;
 	}
 
-	size_t len = 0;
+	int len = 0;
 
 	memset(request->logs->request_desc, 0, sizeof(request->logs->request_desc));
 	va_list ap;
 	va_start(ap, msg);
-	len += vsnprintf(request->logs->request_desc, sizeof(request->logs->request_desc), msg, ap);
+	len += vstr_format(request->logs->request_desc, sizeof(request->logs->request_desc), msg, ap);
 	va_end(ap);
 
 	request->logs->request_desc[len] = 0;
@@ -469,12 +493,12 @@ void logs_set_reply_desc(REQUEST *request, int overwrite, const char *msg, ...) 
 		return;
 	}
 	
-	size_t len = 0;
+	int len = 0;
 
 	memset(request->logs->reply_desc, 0, sizeof(request->logs->reply_desc));
 	va_list ap;
 	va_start(ap, msg);
-	len += vsnprintf(request->logs->reply_desc, sizeof(request->logs->reply_desc), msg, ap);
+	len += vstr_format(request->logs->reply_desc, sizeof(request->logs->reply_desc)-1, msg, ap);
 	va_end(ap);
 
 	request->logs->reply_desc[len] = 0;
