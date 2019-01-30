@@ -7,7 +7,7 @@
  */
 
 
-#include "dstr.h"
+#include <freeradius-devel/dstr.h>
 
 #include <stdlib.h>
 #include <stdarg.h>

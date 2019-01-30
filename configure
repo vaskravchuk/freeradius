@@ -20386,6 +20386,8 @@ LIBS="-luuid $LIBS"
 $as_echo "checking for curl_easy_perform in -lcurl..." >&6; }
 LIBS="-lcurl $LIBS"
 
+ac_check_lib_save_LIBS=$LIBS
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_aton in -lresolv" >&5
 $as_echo_n "checking for inet_aton in -lresolv... " >&6; }
 if ${ac_cv_lib_resolv_inet_aton+:} false; then :

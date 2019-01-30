@@ -6,8 +6,8 @@
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
 
-#include "curl_p.h"
-#include "dstr.h"
+#include <freeradius-devel/curl_p.h>
+#include <freeradius-devel/dstr.h>
 #include <stdio.h>
 #include <curl/curl.h>
 
