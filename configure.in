@@ -583,9 +583,12 @@ AC_CHECK_LIB(socket, getsockname)
 dnl Check if we need -luuid
 AC_CHECK_LIB(uuid, uuid_generate_random)
 
+dnl Check if we need -lcurl
+AC_CHECK_LIB(curl, curl_easy_perform)
+
 dnl Check for -lresolv
 dnl This library may be needed later.
-AC_CHECK_LIB(resolv, inet_aton)
+AC_CHECK_LIB(resolv, inet_aton)                                                                                                                                           
 
 dnl Check if we need -lnsl. Usually if we want to
 dnl link against -lsocket we need to include -lnsl as well.

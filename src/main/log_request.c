@@ -2,25 +2,6 @@
  * log.c	Logging module.
  *
  * Version:	$Id$
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * Copyright 2001,2006  The FreeRADIUS server project
- * Copyright 2000  Miquel van Smoorenburg <miquels@cistron.nl>
- * Copyright 2000  Alan DeKok <aland@ox.org>
- * Copyright 2001  Chad Miller <cmiller@surfsouth.com>
  */
 
 #include <freeradius-devel/ident.h>
@@ -196,7 +177,7 @@ int log_add_json_vps(char *out, int outlen, const char *key, VALUE_PAIR *vps, in
 	if (buf[buf_offset-1] == ',') buf[buf_offset-1]=0;
 	buf[buf_offset] = 0;
 	if (buf[0]) {
-		len += str_format(out + len, outlen - len, "\"%s\":{%s},", key, buf);
+		len = str_format(out, outlen, "\"%s\":{%s},", key, buf);
 	}
 
 	return len;
@@ -389,8 +370,8 @@ void log_request(REQUEST *request, int full_info, const char *msg, ...) {
 		va_start(ap, msg);
 		len = vstr_format(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
-		msg_buffer[len] = 0;
 	}
+	msg_buffer[len] = 0;
 
 	len = request_to_string(buffer, sizeof(buffer), request, msg_buffer, full_info);
 	buffer[len] = 0;
@@ -413,8 +394,8 @@ void log_response(REQUEST *request, const char *msg, ...) {
 		va_start(ap, msg);
 		len = vstr_format(msg_buffer, sizeof(msg_buffer), msg, ap);
 		va_end(ap);
-		msg_buffer[len] = 0;
 	}
+	msg_buffer[len] = 0;
 
 	len = response_to_string(buffer, sizeof(buffer), request, msg_buffer, 0);
 	buffer[len] = 0;
