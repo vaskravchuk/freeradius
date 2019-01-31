@@ -20176,6 +20176,9 @@ fi
 
 done
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: adding -lcurl" >&5
+$as_echo "adding -lcurl..." >&6; }
+LIBS="-lcurl $LIBS"
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
 $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
@@ -20377,16 +20380,9 @@ _ACEOF
 
 fi
 
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for uuid_generate_random in -luuid" >&5
-$as_echo "checking for uuid_generate_random in -luuid..." >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: adding -luuid" >&5
+$as_echo "adding -luuid..." >&6; }
 LIBS="-luuid $LIBS"
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for curl_easy_perform in -lcurl" >&5
-$as_echo "checking for curl_easy_perform in -lcurl..." >&6; }
-LIBS="-lcurl $LIBS"
-
-ac_check_lib_save_LIBS=$LIBS
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_aton in -lresolv" >&5
 $as_echo_n "checking for inet_aton in -lresolv... " >&6; }
