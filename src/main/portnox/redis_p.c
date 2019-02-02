@@ -76,6 +76,7 @@ static REDIS get_redis_client() {
 
 /* Invalidate our singelton redis client to be recreated. */
 static void invalidate_redis_client() {
+    if (redis_client) credis_close(redis_client);
     redis_client = NULL;
 }
 
