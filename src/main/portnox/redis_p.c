@@ -57,7 +57,7 @@ static void invalidate_redis_client();
 static int perform_redis_operation(redis_op_info* op);
 
 /*
- * Redis client will be on for all requests,
+ * Redis client will be one for all requests,
  * because reconnection takes a lot of time.
  */
 REDIS redis_client = NULL;
