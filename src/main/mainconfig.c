@@ -239,10 +239,10 @@ static const CONF_PARSER log_config_nodest[] = {
 
 static const CONF_PARSER redis_config_nodest[] = {
 	{ "srv_addr", PW_TYPE_BOOLEAN, 0, &redis_srv_addr, NULL },
-	{ "srv_port", PW_TYPE_INTEGER, 0, &redis_srv_port, 6379 },
-	{ "srv_timeout", PW_TYPE_INTEGER, 0, &redis_srv_timeout, 500 },
+	{ "srv_port", PW_TYPE_INTEGER, 0, &redis_srv_port, Stringify(6379) },
+	{ "srv_timeout", PW_TYPE_INTEGER, 0, &redis_srv_timeout, Stringify(500) },
 	{ "srv_pwd", PW_TYPE_STRING_PTR, 0, &redis_srv_pwd, NULL},
-	{ "srv_db", PW_TYPE_INTEGER, 0, &redis_srv_db, 0},
+	{ "srv_db", PW_TYPE_INTEGER, 0, &redis_srv_db, Stringify(0)},
 
 	{ NULL, -1, 0, NULL, NULL }
 };
