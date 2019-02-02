@@ -1,5 +1,5 @@
 /*
- *  dstr.c	Dynamic string.
+ * dstr.c	Dynamic string.
  *
  * Version:	$Id$t
  *
@@ -7,7 +7,7 @@
  */
 
 
-#include <freeradius-devel/dstr.h>
+#include <freeradius-devel/portnox/dstr.h>
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -80,6 +80,47 @@ dstr dstr_cstr_n(char *c, size_t len) {
 dstr dstr_cstr(char *c) {
     size_t len = strlen(c);
     return dstr_cstr_n(c, len);
+}
+
+/* Return escaped dstr for json or redis. */
+dstr dstr_escaped(const char *str) {
+    char* rep = NULL;
+    int i = 0;
+    char chr = 0;
+    dstr s;
+
+    /* Are we not a string? */
+    if (!str || *str) NaS;
+
+    /* create new string */
+    size_t len = strlen(str);
+    s = dstr_create(len+1);
+
+    /* iterate throw all chars */
+    for(;(chr = str[i]) && (i < len); i++) {
+        switch (chr) {
+            case '\\': rep = "\\\\"; break;
+            case '"': rep = "\\\""; break;
+            case '/': rep = "\\/"; break;
+            case '\b': rep = "\\b"; break;
+            case '\f': rep = "\\f"; break;
+            case '\n': rep = "\\n"; break;
+            case '\r': rep = "\\r"; break;
+            case '\t': rep = "\\t"; break;
+            default: rep = NULL; break;
+        }
+
+        if (rep != NULL) {
+            /* copy with escaping */
+            dstr_cat_cstr(&s, rep);
+        }
+        else {
+            /* just copy */
+            s.s[s.size++] = chr;
+        }
+    }
+
+    return s;
 }
 
 /* Create a new string as a copy of an old one */

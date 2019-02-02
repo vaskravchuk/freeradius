@@ -1,13 +1,13 @@
 /*
- *  curl_p.c	Execute curl.
+ * curl_p.c	Execute curl.
  *
  * Version:	$Id$t
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
 
-#include <freeradius-devel/curl_p.h>
-#include <freeradius-devel/dstr.h>
+#include <freeradius-devel/portnox/curl_p.h>
+#include <freeradius-devel/portnox/dstr.h>
 #include <stdio.h>
 #include <curl/curl.h>
 

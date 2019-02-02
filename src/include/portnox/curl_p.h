@@ -1,5 +1,5 @@
 /*
- *  curl_p.c	Execute curl.
+ * curl_p.h	Execute curl.
  *
  * Version:	$Id$t
  *
@@ -9,14 +9,13 @@
 #ifndef CURL_P_H
 #define CURL_P_H
 
-#include "dstr.h"
+#include <freeradius-devel/portnox/dstr.h>
 
 /* Id response or request is destroyed*/
 #define is_destroyed(S) (!((S).data)->s)
 
-typedef struct srv_req srv_req;
 /* request structure */
-struct srv_req {
+typedef struct srv_req {
     /* endpoint url */
     char* url;
     /* data to send. if empty -> GET request */
@@ -28,18 +27,17 @@ struct srv_req {
     char* req_auth_crt_path;
     /* pwd to auth certificate */
     char* req_auth_crt_pwd;
-};
+} srv_req;
 
-typedef struct srv_resp srv_resp;
 /* response from server */
-struct srv_resp {
+typedef struct srv_resp {
     /* curl return code */
     int return_code;
     /* http code */
     long http_code;
     /* plain data from be */
     dstr data;
-};
+} srv_resp;
 
 /* Create/destroy structs */
 srv_req req_create(char* url, dstr data, int is_debug, int need_crt_auth);
