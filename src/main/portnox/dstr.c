@@ -115,8 +115,7 @@ dstr dstr_escaped(const char *str) {
             dstr_cat_cstr(&s, rep);
         }
         else {
-            /* just copy */
-            s.s[s.size++] = chr;
+            dstr_cat_char(&s, chr);
         }
     }
 
@@ -209,6 +208,20 @@ void dstr_cat_fmt(dstr *s, const char* fmt, ...) {
 
     va_end(v);
     free(buf);
+}
+
+void dstr_cat_char(dstr *s, char chr) {
+    /* Are we not a string? */
+    if (is_nas(s)) return;
+
+    if (s->size + 1 >= s->b_size) {
+        dstr_resize(s, s->size + 1);
+
+        /* Are we no longer a string? */
+        if (is_nas(s)) return;
+    }
+
+    s->s[s->size++] = chr;
 }
 
 void dstr_cat_cstr(dstr *s, const char *str) {

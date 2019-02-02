@@ -65,6 +65,7 @@ void dstr_cpy_dstr(dstr *dest, dstr *src);
 /* Concat */
 void dstr_cat_cstr_n(dstr *s, size_t len, const char *str);
 void dstr_cat_fmt(dstr *s, const char* fmt, ...);
+void dstr_cat_char(dstr *s, char chr);
 void dstr_cat_cstr(dstr *s, const char *str);
 void dstr_cat_dstr(dstr *s, const dstr *s2);
 /* Should be finished with "0" value */

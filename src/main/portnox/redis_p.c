@@ -184,6 +184,8 @@ int redis_get(const char *key, char **val) {
     /* Escape key string */
     if (result == CREDIS_OK) *val = op_info.val;
 
+    dstr_destroy(&dkey);
+
     return result;
 }
 
