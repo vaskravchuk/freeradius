@@ -1,5 +1,5 @@
 /*
- *  dstr.c	Dynamic string.
+ * dstr.h	Dynamic string.
  *
  * Version:	$Id$t
  *
@@ -19,16 +19,15 @@
 #define NaS ((dstr) {NULL, 0, 0})
 #define is_nas(S) (!(S)->s)
 
-typedef struct dstr dstr;
 /* String struct */
-struct dstr {
+typedef struct dstr {
     /* Buffer */
     char *s;
     /* String length */
     size_t size;
     /* Buffer size */
     size_t b_size;
-};
+} dstr;
 
 /* Get string size */
 size_t dstr_size(dstr *s);
@@ -52,11 +51,12 @@ dstr dstr_cstr_n(char *c, size_t len);
  */
 dstr dstr_cstr(char *c);
 /*
- * Converting
  * Be careful with "dstr_to_cstr" and dstr_destroy().
  * dstr_destroy() freeing buffer, so result of "dstr_to_cstr" will be freed
  */
 char *dstr_to_cstr(dstr *s);
+/* Return string with escaped chars */
+dstr dstr_escaped(const char *str);
 
 /* Copy */
 dstr dstr_dup_dstr(dstr *s);

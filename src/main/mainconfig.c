@@ -65,6 +65,13 @@ char *current_server = NULL;
 const char *STR_VIRTUAL_SERVER = "Virtual server";
 int allow_portnox_request_log = 0;
 
+/* redis settings */
+char* redis_srv_addr = NULL;
+int redis_srv_port = 0;
+int redis_srv_timeout = 200;
+char* redis_srv_pwd = NULL;
+int redis_srv_db = 0;
+
 #ifdef HAVE_GMTIME_R
 extern int log_dates_utc;
 #endif
@@ -230,6 +237,17 @@ static const CONF_PARSER log_config_nodest[] = {
 };
 
 
+static const CONF_PARSER redis_config_nodest[] = {
+	{ "srv_addr", PW_TYPE_BOOLEAN, 0, &redis_srv_addr, NULL },
+	{ "srv_port", PW_TYPE_INTEGER, 0, &redis_srv_port, 6379 },
+	{ "srv_timeout", PW_TYPE_INTEGER, 0, &redis_srv_timeout, 500 },
+	{ "srv_pwd", PW_TYPE_STRING_PTR, 0, &redis_srv_pwd, NULL},
+	{ "srv_db", PW_TYPE_INTEGER, 0, &redis_srv_db, 0},
+
+	{ NULL, -1, 0, NULL, NULL }
+};
+
+
 /*
  *  A mapping of configuration file names to internal variables
  */
@@ -267,6 +285,7 @@ static const CONF_PARSER server_config[] = {
 	{ "proxy_requests", PW_TYPE_BOOLEAN, 0, &mainconfig.proxy_requests, "yes" },
 #endif
 	{ "log", PW_TYPE_SUBSECTION, 0, NULL, (const void *) log_config_nodest },
+	{ "redis", PW_TYPE_SUBSECTION, 0, NULL, (const void *) redis_config_nodest },
 
 	/*
 	 *	People with old configs will have these.  They are listed
