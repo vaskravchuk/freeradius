@@ -24,11 +24,11 @@ srv_resp resp_create(int return_code, int http_code, dstr data) {
 }
 
 req_destroy(srv_req* req) {
-    dstr_destroy(&req->data);
+    if (req->data) dstr_destroy(&req->data);
 }
 
 resp_destroy(srv_resp* resp) {
-    dstr_destroy(&resp->data);
+    if (resp->data) dstr_destroy(&resp->data);
 }
 
 /* callback to save incoming data */

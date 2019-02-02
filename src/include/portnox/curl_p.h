@@ -11,9 +11,6 @@
 
 #include <freeradius-devel/portnox/dstr.h>
 
-/* Id response or request is destroyed*/
-#define is_destroyed(S) (!((S).data)->s)
-
 /* request structure */
 typedef struct srv_req {
     /* endpoint url */
