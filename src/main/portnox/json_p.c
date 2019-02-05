@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <freeradius-devel/portnox/json_p.h>
-#include <freeradius-devel/portnox/cJSON.h>
+#include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dsrt.h>
 
 char *create_request_data_json(struct request_data *req, struct radius_custom rad_attr[], int attr_len) {
@@ -50,20 +50,41 @@ cJSON *make_custom_attributes(struct radius_custom rad_attr[], int attr_len) {
     return rad_custom;
 }
 
-struct radius_custom *parse_response_data(char *toparse) {
+struct radius_custom *parse_response_data(char *json, int *size) {
     cJSON *array = NULL;
-    cJSON *parsed = cJSON_Parse(toparse);
+    cJSON *parsed = cJSON_Parse(json);
     cJSON *rad_custom_arr = cJSON_GetObjectItem(parsed, "RadiusCustom");
 
     int attrs_size = cJSON_GetArraySize(rad_custom_arr);
+    *size = attrs_size;
     struct radius_custom *rad_attr = malloc(attrs_size * sizeof(struct radius_custom));
     int i = 0;
 
     cJSON_ArrayForEach(array, rad_custom_arr) {
-        rad_attr[i].attr = (cJSON_GetObjectItem(array, "key")->valuestring);
-        rad_attr[i].value = cJSON_GetObjectItem(array, "value")->valuestring;
+        rad_attr[i].attr = strdup(cJSON_GetObjectItem(array, "key")->valuestring);
+        rad_attr[i].value = strdup(cJSON_GetObjectItem(array, "value")->valuestring);
         i++;
     }
+    cJSON_Delete(parsed);
 
     return rad_attr;
 }
+
+void request_data_destroy(struct request_data *data) {
+    free(data->plain_pwd);
+    free(data->nt_response);
+    free(data->nt_challenge);
+    free(data->username);
+    free(data->mac_addr);
+}
+
+void radius_custom_destroy(struct radius_custom *rad_custom) {
+    free(rad_custom->value);
+    free(rad_custom->attr);
+}
+
+void radius_custom_array_destroy(struct radius_custom *rad_custom, int *size) {
+    int i;
+    for (i = 0; i < *size; i++) {
+        radius_custom_destroy(&rad_custom[i]);
+    }
