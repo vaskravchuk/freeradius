@@ -8,7 +8,7 @@
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dsrt.h>
 
-char *create_request_data_json(struct request_data *req, struct radius_custom rad_attr[], int attr_len) {
+char *create_request_data_json(struct portnox_auth_request *req, struct radius_custom rad_attr[], int attr_len) {
     cJSON *request_data = cJSON_CreateObject();
 
     if (req->authn_method) {
@@ -70,7 +70,7 @@ struct radius_custom *parse_response_data(char *json, int *size) {
     return rad_attr;
 }
 
-void request_data_destroy(struct request_data *data) {
+void request_data_destroy(struct portnox_auth_request *data) {
     free(data->plain_pwd);
     free(data->nt_response);
     free(data->nt_challenge);
@@ -88,3 +88,4 @@ void radius_custom_array_destroy(struct radius_custom *rad_custom, int *size) {
     for (i = 0; i < *size; i++) {
         radius_custom_destroy(&rad_custom[i]);
     }
+}

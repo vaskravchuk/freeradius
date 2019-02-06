@@ -7,8 +7,10 @@
 
 #include <freeradius-devel/portnox/dep/cJSON.h>
 
+typedef struct portnox_auth_request portnox_auth_request;
+
 //request info structure 
-struct request_data {
+struct portnox_auth_request {
     int authn_method;
     char *mac_addr;
     char *plain_pwd;
@@ -23,12 +25,12 @@ struct radius_custom {
     char *value;
 };
 // destroy structures
-void request_data_destroy(struct request_data *data);
+void request_data_destroy(struct portnox_auth_request *data);
 void radius_custom_destroy(struct radius_custom* rad_custom);
 void radius_custom_array_destroy(struct radius_custom *rad_custom, int *size);
 
 // create json string request with request data and custom radius attributes 
-char *create_request_data_json(struct request_data *req, struct radius_custom rad_attr[], int attr_len);
+char *create_request_data_json(struct portnox_auth_request *req, struct radius_custom rad_attr[], int attr_len);
 
 cJSON *make_custom_attributes(struct radius_custom rad_attr[], int attr_len);
 
