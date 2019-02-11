@@ -71,6 +71,7 @@ int redis_srv_port = 0;
 int redis_srv_timeout = 200;
 char* redis_srv_pwd = NULL;
 int redis_srv_db = 0;
+int redis_cache_ttl = 3600;
 
 char* centrale_baseurl = NULL;
 char* cluster_id = NULL;
@@ -251,10 +252,6 @@ static const CONF_PARSER redis_config_nodest[] = {
 
 	{ NULL, -1, 0, NULL, NULL }
 };
-
-static const CONF_PARSER redis_config_nodest[]{
-
-}
 /*
  *  A mapping of configuration file names to internal variables
  */
@@ -293,6 +290,8 @@ static const CONF_PARSER server_config[] = {
 #endif
 	{ "log", PW_TYPE_SUBSECTION, 0, NULL, (const void *) log_config_nodest },
 	{ "redis", PW_TYPE_SUBSECTION, 0, NULL, (const void *) redis_config_nodest },
+
+	{ "redis_cache_ttl", PW_TYPE_INTEGER, 0, &redis_cache_ttl, 3600 },
 
 	{ "CENTRALE_BASEURL", PW_TYPE_STRING_PTR, 0, &centrale_baseurl, NULL},
 	{ "CLUSTER_ID", PW_TYPE_STRING_PTR, 0, &cluster_id, NULL },

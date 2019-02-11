@@ -17,11 +17,6 @@ struct portnox_auth_request {
     char *nt_challenge;
     char *nt_response;
     char *username;
-
-    //portnox client call
-    char *caller_ip;
-    char *caller_port;
-    char *cluster_id;
 };
 
 // radius custom attributes structure

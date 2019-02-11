@@ -29,15 +29,6 @@ char *create_request_data_json(struct portnox_auth_request *req, struct radius_c
     if (req->username) {
         cJSON_AddStringToObject(request_data, "UserName", req->username);
     }
-    if (req->caller_ip) {
-        cJSON_AddStringToObject(request_data, "CallerIp", req->caller_ip);
-    }
-    if (req->caller_port) {
-        cJSON_AddStringToObject(request_data, "CallerPort", req->caller_port);
-    }
-    if (req->cluster_id) {
-        cJSON_AddStringToObject(request_data, "ClusterId", req->cluster_id);
-    }
     if (rad_attr != NULL & attr_len > 0) {
         cJSON *rad_custom = make_custom_attributes(rad_attr, attr_len);
         cJSON_AddItemToObject(request_data, "RadiusCustom", rad_custom);
@@ -49,7 +40,8 @@ char *create_request_data_json(struct portnox_auth_request *req, struct radius_c
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = cJSON_Parse(json);
-    char *val = cJSON_GetObjectItem(parsed, attr)->valuestring;
+    char *val =  strdup(cJSON_GetObjectItem(parsed, attr)->valuestring);
+    cJSON_Delete(parsed);
     return val;
 }
 

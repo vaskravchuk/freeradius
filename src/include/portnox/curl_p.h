@@ -19,11 +19,8 @@ typedef struct srv_req {
     dstr data;
     /* if 'true' -> print curl logs */
     int is_debug;
-
-    /* cert (pfx) path to authenticate request on be */
-    char* req_auth_crt_path;
-    /* pwd to auth certificate */
-    char* req_auth_crt_pwd;
+    /* if 'true' -> use certificate */
+    int need_crt_auth;
 } srv_req;
 
 /* response from server */
@@ -31,7 +28,7 @@ typedef struct srv_resp {
     /* curl return code */
     int return_code;
     /* http code */
-    long http_code;
+    long http_code;.
     /* plain data from be */
     dstr data;
 } srv_resp;

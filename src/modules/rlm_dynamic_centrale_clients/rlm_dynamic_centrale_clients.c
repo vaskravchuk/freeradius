@@ -9,22 +9,29 @@ RCSID("$Id$")
 #include <ctype.h>
 #include <signal.h>
 
+#define CALLER_ORG_ID "CallerOrgId"
+#define CALLER_SECRET "CallerSecret"
+
 extern char* centrale_baseurl;
 extern char* cluster_id;
-extern char* portnox_crt_path;
-extern char* portnox_crt_pwd;
+extern int redis_cache_ttl;
+
+char *format_client_output(char *ip, char *port, char *caller_secret);
+char *get_shared_secret_key(char *port);
+char *get_centrale_orgid_key(char *port);
+char *get_portnox_client_url(); 
 
 /*
  *      Define a structure for our module configuration.
  */
 typedef struct rlm_dynamic_centrale_clients_t {
     char    *program;
-    int    *use_internal_script;
+    int     *use_script;
 } rlm_dynamic_centrale_clients_t;
 
 static const CONF_PARSER module_config[] = {
     { "program",  PW_TYPE_STRING_PTR, offsetof(rlm_dynamic_centrale_clients_t, program), NULL, NULL },
-    { "use_internal_script",  PW_TYPE_BOOLEAN, offsetof(rlm_dynamic_centrale_clients_t, use_internal_script), NULL, NULL },
+    { "use_script",  PW_TYPE_BOOLEAN, offsetof(rlm_dynamic_centrale_clients_t, use_script), NULL, "no" },
     { NULL, -1, 0, NULL, NULL }
 };
 
@@ -97,7 +104,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         return RLM_MODULE_FAIL;
     }
 
-    if (inst->use_internal_script == 1) {
+    if (inst->use_script == 0) {
         if (!snprintf(cmdline, sizeof(cmdline), "%s %d %s %s",  hostname, request->packet->dst_port, buffer, request->context_id)) {
             radius_exec_logger_centrale(request, "60021", "rlm_dynamic_centrale_clients: Unable to make arguments");
             return RLM_MODULE_FAIL;
@@ -144,48 +151,35 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
 int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
     char *shared_secret;
     char *caller_orgid;
+    char *caller_secret;
     char *resp_data;
-    dstr req_json;
+    char *req_json;
     srv_req client_call_req;
     srv_resp client_call_resp;
-    int from_cache;
+    char *shared_secret_key;
+    char *centrale_orgid_key;
+    int from_cache = 0;
     int result;
 
     char *args = strtok(cmd, " ");
 
-    char shared_secret_key_buf[40];
-    char centrale_orgid_key_buf[40];
-    char url_buf[150];
+    char *url = get_portnox_client_url();
+    shared_secret_key = get_shared_secret_key(&args[1]);
 
-    snprintf(url_buf, sizeof(url_buf), "%s/%s", centrale_baseurl, "cloudradius/callers");
-    snprintf(shared_secret_key_buf, sizeof(shared_secret_key_buf), "secret:%s:SHARED_SECRET", args[1]);
-
-    result = redis_get(shared_secret_key_buf, &shared_secret);
+    result = redis_get(shared_secret_key, &shared_secret);
 
     if (result == 0) {
         from_cache = 1;
-    }
-    else {
-        radlog(L_ERR, "Problem getting shared secret from redis");
     }
 
     if (from_cache == 0) {
         radlog(L_INFO, "Dynamic central clients for ip %s port %s from url", args[0], args[1]);
 
-        portnox_auth_request req = {
-            .cluster_id = cluster_id,
-            .caller_ip = &args[0],
-            .caller_port = &args[1]
-        };
+        req_json = (char *) calloc(300, sizeof(char));
+        snprintf(req_json, 300 * sizeof(char), "{\"CallerIp\":\"%s\",\"CallerPort\":%s,\"ClusterId\":\"%s\"}",
+                 &args[0], &args[1], cluster_id);
 
-        req_json = dstr_cstr(create_request_data_json(&req, NULL, 0));
-
-        client_call_req = (srv_req) {
-            .url = url_buf,
-            .data = req_json,
-            .req_auth_crt_path = portnox_crt_path,
-            .req_auth_crt_pwd = portnox_crt_pwd
-        };
+        client_call_req = req_create(url, dstr_cstr(req_json), 0, 1);
 
         client_call_resp = exec_http_request(&client_call_req);
 
@@ -196,47 +190,81 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
 
         resp_data = dstr_to_cstr(&clients_call_resp.data);
 
-        caller_orgid = get_val_by_attr_from_json(resp_data, "CallerOrgId");
+        caller_orgid = get_val_by_attr_from_json(resp_data, CALLER_ORG_ID);
 
         if (!caller_orgid) {
-            radlog(L_ERR, "60007: Unable to get CallerOrgId for client %s on port %s", args[0], args[1]);
+            radius_exec_logger_centrale(request, "60007",
+                                        "rlm_dynamic_centrale_clients: Unable to get CallerOrgId for client %s on port %s",
+                                        args[0], args[1]);
         }
 
-        caller_secret = get_val_by_attr_from_json(resp_data, "CallerSecret");
+        caller_secret = get_val_by_attr_from_json(resp_data, CALLER_SECRET);
 
         if (!caller_secret) {
-            radlog(L_ERR, "60007: Unable to get CallerSecret for client %s on port %s", args[0], args[1]);
+            radius_exec_logger_centrale(request, "60007",
+                                        "rlm_dynamic_centrale_clients: Unable to get CallerSecret for client %s on port %s",
+                                        args[0], args[1]);
         }
 
         req_destroy(&client_call_req);
         resp_destroy(&client_call_resp);
+        free(req_json);
     } else {
         caller_secret = shared_secret;
     }
 
     if (shared_secret) {
+        char *client_buffer;
+
         FILE *output_file = fopen(&args[3], "w");
 
-        char *client = "client %s {\n"
-                       "\tsecret = %s\n"
-                       "\tshortname = %s\n"
-                       "}";
+        client_buffer = format_client_output(&args[0], &args[1], caller_secret);
 
-        char *client_buffer[350];
-
-        snprintf(client_buffer, sizeof(client_buffer), client, args[0], caller_secret, args[1]);
         fputs(client_buffer, output_file);
         fclose(output_file);
         free(client_buffer);
     }
 
     if (from_cache == 0) {
-        snprintf(centrale_orgid_key_buf, sizeof(centrale_orgid_key_buf), "secret:%s:CENTRALE_ORGID", &args[1]);
-        redis_set(centrale_orgid_key_buf, caller_orgid);
-        redis_setex(shared_secret_key_buf, caller_secret, 3600);
+        centrale_orgid_key = get_centrale_orgid_key(&args[1]);
+        redis_set(centrale_orgid_key, caller_orgid);
+        redis_setex(shared_secret_key, caller_secret, redis_cache_ttl);
     }
 
+    free(centrale_orgid_key);
+    free(shared_secret_key);
+    free(caller_secret);
+    free(caller_orgid);
     return 0;
+}
+
+void format_client_output(char* buffer, char*ip, char* port, char* caller_secret) {
+    char *client = "client %s {\n"
+                   "\tsecret = %s\n"
+                   "\tshortname = %s\n"
+                   "}";
+    snprintf(buffer, sizeof(buffer), client, ip, caller_secret, port);
+}
+
+void get_shared_secret_key(char* key_buf, char* port) {
+    snprintf(key_buf, sizeof(key_buf), "secret:%s:SHARED_SECRET", port);
+}
+
+void get_centrale_orgid_key(char* key_buf, char* port) {
+    snprintf(key_buf, sizeof(key_buf), "secret:%s:CENTRALE_ORGID", port);
+}
+
+char *get_portnox_client_url() {
+    static char *portnox_url;
+    if (!portnox_url) {
+        char *url_end = "cloudradius/callers";
+        int len = strlen(centrale_baseurl) + strlen(url_end);
+
+        portnox_url = calloc(len, sizeof(char));
+        snprintf(portnox_url, len * sizeof(char), "%s/%s", centrale_baseurl, url_end);
+        return portnox_url;
+    }
+    return portnox_url;
 }
 
 
