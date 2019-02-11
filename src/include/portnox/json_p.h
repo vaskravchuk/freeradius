@@ -17,6 +17,11 @@ struct portnox_auth_request {
     char *nt_challenge;
     char *nt_response;
     char *username;
+
+    //portnox client call
+    char *caller_ip;
+    char *caller_port;
+    char *cluster_id;
 };
 
 // radius custom attributes structure
@@ -33,6 +38,7 @@ void radius_custom_array_destroy(struct radius_custom *rad_custom, int *size);
 char *create_request_data_json(struct portnox_auth_request *req, struct radius_custom rad_attr[], int attr_len);
 
 cJSON *make_custom_attributes(struct radius_custom rad_attr[], int attr_len);
+char *get_val_by_attr_from_json(char *json, char *attr);
 
 // parse response json radius custom attributes into radius_custom struct array
 struct radius_custom *parse_response_data(char *json, int *size);
