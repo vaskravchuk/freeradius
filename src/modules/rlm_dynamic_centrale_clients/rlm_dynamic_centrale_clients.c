@@ -167,7 +167,6 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
     }
     else {
         radlog(L_ERR, "Problem getting shared secret from redis");
-        return 1;
     }
 
     if (from_cache == 0) {
@@ -184,36 +183,33 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
         client_call_req = (srv_req) {
             .url = url_buf,
             .data = req_json,
-            .is_debug = 1,
-            .need_crt_auth = 1,
             .req_auth_crt_path = portnox_crt_path,
             .req_auth_crt_pwd = portnox_crt_pwd
         };
 
         client_call_resp = exec_http_request(&client_call_req);
 
-        if (client_call_resp.return_code == 0) {
-            resp_data = dstr_to_cstr(&clients_call_resp.data);
-
-            caller_orgid = get_val_by_attr_from_json(data_from_file, "CallerOrgId");
-
-            if (!caller_orgid) {
-                radlog(L_ERR, "60007: Unable to get CallerOrgId for client %s on port %s", args[0], args[1]);
-            }
-
-            caller_secret = get_val_by_attr_from_json(data_from_file, "CallerSecret");
-
-            if (!caller_secret) {
-                radlog(L_ERR, "60007: Unable to get CallerSecret for client %s on port %s", args[0], args[1]);
-            }
-
-            req_destroy(&client_call_req);
-            resp_destroy(&client_call_resp);
-        }
-        else {
+        if (client_call_resp.return_code != 0) {
             radlog(L_ERR, "Failed curl request with error code %d", client_call_resp.return_code);
             return 1;
         }
+
+        resp_data = dstr_to_cstr(&clients_call_resp.data);
+
+        caller_orgid = get_val_by_attr_from_json(resp_data, "CallerOrgId");
+
+        if (!caller_orgid) {
+            radlog(L_ERR, "60007: Unable to get CallerOrgId for client %s on port %s", args[0], args[1]);
+        }
+
+        caller_secret = get_val_by_attr_from_json(resp_data, "CallerSecret");
+
+        if (!caller_secret) {
+            radlog(L_ERR, "60007: Unable to get CallerSecret for client %s on port %s", args[0], args[1]);
+        }
+
+        req_destroy(&client_call_req);
+        resp_destroy(&client_call_resp);
     } else {
         caller_secret = shared_secret;
     }
