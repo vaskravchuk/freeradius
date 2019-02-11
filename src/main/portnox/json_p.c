@@ -29,14 +29,22 @@ char *create_request_data_json(struct portnox_auth_request *req, struct radius_c
     if (req->username) {
         cJSON_AddStringToObject(request_data, "UserName", req->username);
     }
-
-    cJSON *rad_custom = make_custom_attributes(rad_attr, attr_len);
-    cJSON_AddItemToObject(request_data, "RadiusCustom", rad_custom);
-
+    if (rad_attr != NULL & attr_len > 0) {
+        cJSON *rad_custom = make_custom_attributes(rad_attr, attr_len);
+        cJSON_AddItemToObject(request_data, "RadiusCustom", rad_custom);
+    }
     char *json = cJSON_Print(request_data);
     cJSON_Delete(request_data);
     return json;
 }
+
+char *get_val_by_attr_from_json(char *json, char *attr) {
+    cJSON *parsed = cJSON_Parse(json);
+    char *val =  strdup(cJSON_GetObjectItem(parsed, attr)->valuestring);
+    cJSON_Delete(parsed);
+    return val;
+}
+
 
 cJSON *make_custom_attributes(struct radius_custom rad_attr[], int attr_len) {
     cJSON *rad_custom = cJSON_CreateArray();
@@ -66,7 +74,6 @@ struct radius_custom *parse_response_data(char *json, int *size) {
         i++;
     }
     cJSON_Delete(parsed);
-
     return rad_attr;
 }
 
@@ -76,6 +83,9 @@ void request_data_destroy(struct portnox_auth_request *data) {
     free(data->nt_challenge);
     free(data->username);
     free(data->mac_addr);
+    free(data->caller_ip);
+    free(data->caller_port);
+    free(data->cluster_id);
 }
 
 void radius_custom_destroy(struct radius_custom *rad_custom) {
