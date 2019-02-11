@@ -10,6 +10,7 @@
 #include <freeradius-devel/portnox/dep/credis.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/autoconf.h>
+#include <freeradius-devel/portnox/portnox_config.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -46,12 +47,6 @@ struct redis_op_info {
     #define REDIS_CLIENT_UNLOCK
 #endif
 
-extern char* redis_srv_addr;
-extern int redis_srv_port;
-extern int redis_srv_timeout;
-extern char* redis_srv_pwd;
-extern int redis_srv_db;
-
 static REDIS get_redis_client();
 static void invalidate_redis_client();
 static int perform_redis_operation(redis_op_info* op);
@@ -66,10 +61,14 @@ REDIS redis_client = NULL;
 static REDIS get_redis_client() {
     if (redis_client == NULL) {
         /* Create redis client */
-        redis_client = credis_connect(redis_srv_addr, redis_srv_port, redis_srv_pwd, redis_srv_timeout);
+        redis_client = credis_connect(
+                            portnox_config.redis.srv_addr, 
+                            portnox_config.redis.srv_port,
+                            portnox_config.redis.srv_pwd, 
+                            portnox_config.redis.srv_timeout);
 
         /* Select redis DB */
-        if (redis_client) credis_select(redis_client, redis_srv_db);
+        if (redis_client) credis_select(redis_client, portnox_config.redis.srv_db);
     }
     return redis_client;
 }

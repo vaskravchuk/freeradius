@@ -3,14 +3,13 @@
  */
 
 #include <freeradius-devel/ident.h>
+#include <freeradius-devel/portnox/portnox_config.h>
 
 #include "rlm_eap.h"
 
-extern int allow_portnox_request_log;
-
 void radlog_eaphandler_portnox(EAP_HANDLER *handler, int full_info, const char *msg, ...) 
 {
-	if (!allow_portnox_request_log) {
+	if (!portnox_config.log.allow_auth_flow_log) {
 		return;
 	}
 	
