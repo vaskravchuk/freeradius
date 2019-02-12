@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <freeradius-devel/portnox/json_p.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
-#include <freeradius-devel/portnox/dsrt.h>
+#include <freeradius-devel/portnox/dstr.h>
 
 char *create_request_data_json(struct portnox_auth_request *req, struct radius_custom rad_attr[], int attr_len) {
     cJSON *request_data = cJSON_CreateObject();
@@ -38,10 +38,22 @@ char *create_request_data_json(struct portnox_auth_request *req, struct radius_c
     return json;
 }
 
-char *get_val_by_attr_from_json(char *json, char *attr) {
-    cJSON *parsed = cJSON_Parse(json);
-    char *val =  strdup(cJSON_GetObjectItem(parsed, attr)->valuestring);
-    cJSON_Delete(parsed);
+char* get_val_by_attr_from_json(char *json, char *attr) {
+    cJSON *parsed = NULL;
+    cJSON *found_item = NULL;
+    char *val = NULL;
+
+    parsed = cJSON_Parse(json);
+    if (!parsed) goto fail;
+
+    found_item = cJSON_GetObjectItem(parsed, attr);
+    if (!found_item || !found_item->valuestring) goto fail;
+
+    /* should be copied */
+    val =  strdup(found_item->valuestring);
+
+    fail:
+    if (parsed) cJSON_Delete(parsed);
     return val;
 }
 
@@ -83,9 +95,6 @@ void request_data_destroy(struct portnox_auth_request *data) {
     free(data->nt_challenge);
     free(data->username);
     free(data->mac_addr);
-    free(data->caller_ip);
-    free(data->caller_port);
-    free(data->cluster_id);
 }
 
 void radius_custom_destroy(struct radius_custom *rad_custom) {

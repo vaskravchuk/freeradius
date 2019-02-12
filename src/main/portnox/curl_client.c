@@ -1,37 +1,41 @@
 /*
- * curl_p.c	Execute curl.
+ * curl_client.c	Execute curl.
  *
  * Version:	$Id$t
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
 
-#include <freeradius-devel/portnox/curl_p.h>
+#include <freeradius-devel/portnox/curl_client.h>
+#include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <stdio.h>
 #include <curl/curl.h>
 
 #define START_BUF_SIZE 1024
 
-extern char* portnox_crt_path;
-extern char* portnox_crt_pwd;
-
 static size_t curl_write_callback_string(void *contents, size_t size, size_t nmemb, void *usr_data);
 
-srv_req req_create(char* url, dstr data, int is_debug, int need_crt_auth) {
+srv_req req_create(char* url, char* data, int is_debug, int need_crt_auth) {
     return (srv_req) {url, data, is_debug, need_crt_auth};
 }
 
-srv_resp resp_create(int return_code, int http_code, dstr data) {
+srv_resp resp_create(int return_code, int http_code, char* data) {
     return (srv_resp) {return_code, http_code, data};
 }
 
 req_destroy(srv_req* req) {
-    if (req->data) dstr_destroy(&req->data);
+    if (req->data) {
+        free(req->data);
+        req->data = NULL;
+    }
 }
 
 resp_destroy(srv_resp* resp) {
-    if (resp->data) dstr_destroy(&resp->data);
+    if (resp->data) {
+        free(resp->data);
+        resp->data = NULL;
+    }
 }
 
 /* callback to save incoming data */
@@ -44,6 +48,7 @@ static size_t curl_write_callback_string(void *contents, size_t size, size_t nme
 
 srv_resp exec_http_request(srv_req* req) {
     srv_resp resp;
+    dstr data;
     CURL *curl;
 
     curl = curl_easy_init();
@@ -81,27 +86,32 @@ srv_resp exec_http_request(srv_req* req) {
      */
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 #endif
-
-        resp = resp_create(0, 0, dstr_create(START_BUF_SIZE));
+        resp = resp_create(0, 0, NULL);
+        /* do not destroy, we will move string to outside scope */
+        data = dstr_create(START_BUF_SIZE);
+        /* curl_easy_perform will return "22" if http_code will be >= 400 */
+        curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, req->is_debug ? 1L : 0L);
         /* Perform the request, res will get the return code */
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_string);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp.data);
-        if (dstr_size(&req->data)) {
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, dstr_to_cstr(&req->data));
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+        if (req->data && *req->data) {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, req->data);
         }
 
         /* Set the cert for client authentication if needed*/
         if (req->need_crt_auth) {
-            curl_easy_setopt(curl, CURLOPT_SSLCERT,  portnox_crt_path);
+            curl_easy_setopt(curl, CURLOPT_SSLCERT,  portnox_config.be.req_crt);
             curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            curl_easy_setopt(curl, CURLOPT_SSLCERTPASSWD, portnox_crt_pwd);
+            curl_easy_setopt(curl, CURLOPT_SSLCERTPASSWD, portnox_config.be.req_crt_pwd);
         }
 
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, req->is_debug ? 1L : 0L);
-
+        /* do all work */
         resp.return_code = curl_easy_perform(curl);
         curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &resp.http_code);
-        // do all work
+
+        /* moving string to request scope */
+        resp.data = dstr_to_cstr(&data);
 
         /* always cleanup */
         curl_easy_cleanup(curl);

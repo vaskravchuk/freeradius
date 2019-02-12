@@ -63,20 +63,6 @@ char *request_log_file = NULL;
 char *debug_condition = NULL;
 char *current_server = NULL;
 const char *STR_VIRTUAL_SERVER = "Virtual server";
-int allow_portnox_request_log = 0;
-
-/* redis settings */
-char* redis_srv_addr = NULL;
-int redis_srv_port = 0;
-int redis_srv_timeout = 200;
-char* redis_srv_pwd = NULL;
-int redis_srv_db = 0;
-int redis_cache_ttl = 3600;
-
-char* centrale_baseurl = NULL;
-char* cluster_id = NULL;
-char* portnox_crt_path = NULL;
-char* portnox_crt_pwd = NULL;
 
 #ifdef HAVE_GMTIME_R
 extern int log_dates_utc;
@@ -89,11 +75,6 @@ typedef struct cached_config_t {
 } cached_config_t;
 
 static cached_config_t	*cs_cache = NULL;
-
-/*
- * Script for log portnox errors
- */
-char	*portnox_log_script;
 
 /*
  *	Temporary local variables for parsing the configuration
@@ -235,23 +216,13 @@ static const CONF_PARSER log_config_nodest[] = {
 
 #ifdef HAVE_GMTIME_R
 	{ "use_utc", PW_TYPE_BOOLEAN, 0, &log_dates_utc, NULL },
-#endif
-
-	{ "allow_portnox_request_log", PW_TYPE_BOOLEAN, 0, &allow_portnox_request_log, "yes" },
+#endif,
 
 	{ NULL, -1, 0, NULL, NULL }
 };
 
+extern const CONF_PARSER portnox_config_nodest[];
 
-static const CONF_PARSER redis_config_nodest[] = {
-	{ "srv_addr", PW_TYPE_BOOLEAN, 0, &redis_srv_addr, NULL },
-	{ "srv_port", PW_TYPE_INTEGER, 0, &redis_srv_port, Stringify(6379) },
-	{ "srv_timeout", PW_TYPE_INTEGER, 0, &redis_srv_timeout, Stringify(500) },
-	{ "srv_pwd", PW_TYPE_STRING_PTR, 0, &redis_srv_pwd, NULL},
-	{ "srv_db", PW_TYPE_INTEGER, 0, &redis_srv_db, Stringify(0)},
-
-	{ NULL, -1, 0, NULL, NULL }
-};
 /*
  *  A mapping of configuration file names to internal variables
  */
@@ -268,7 +239,6 @@ static const CONF_PARSER server_config[] = {
 	{ "localstatedir",      PW_TYPE_STRING_PTR, 0, &localstatedir,     "${prefix}/var"},
 	{ "sbindir",            PW_TYPE_STRING_PTR, 0, &sbindir,           "${prefix}/sbin"},
 	{ "logdir",             PW_TYPE_STRING_PTR, 0, &radlog_dir,        "${localstatedir}/log"},
-	{ "portnox_log_script", PW_TYPE_STRING_PTR, 0, &portnox_log_script,""},
 	{ "run_dir",            PW_TYPE_STRING_PTR, 0, &run_dir,           "${localstatedir}/run/${name}"},
 	{ "libdir",             PW_TYPE_STRING_PTR, 0, &radlib_dir,        "${prefix}/lib"},
 	{ "radacctdir",         PW_TYPE_STRING_PTR, 0, &radacct_dir,       "${logdir}/radacct" },
@@ -289,15 +259,7 @@ static const CONF_PARSER server_config[] = {
 	{ "proxy_requests", PW_TYPE_BOOLEAN, 0, &mainconfig.proxy_requests, "yes" },
 #endif
 	{ "log", PW_TYPE_SUBSECTION, 0, NULL, (const void *) log_config_nodest },
-	{ "redis", PW_TYPE_SUBSECTION, 0, NULL, (const void *) redis_config_nodest },
-
-	{ "redis_cache_ttl", PW_TYPE_INTEGER, 0, &redis_cache_ttl, 3600 },
-
-	{ "CENTRALE_BASEURL", PW_TYPE_STRING_PTR, 0, &centrale_baseurl, NULL},
-	{ "CLUSTER_ID", PW_TYPE_STRING_PTR, 0, &cluster_id, NULL },
-
-	{ "PORTNOX_CRT_PATH", PW_TYPE_STRING_PTR, 0, &portnox_crt_path, NULL },
-	{ "PORTNOX_CRT_PWD", PW_TYPE_STRING_PTR, 0, &portnox_crt_pwd, NULL },
+	{ "portnox", PW_TYPE_SUBSECTION, 0, NULL, (const void *) portnox_config_nodest },
 
 	/*
 	 *	People with old configs will have these.  They are listed

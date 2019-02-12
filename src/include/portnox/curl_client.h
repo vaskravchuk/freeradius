@@ -1,13 +1,13 @@
 /*
- * curl_p.h	Execute curl.
+ * curl_client.h	Execute curl.
  *
  * Version:	$Id$t
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
 
-#ifndef CURL_P_H
-#define CURL_P_H
+#ifndef CURL_CLIENT_H
+#define CURL_CLIENT_H
 
 #include <freeradius-devel/portnox/dstr.h>
 
@@ -16,7 +16,7 @@ typedef struct srv_req {
     /* endpoint url */
     char* url;
     /* data to send. if empty -> GET request */
-    dstr data;
+    char* data;
     /* if 'true' -> print curl logs */
     int is_debug;
     /* if 'true' -> use certificate */
@@ -28,18 +28,18 @@ typedef struct srv_resp {
     /* curl return code */
     int return_code;
     /* http code */
-    long http_code;.
+    long http_code;
     /* plain data from be */
-    dstr data;
+    char* data;
 } srv_resp;
 
 /* Create/destroy structs */
-srv_req req_create(char* url, dstr data, int is_debug, int need_crt_auth);
-srv_resp resp_create(int return_code, int http_code, dstr data);
+srv_req req_create(char* url, char* data, int is_debug, int need_crt_auth);
+srv_resp resp_create(int return_code, int http_code, char* data);
 req_destroy(srv_req* req);
 resp_destroy(srv_resp* resp);
 
 /* Do curl http call */
 srv_resp exec_http_request(srv_req* req);
 
-#endif //CURL_P_H
+#endif //CURL_CLIENT_H

@@ -1,13 +1,13 @@
 /*
- * redis_p.h	Execute redis commands.
+ * redis_client.h	Execute redis commands.
  *
  * Version:	$Id$t
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
 
-#ifndef REDIS_P_H
-#define REDIS_P_H
+#ifndef REDIS_CLIENT_H
+#define REDIS_CLIENT_H
 
 /*
  * !!!WARNING!!!!
@@ -30,4 +30,4 @@ int redis_del(const char *key);
 /* Return string which describes redis Error */
 const char* redis_error_descr(int error);
 
-#endif //REDIS_P_H
+#endif //REDIS_CLIENT_H

@@ -122,6 +122,30 @@ dstr dstr_escaped(const char *str) {
     return s;
 }
 
+dstr dstr_from_fmt(const char* fmt, ...) {
+    char *buf;
+    int size;
+    va_list v;
+    dstr s;
+
+    va_start(v, fmt);
+
+    size = vasprintf(&buf, fmt, v);
+    /* problems occurred? */
+    if (size < 0) {
+        va_end(v);
+        return;
+    }
+
+    s = dstr_create(size+1);
+    dstr_cat_cstr_n(&s, size, buf);
+
+    va_end(v);
+    free(buf);
+
+    return s;
+}
+
 /* Create a new string as a copy of an old one */
 dstr dstr_dup_dstr(dstr *s) {
     dstr s2;

@@ -57,6 +57,8 @@ dstr dstr_cstr(char *c);
 char *dstr_to_cstr(dstr *s);
 /* Return string with escaped chars */
 dstr dstr_escaped(const char *str);
+/* Return string from format */
+dstr dstr_from_fmt(const char* fmt, ...);
 
 /* Copy */
 dstr dstr_dup_dstr(dstr *s);
