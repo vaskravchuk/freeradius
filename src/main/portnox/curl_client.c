@@ -47,7 +47,7 @@ static size_t curl_write_callback_string(void *contents, size_t size, size_t nme
 }
 
 srv_resp exec_http_request(srv_req* req) {
-    srv_resp resp;
+    srv_resp resp = {0};
     dstr data;
     CURL *curl;
 
@@ -86,7 +86,6 @@ srv_resp exec_http_request(srv_req* req) {
      */
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 #endif
-        resp = resp_create(0, 0, NULL);
         /* do not destroy, we will move string to outside scope */
         data = dstr_create(START_BUF_SIZE);
         /* curl_easy_perform will return "22" if http_code will be >= 400 */

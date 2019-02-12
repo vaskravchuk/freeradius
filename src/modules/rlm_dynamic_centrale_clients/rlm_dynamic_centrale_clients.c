@@ -152,8 +152,8 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
-    srv_req call_req;
-    srv_resp call_resp;
+    srv_req call_req = {0};
+    srv_resp call_resp = {0};
     int from_cache = 0;
     int result = 0;
 
