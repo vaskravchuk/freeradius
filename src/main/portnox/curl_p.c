@@ -13,6 +13,9 @@
 
 #define START_BUF_SIZE 1024
 
+extern char* portnox_crt_path;
+extern char* portnox_crt_pwd;
+
 static size_t curl_write_callback_string(void *contents, size_t size, size_t nmemb, void *usr_data);
 
 srv_req req_create(char* url, dstr data, int is_debug, int need_crt_auth) {
@@ -89,9 +92,9 @@ srv_resp exec_http_request(srv_req* req) {
 
         /* Set the cert for client authentication if needed*/
         if (req->need_crt_auth) {
-            curl_easy_setopt(curl, CURLOPT_SSLCERT,  portnox_config.be.req_crt);
+            curl_easy_setopt(curl, CURLOPT_SSLCERT,  portnox_crt_path);
             curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "PEM");
-            curl_easy_setopt(curl, CURLOPT_SSLCERTPASSWD, portnox_config.be.req_crt_pwd);
+            curl_easy_setopt(curl, CURLOPT_SSLCERTPASSWD, portnox_crt_pwd);
         }
 
         curl_easy_setopt(curl, CURLOPT_VERBOSE, req->is_debug ? 1L : 0L);

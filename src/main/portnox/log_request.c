@@ -8,10 +8,11 @@
 RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
-#include <freeradius-devel/portnox/portnox_config.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
+extern int allow_portnox_request_log;
 
 int is_contains(char **arr, int size, char* str) {
 	int found = 0;
@@ -355,7 +356,7 @@ int response_to_string(char *out, int outlen, REQUEST *request, char *msg, int f
 }
 
 void log_request(REQUEST *request, int full_info, const char *msg, ...) {
-	if (!portnox_config.log.allow_auth_flow_log) {
+	if (!allow_portnox_request_log) {
 		return;
 	}
 	
@@ -379,7 +380,7 @@ void log_request(REQUEST *request, int full_info, const char *msg, ...) {
 }
 
 void log_response(REQUEST *request, const char *msg, ...) {
-	if (!portnox_config.log.allow_auth_flow_log) {
+	if (!allow_portnox_request_log) {
 		return;
 	}
 	

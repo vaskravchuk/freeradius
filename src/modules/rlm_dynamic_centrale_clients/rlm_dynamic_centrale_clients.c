@@ -4,7 +4,6 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/rad_assert.h>
-#include <freeradius-devel/portnox/portnox_config.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -14,10 +13,13 @@ RCSID("$Id$")
 #define CALLER_SECRET "CallerSecret"
 
 extern char* centrale_baseurl;
+extern char* cluster_id;
+extern int redis_cache_ttl;
 
 char *format_client_output(char *ip, char *port, char *caller_secret);
-char *get_shared_secret_key(char* key_buf, char* port);
-char *get_centrale_orgid_key(char* key_buf, char* port);
+char *get_shared_secret_key(char *port);
+char *get_centrale_orgid_key(char *port);
+char *get_portnox_client_url(); 
 
 /*
  *      Define a structure for our module configuration.
@@ -161,7 +163,8 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
 
     char *args = strtok(cmd, " ");
 
-    get_shared_secret_key(&shared_secret_key, &args[1]);
+    char *url = get_portnox_client_url();
+    shared_secret_key = get_shared_secret_key(&args[1]);
 
     result = redis_get(shared_secret_key, &shared_secret);
 
@@ -174,9 +177,9 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
 
         req_json = (char *) calloc(300, sizeof(char));
         snprintf(req_json, 300 * sizeof(char), "{\"CallerIp\":\"%s\",\"CallerPort\":%s,\"ClusterId\":\"%s\"}",
-                 &args[0], &args[1], portnox_config.be.cluster_id);
+                 &args[0], &args[1], cluster_id);
 
-        client_call_req = req_create(portnox_config.be.caller_info_url, dstr_cstr(req_json), 0, 1);
+        client_call_req = req_create(url, dstr_cstr(req_json), 0, 1);
 
         client_call_resp = exec_http_request(&client_call_req);
 
@@ -223,9 +226,9 @@ int radius_exec_dynamic_centrale(const char *cmd, REQUEST *request) {
     }
 
     if (from_cache == 0) {
-        get_centrale_orgid_key(&centrale_orgid_key, &args[1]);
+        centrale_orgid_key = get_centrale_orgid_key(&args[1]);
         redis_set(centrale_orgid_key, caller_orgid);
-        redis_setex(shared_secret_key, caller_secret, portnox_config.redis.keys.cache_ttl);
+        redis_setex(shared_secret_key, caller_secret, redis_cache_ttl);
     }
 
     free(centrale_orgid_key);
@@ -249,6 +252,19 @@ void get_shared_secret_key(char* key_buf, char* port) {
 
 void get_centrale_orgid_key(char* key_buf, char* port) {
     snprintf(key_buf, sizeof(key_buf), "secret:%s:CENTRALE_ORGID", port);
+}
+
+char *get_portnox_client_url() {
+    static char *portnox_url;
+    if (!portnox_url) {
+        char *url_end = "cloudradius/callers";
+        int len = strlen(centrale_baseurl) + strlen(url_end);
+
+        portnox_url = calloc(len, sizeof(char));
+        snprintf(portnox_url, len * sizeof(char), "%s/%s", centrale_baseurl, url_end);
+        return portnox_url;
+    }
+    return portnox_url;
 }
 
 

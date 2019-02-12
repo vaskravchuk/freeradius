@@ -477,6 +477,12 @@ extern int			log_auth_detail;
 extern const char   *radiusd_version;
 void			radius_signal_self(int flag);
 
+
+/*
+ * Script for log portnox errors
+ */
+extern char	*portnox_log_script;
+
 #define RADIUS_SIGNAL_SELF_NONE		(0)
 #define RADIUS_SIGNAL_SELF_HUP		(1 << 0)
 #define RADIUS_SIGNAL_SELF_TERM		(1 << 1)

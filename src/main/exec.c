@@ -25,7 +25,6 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/rad_assert.h>
-#include <freeradius-devel/portnox/portnox_config.h>
 
 #include <sys/file.h>
 
@@ -643,12 +642,12 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		}
 	}
 
-	int scr_res = radius_exec_program(portnox_config.log.log_script, request,
+	int scr_res = radius_exec_program(portnox_log_script, request,
         0, /* wait */
 		NULL, 0,
 		45,
 		request->packet->vps, NULL, 1);
 	if (scr_res != 0) {
-		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", portnox_config.log.log_script);
+		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", portnox_log_script);
 	}
 }

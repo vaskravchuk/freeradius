@@ -10,7 +10,7 @@ SERVER_SRCS	= acct.c auth.c client.c conffile.c crypt.c exec.c files.c \
 		  session.c threads.c util.c valuepair.c version.c  \
 		  xlat.c event.c realms.c evaluate.c vmps.c detail.c \
 		  portnox/curl_p.c portnox/redis_p.c portnox/dstr.c portnox/dep/credis.c \
-		  portnox/log_request.c portnox/dep/cJSON.c portnox/json_p.c portnox/portnox_config.c
+		  portnox/log_request.c portnox/dep/cJSON.c portnox/json_p.c
 
 SERVER_OBJS	+= $(SERVER_SRCS:.c=.lo)
 

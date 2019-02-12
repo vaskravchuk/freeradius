@@ -26,7 +26,6 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/radpaths.h>
-#include <freeradius-devel/portnox/portnox_config.h>
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -91,7 +90,7 @@ int debug_flag = 0;
 struct main_config_t mainconfig;
 char *request_log_file = NULL;
 char *debug_log_file = NULL;
-struct portnox_conf_t portnox_config;
+int allow_portnox_request_log = 0;
 int radius_xlat(UNUSED char *out, UNUSED int outlen, UNUSED const char *fmt,
 		UNUSED REQUEST *request, UNUSED RADIUS_ESCAPE_STRING func)
 {
