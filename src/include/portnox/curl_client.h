@@ -14,23 +14,23 @@
 /* request structure */
 typedef struct srv_req {
     /* endpoint url */
-    char* url;
+    char* url = NULL;
     /* data to send. if empty -> GET request */
-    char* data;
+    char* data = NULL;
     /* if 'true' -> print curl logs */
-    int is_debug;
+    int is_debug = 0;
     /* if 'true' -> use certificate */
-    int need_crt_auth;
+    int need_crt_auth = 0;
 } srv_req;
 
 /* response from server */
 typedef struct srv_resp {
     /* curl return code */
-    int return_code;
+    int return_code = 0;
     /* http code */
-    long http_code;
+    long http_code = 0;
     /* plain data from be */
-    char* data;
+    char* data = NULL;
 } srv_resp;
 
 /* Create/destroy structs */
