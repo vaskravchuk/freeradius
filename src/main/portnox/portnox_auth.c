@@ -93,7 +93,7 @@ int portnox_auth(REQUEST *request,
         radius_exec_logger_centrale(request, 
                                     auth_info->failed_auth_error_code, 
                                     "CURL_ERR: %d %ld",
-                                    call_resp.return_code);
+                                    call_resp.return_code, call_resp.http_code);
         result = AUTH_REJECT_ERROR;
         goto fail;
     }
