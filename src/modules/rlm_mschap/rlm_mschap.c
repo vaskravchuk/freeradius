@@ -743,7 +743,7 @@ static int do_mschap(rlm_mschap_t *inst,
 						     request->packet->vps, &answer, 1, 60025);
 		}
 		else {
-		    result = portnox_auth(request, 1, &auth_info, &answer);
+		    result = portnox_auth(request, MSCHAP_AUTH_METHOD, &auth_info, &answer);
 		}
 		if (result != 0) {
 			char *p;

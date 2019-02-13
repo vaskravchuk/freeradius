@@ -38,7 +38,7 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
 
-    result = portnox_auth(request, 1, &auth_info, &answer);
+    result = portnox_auth(request, PAP_AUTH_METHOD, &auth_info, &answer);
 
 	if (result != OPERATION_SUCCESS) {
 		radlog(L_ERR, "portnox_pap_auth failed");
