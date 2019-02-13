@@ -235,7 +235,7 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	val[len] = 0;
 
     val_escaped = str_replace(val, "\\\\", "\\");
-	str = dstr_cstr_n(val, len);
+	str = dstr_cstr(val_escaped);
 
 	return str;
 }

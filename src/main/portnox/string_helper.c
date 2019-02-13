@@ -92,7 +92,5 @@ char* str_replace(char* string, const char* substr, const char* replacement) {
         free(oldstr);
     }
 
-    free(string);
-
     return newstr;
 }
