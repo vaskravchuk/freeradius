@@ -696,14 +696,14 @@ static char *X509_to_PEM(X509 *cert) {
 void cert_processor(dstr* val, void* user_data) {
 	X509 *client_cert = NULL;
 	char *row_cert = NULL;
-	if (is_nas(&val)) return;
+	if (is_nas(val)) return;
 
-	client_cert = (x509*)user_data;
+	client_cert = (X509*)user_data;
 
 	row_cert = X509_to_PEM(client_cert);
 
 	if (row_cert) {
-		dstr_destroy(&val);
+		dstr_destroy(val);
 		*val = dstr_cstr(row_cert);
 	}
 }
