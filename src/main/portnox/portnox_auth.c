@@ -17,7 +17,6 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
 
-#define ATTR_VALUE_BUF_SIZE         256
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
@@ -216,13 +215,15 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     char val[ATTR_VALUE_BUF_SIZE];
 	dstr str = {0};
 
-	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
-		if (!vp->name || !(*vp->name)) continue;
-		if (strcmp(attr, vp->name) == 0) {
-			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
-			break;	
-		}
-	}
+    if (request->packet) {
+    	for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
+    		if (!vp->name || !(*vp->name)) continue;
+    		if (strcmp(attr, vp->name) == 0) {
+    			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
+    			break;	
+    		}
+    	}
+    }
 	val[len] = 0;
 
 	str = dstr_cstr_n(val, len);

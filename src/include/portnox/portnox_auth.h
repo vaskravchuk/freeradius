@@ -41,11 +41,13 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define IDENTITY_NOT_FOUND_ERROR    -3
 #define AUTH_REJECT_ERROR    		-4
 
-#define PAP_AUTH_METHOD 1
-#define MSCHAP_AUTH_METHOD 2
-#define CHAP_AUTH_METHOD 4
-#define EAPTLS_AUTH_METHOD 5
-#define MD5_AUTH_METHOD 6
+#define PAP_AUTH_METHOD             1
+#define MSCHAP_AUTH_METHOD          2
+#define CHAP_AUTH_METHOD            4
+#define EAPTLS_AUTH_METHOD          5
+#define MD5_AUTH_METHOD             6
+
+#define ATTR_VALUE_BUF_SIZE         256
 
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_t {
