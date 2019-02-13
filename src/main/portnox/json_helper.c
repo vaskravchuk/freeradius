@@ -7,12 +7,7 @@
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
-
-#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
-#define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
-
-#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
-#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
+#include <freeradius-devel/portnox/json_helper.h>
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;
@@ -42,8 +37,8 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
     if (!attrs) return;
 
     cJSON_ArrayForEach(item, attrs) {
-        key = cJSON_GetObjectItem(array, RESP_CUSTOM_ATTR_VAL_KEY);
-        val = cJSON_GetObjectItem(array, RESP_CUSTOM_ATTR_VAL_VALUE);
+        key = cJSON_GetObjectItem(item, RESP_CUSTOM_ATTR_VAL_KEY);
+        val = cJSON_GetObjectItem(item, RESP_CUSTOM_ATTR_VAL_VALUE);
         if (key && val) {
             vp = pairmake(key->valuestring, val->valuestring, T_OP_ADD);
             pairadd(output_pairs, vp);
