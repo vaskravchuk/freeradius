@@ -22,7 +22,6 @@ RCSID("$Id$")
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 static char* get_username(REQUEST *request);
 static dstr get_mac(REQUEST *request);
-static cJSON* get_attrs_json(REQUEST *request, char* client, char* context_id);
 static char* get_request_json(REQUEST *request, 
                               int auth_method, 
                               char* identity, 
