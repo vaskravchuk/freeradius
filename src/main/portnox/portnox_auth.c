@@ -11,6 +11,7 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
+#include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/portnox_auth.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
@@ -189,7 +190,7 @@ static char* get_request_json(REQUEST *request,
     cJSON_AddNumberToObject(json_obj, AUTH_METHOD_PR, auth_method);
     if (identity && *identity) cJSON_AddStringToObject(json_obj, USERNAME_PR, identity);
     if (mac && *mac) cJSON_AddStringToObject(json_obj, MAC_ADDRESS_PR, mac);
-    if (attrs) cJSON_AddObjectToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
+    if (attrs) cJSON_AddItemToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
     /* process custom params */
     if (attr_proc_list) {
         for (int i = 0; i < attr_proc_list->count; i++) {
