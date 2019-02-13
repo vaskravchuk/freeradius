@@ -21,7 +21,7 @@ RCSID("$Id$")
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
-static char* get_username(REQUEST *request);
+static dstr get_username(REQUEST *request);
 static dstr get_mac(REQUEST *request);
 static char* get_request_json(REQUEST *request, 
                               int auth_method, 
@@ -32,6 +32,7 @@ static int create_auth_req(REQUEST *request,
                            int auth_method, 
                            auth_attr_proc_list_t *attr_proc_list, 
                            srv_req* req);
+static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
 
 
 int portnox_auth(REQUEST *request, 
@@ -115,7 +116,7 @@ static int create_auth_req(REQUEST *request,
     if (org_id_res == -1) {
         result = ORG_ID_NOT_FOUND_ERROR;
         goto fail;
-    } else (org_id_res != 0) {
+    } else if (org_id_res != 0) {
         result = ORG_ID_NOT_FAILED_GET_ERROR;
         goto fail;
     }
@@ -128,7 +129,7 @@ static int create_auth_req(REQUEST *request,
     }
 
     /* get org id */
-    url = dstr_from_fmt(portnox_config.be.auth_info_url, org_id);
+    url = dstr_from_fmt(portnox_config.be.auth_url, org_id);
 
     /* get mac */
     mac = get_mac(request);
