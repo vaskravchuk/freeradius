@@ -55,16 +55,22 @@ typedef struct auth_attr_proc_t {
 	char* attr_name;
 	char* json_attr;
 	void (* processor)(dstr*);
-} auth_attr_proc_t;
+} AUTH_SP_ATTR;
 
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_list_t {
-	auth_attr_proc_t* items;
+	AUTH_SP_ATTR *items;
 	int count;
-} auth_attr_proc_list_t;
+} AUTH_SP_ATTR_LIST;
 
+typedef struct auth_info_t {
+    AUTH_SP_ATTR_LIST *auth_attr_list;
+    char* missed_orgid_error_code;
+    char* missed_username_error_code;
+    char* failed_auth_error_code;
+} AUTH_INFO;
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
-                auth_attr_proc_list_t *attr_proc_list, 
+                AUTH_INFO *auth_info, 
                 VALUE_PAIR **output_pairs);

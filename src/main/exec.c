@@ -631,12 +631,13 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 
 	if (format != NULL) {
 		char buffer[8192];
-		*buffer = '\0';
+		int len = 0;
 		va_list ap;
 
 		va_start(ap, format);
-		vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
+		len = vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
 		va_end(ap);
+		buffer[len]=0;
 		radlog(L_DBG, buffer);
 		if (!radius_pairmake(request, &request->packet->vps, "P-Error-Msg", buffer, T_OP_SET)) {
 			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Msg");

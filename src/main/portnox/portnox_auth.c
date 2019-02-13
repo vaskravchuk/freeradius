@@ -24,15 +24,15 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 static dstr get_username(REQUEST *request);
 static dstr get_mac(REQUEST *request);
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
-                              auth_attr_proc_list_t *attr_proc_list);
+                              AUTH_SP_ATTR_LIST *attr_proc_list);
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
-                               auth_attr_proc_list_t *attr_proc_list);
+                               AUTH_SP_ATTR_LIST *attr_proc_list);
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
 static char* auth_method_str(int auth_method);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
-                auth_attr_proc_list_t *attr_proc_list, 
+                AUTH_INFO *auth_info, 
                 VALUE_PAIR **output_pairs) {
     int result = OPERATION_SUCCESS;
     srv_req call_req = {0};
@@ -49,7 +49,7 @@ int portnox_auth(REQUEST *request,
     identity = get_username(request);
     if (!dstr_size(&identity)) {
         radius_exec_logger_centrale(request, 
-                                    "60001", 
+                                    auth_info->missed_username_error_code, 
                                     "Please use: username");
         result = IDENTITY_NOT_FOUND_ERROR;
         goto fail;
@@ -61,7 +61,7 @@ int portnox_auth(REQUEST *request,
     /* get org id */
     if (get_org_id_for_client(request->client_shortname, &org_id)) {
         radius_exec_logger_centrale(request, 
-                                    "60000", 
+                                    auth_info->missed_orgid_error_code, 
                                     "Unable to find centrale orgid in REDIS for port %s", 
                                     request->client_shortname);
         result = ORG_ID_FAILED_GET_ERROR;
@@ -78,7 +78,7 @@ int portnox_auth(REQUEST *request,
                              org_id,
                              dstr_to_cstr(&identity), 
                              dstr_to_cstr(&mac), 
-                             attr_proc_list);
+                             auth_info->auth_attr_list);
 
     if (result != OPERATION_SUCCESS) {
         goto fail;
@@ -91,10 +91,9 @@ int portnox_auth(REQUEST *request,
 
     if (call_resp.return_code != 0) {
         radius_exec_logger_centrale(request, 
-                                    "60002", 
-                                    "CURL_ERR: %d %ld while connecting to service_url/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
-                                    call_resp.return_code, call_resp.http_code, org_id, dstr_to_cstr(&identity), request->client_shortname, dstr_to_cstr(&mac),
-                                    get_attrs_json_str(request));
+                                    auth_info->failed_auth_error_code, 
+                                    "CURL_ERR: %d %ld",
+                                    call_resp.return_code);
         result = AUTH_REJECT_ERROR;
         goto fail;
     }
@@ -112,7 +111,7 @@ int portnox_auth(REQUEST *request,
 }
 
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
-                               auth_attr_proc_list_t *attr_proc_list) {
+                               AUTH_SP_ATTR_LIST *attr_proc_list) {
     dstr url = {0};
     char* json = NULL;
 
@@ -182,7 +181,7 @@ static dstr get_mac(REQUEST *request) {
 }
 
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
-                              auth_attr_proc_list_t *attr_proc_list) {
+                              AUTH_SP_ATTR_LIST *attr_proc_list) {
     char *json = NULL;
     cJSON *json_obj = NULL; 
     cJSON* attrs = NULL;
@@ -200,7 +199,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
     /* process custom params */
     if (attr_proc_list) {
         for (int i = 0; i < attr_proc_list->count; i++) {
-        	auth_attr_proc_t proc = attr_proc_list->items[i];
+        	AUTH_SP_ATTR proc = attr_proc_list->items[i];
         	dstr val = get_vps_attr_or_empty(request, proc.attr_name);
             if (proc.processor) proc.processor(&val);
             if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, proc.json_attr, dstr_to_cstr(&val));
