@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define PORTNOX_INNER_PORT "18122"
+
 /* shared secret redis dal */
 int get_shared_secret_for_client(const char *client, char **val) {
     return do_get_for_client(client, val, portnox_config.redis.keys.shared_secret_key_format);
@@ -58,11 +60,16 @@ int do_set_for_client(const char *client, const char *val, int need_ttl, char* f
     return result;
 }
 int do_get_for_client(const char *client, const char **val, char* format) {
-    int result;
-    dstr key;
+    int result = 0;
+    dstr key = {0};
 
-    key = dstr_from_fmt(format, client);
-    result = redis_get(dstr_to_cstr(&key), val);
+    if (strcmp(client, PORTNOX_INNER_PORT) == 0) {
+        *val = strdup(portnox_config.be.cluster_id);
+    }
+    else {
+        key = dstr_from_fmt(format, client);
+        result = redis_get(dstr_to_cstr(&key), val);
+    }
 
     dstr_destroy(&key);
 

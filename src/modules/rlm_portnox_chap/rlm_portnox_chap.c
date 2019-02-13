@@ -45,7 +45,7 @@ static int portnox_chap_auth(void *instance, REQUEST *request)
 		result = RLM_MODULE_FAIL;
 	}
 	else {
-		result = RLM_MODULE_OK
+		result = RLM_MODULE_OK;
 	}
 
 	/* Move the answer over to the request reply */
