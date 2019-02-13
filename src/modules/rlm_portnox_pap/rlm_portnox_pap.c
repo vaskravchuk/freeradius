@@ -33,7 +33,7 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
 {
     static AUTH_SP_ATTR procs[1] = { (AUTH_SP_ATTR){USER_PWD_ATTR, PLAIN_PWD_PR, NULL} };
     static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
-    static AUTH_INFO auth_info = {&proc_list,"60033","60034","60035"}
+    static AUTH_INFO auth_info = {&proc_list,"60033","60034","60035"};
 
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
