@@ -39,6 +39,7 @@ static const CONF_PARSER portnox_be_config_nodest[] = {
 	{ "caller_info_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.caller_info_url, NULL},
 	{ "auth_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.auth_url, NULL},
 	{ "event_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.event_url, NULL},
+	{ "timeout", PW_TYPE_INTEGER, 0, &portnox_config.be.timeout, Stringify(30)},
 
 	{ NULL, -1, 0, NULL, NULL }
 };

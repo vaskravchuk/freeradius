@@ -12,3 +12,4 @@ RCSIDH(string_helper_h, "$Id$")
 int json_escape(char* str, char* out, int outlen);
 int replace_char(char *str, char orig, char rep);
 void lower(char *str);
+char* str_replace(char* string, const char* substr, const char* replacement);

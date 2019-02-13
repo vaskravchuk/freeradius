@@ -35,6 +35,7 @@ typedef struct portnox_be_config_t {
 	char						*caller_info_url;
 	char						*auth_url;
 	char						*event_url;
+	int							timeout;
 } PORTNOX_BE_CONFIG_T;
 
 typedef struct portnox_log_config_t {

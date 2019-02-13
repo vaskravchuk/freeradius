@@ -17,6 +17,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
@@ -219,6 +220,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	int len = 0;
     char val[ATTR_VALUE_BUF_SIZE];
+    char *val_escaped = NULL;
 	dstr str = {0};
 
     if (request->packet) {
@@ -232,7 +234,9 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     }
 	val[len] = 0;
 
+    val_escaped = str_replace(val, "\\\\", "\\")
 	str = dstr_cstr_n(val, len);
+    dstr_replace_chars();
 
 	return str;
 }
