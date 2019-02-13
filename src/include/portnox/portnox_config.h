@@ -17,6 +17,7 @@ typedef struct portnox_redis_keys_config_t {
 	int							cache_ttl;
 	char						*shared_secret_key_format;
 	char						*org_id_key_format;
+	char						*response_key_format;
 } PORTNOX_REDIS_KEYS_CONFIG_T;
 
 typedef struct portnox_redis_config_t {
@@ -36,6 +37,7 @@ typedef struct portnox_be_config_t {
 	char						*auth_url;
 	char						*event_url;
 	int							timeout;
+	int							need_auth_cache_for_error;
 } PORTNOX_BE_CONFIG_T;
 
 typedef struct portnox_log_config_t {

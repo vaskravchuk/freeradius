@@ -90,13 +90,40 @@ int portnox_auth(REQUEST *request,
 
     radlog(L_INFO, "portnox_auth_call: AUTH_CALL_ERR=%d result=%ld", call_resp.return_code, call_resp.http_code);
 
+    /* try use reponse cache from redis */
+    if (portnox_config.be.need_auth_cache_for_error && call_resp.return_code != 0 &&
+        (call_resp.return_code != 22 || call_resp.http_code == 404 || 
+         call_resp.http_code == 405 || call_resp.http_code == 500)) {
+        char* cached_data = NULL;
+        radlog(L_INFO, 
+           "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
+           request->context_id, auth_method_str(auth_method));
+        if (get_response_for_request(request, &cached_data) == 0 && cached_data) {
+            radlog(L_INFO, 
+               "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
+               request->context_id, auth_method_str(auth_method));
+            resp_destroy(&call_resp);
+            call_resp = 
+            call_resp.respond_code = 0;
+            call_resp.http_code = 200;
+            call_resp.data = cached_data;
+        }
+    }
+
     if (call_resp.return_code != 0) {
+        radlog(L_INFO, 
+           "ContextId: %s; portnox_auth move response to redis auth_method: %s", 
+           request->context_id, auth_method_str(auth_method));
         radius_exec_logger_centrale(request, 
                                     auth_info->failed_auth_error_code, 
                                     "CURL_ERR: %d %ld",
                                     call_resp.return_code, call_resp.http_code);
         result = AUTH_REJECT_ERROR;
         goto fail;
+    }
+
+    if (portnox_config.be.need_auth_cache_for_error) {
+        set_response_for_request(request, call_resp.data);
     }
 
     /* process response */

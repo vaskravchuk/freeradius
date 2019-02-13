@@ -44,6 +44,15 @@ int set_org_id_for_port(const int port, const char *val) {
     return do_set_for_port(port, val, 0, &set_org_id_for_client);
 }
 
+
+/* WARNING. 'val' is dynamic allocated string, should be freed. */
+int get_response_for_request(REQUEST *request, char **val) {
+    *val = "";
+}
+int set_response_for_request(REQUEST *request, const char *val) {
+
+}
+
 int do_set_for_client(const char *client, const char *val, int need_ttl, char* format) {
     int result;
     dstr key;

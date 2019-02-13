@@ -17,7 +17,8 @@ struct portnox_config_t portnox_config;
 static const CONF_PARSER portnox_redis_keys_config_nodest[] = {
 	{ "cache_ttl", PW_TYPE_INTEGER, 0, &portnox_config.redis.keys.cache_ttl, Stringify(3600) },
 	{ "shared_secret_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.shared_secret_key_format, "ss_%s"},
-	{ "org_id_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.org_id_key_format, "oid_%s"},
+	{ "org_id_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.org_id_key_format, "oid_%s"}
+	{ "response_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.response_key_format, "r_%s"},
 
 	{ NULL, -1, 0, NULL, NULL }
 };
@@ -40,6 +41,7 @@ static const CONF_PARSER portnox_be_config_nodest[] = {
 	{ "auth_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.auth_url, NULL},
 	{ "event_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.event_url, NULL},
 	{ "timeout", PW_TYPE_INTEGER, 0, &portnox_config.be.timeout, Stringify(30)},
+	{ "need_auth_cache_for_error", PW_TYPE_BOOLEAN, 0, &portnox_config.be.need_auth_cache_for_error, "yes"},
 
 	{ NULL, -1, 0, NULL, NULL }
 };
