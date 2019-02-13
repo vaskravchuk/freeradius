@@ -23,29 +23,63 @@ RCSID("$Id$")
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 static dstr get_username(REQUEST *request);
 static dstr get_mac(REQUEST *request);
-static char* get_request_json(REQUEST *request, 
-                              int auth_method, 
-                              char* identity, 
-                              char* mac, 
+static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               auth_attr_proc_list_t *attr_proc_list);
-static int create_auth_req(REQUEST *request, 
-                           int auth_method, 
-                           auth_attr_proc_list_t *attr_proc_list, 
-                           srv_req* req);
+static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
+                               auth_attr_proc_list_t *attr_proc_list);
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
-
+static char* auth_method_str(int auth_method);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 auth_attr_proc_list_t *attr_proc_list, 
                 VALUE_PAIR **output_pairs) {
-
     int result = OPERATION_SUCCESS;
     srv_req call_req = {0};
     srv_resp call_resp = {0};
+    dstr identity = {0};
+    dstr mac = {0};
+    char *org_id = NULL;
+
+    radlog(L_INFO, 
+           "ContextId: %s; portnox_auth for auth_method: %s", 
+           request->context_id, auth_method_str(auth_method));
+
+    /* get identity */
+    identity = get_username(request);
+    if (!dstr_size(&identity)) {
+        radius_exec_logger_centrale(request, 
+                                    "60001", 
+                                    "Please use: username");
+        result = IDENTITY_NOT_FOUND_ERROR;
+        goto fail;
+    }
+
+    /* get mac */
+    mac = get_mac(request);
+
+    /* get org id */
+    if (get_org_id_for_client(request->client_shortname, &org_id)) {
+        radius_exec_logger_centrale(request, 
+                                    "60000", 
+                                    "Unable to find centrale orgid in REDIS for port %s", 
+                                    request->client_shortname);
+        result = ORG_ID_FAILED_GET_ERROR;
+        goto fail;
+    } 
+    
+    radlog(L_ERR, 
+           "ContextId: %s; Central auth for %s on port %s with mac %s", 
+           request->context_id, dstr_to_cstr(&identity),  request->client_shortname, dstr_to_cstr(&mac));
 
     /* create request struct */
-    result = create_auth_req(request, auth_method, attr_proc_list, &call_req);
+    call_req = create_auth_req(request, 
+                             auth_method, 
+                             org_id,
+                             dstr_to_cstr(&identity), 
+                             dstr_to_cstr(&mac), 
+                             attr_proc_list);
+
     if (result != OPERATION_SUCCESS) {
         goto fail;
     }
@@ -53,7 +87,14 @@ int portnox_auth(REQUEST *request,
     /* call REST to portnox auth service */
     call_resp = exec_http_request(&call_req);
 
+    radlog(L_INFO, "portnox_auth_call: AUTH_CALL_ERR=%d result=%ld", call_resp.return_code, call_resp.http_code);
+
     if (call_resp.return_code != 0) {
+        radius_exec_logger_centrale(request, 
+                                    "60002", 
+                                    "CURL_ERR: %d %ld while connecting to service_url/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
+                                    call_resp.return_code, call_resp.http_code, org_id, identity, request->client_shortname, mac,
+                                    get_attrs_json_str(request));
         result = AUTH_REJECT_ERROR;
         goto fail;
     }
@@ -62,9 +103,31 @@ int portnox_auth(REQUEST *request,
     process_response(&call_resp, output_pairs);
 
     fail:
+    if (org_id) free(org_id);
     req_destroy(&call_req);
     resp_destroy(&call_resp);
+    dstr_destroy(&identity);
+    dstr_destroy(&mac);
     return result;
+}
+
+static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
+                               auth_attr_proc_list_t *attr_proc_list) {
+    dstr url = {0};
+    char* json = NULL;
+
+    /* get org id */
+    url = dstr_from_fmt(portnox_config.be.auth_url, org_id);
+
+    /* get request json string */
+    json = get_request_json(request, 
+                            auth_method, 
+                            identity, 
+                            mac,
+                            attr_proc_list);
+
+    /* create request struct & move json scope to req_create */
+    return req_create(dstr_to_cstr(&url), json, 0, 1);
 }
 
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
@@ -99,61 +162,6 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     if (json) cJSON_Delete(json);
 }
 
-static int create_auth_req(REQUEST *request, 
-                           int auth_method, 
-                           auth_attr_proc_list_t *attr_proc_list, 
-                           srv_req* req) {
-    int result = OPERATION_SUCCESS;
-    char *org_id = NULL;
-    dstr identity = {0};
-    dstr mac = {0};
-    int org_id_res = 0;
-    dstr url = {0};
-    char* json = NULL;
-
-    /* get org id */
-    org_id_res = get_org_id_for_client(request->client_shortname, &org_id);
-    if (org_id_res == -1) {
-        result = ORG_ID_NOT_FOUND_ERROR;
-        goto fail;
-    } else if (org_id_res != 0) {
-        result = ORG_ID_NOT_FAILED_GET_ERROR;
-        goto fail;
-    }
-
-    /* get identity */
-    identity = get_username(request);
-    if (!dstr_size(&identity)) {
-        result = IDENTITY_NOT_FOUND_ERROR;
-        goto fail;
-    }
-
-    /* get org id */
-    url = dstr_from_fmt(portnox_config.be.auth_url, org_id);
-
-    /* get mac */
-    mac = get_mac(request);
-
-    /* get request json string */
-    json = get_request_json(request, 
-                            auth_method, 
-                            dstr_to_cstr(&identity), 
-                            dstr_to_cstr(&mac),
-                            attr_proc_list);
-
-    /* create request struct & move json scope to req_create */
-    *req = req_create(dstr_to_cstr(&url), json, 0, 1);
-
-
-    fail:
-    if (org_id) free(org_id);
-    dstr_destroy(&identity);
-    dstr_destroy(&url);
-    dstr_destroy(&mac);
-    return result;
-}
-
-
 static dstr get_username(REQUEST *request) {
 	return get_vps_attr_or_empty(request, USERNAME_ATTR);
 }
@@ -173,10 +181,7 @@ static dstr get_mac(REQUEST *request) {
 	return str;
 }
 
-static char* get_request_json(REQUEST *request, 
-                              int auth_method, 
-                              char* identity, 
-                              char* mac, 
+static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               auth_attr_proc_list_t *attr_proc_list) {
     char *json = NULL;
     cJSON *json_obj = NULL; 
@@ -232,3 +237,19 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	return str;
 }
 
+static char* auth_method_str(int auth_method) {
+    switch (auth_method) {
+        case PAP_AUTH_METHOD:
+            return "PAP";
+        case MSCHAP_AUTH_METHOD:
+            return "MSCHAP";
+        case CHAP_AUTH_METHOD:
+            return "CHAP";
+        case EAPTLS_AUTH_METHOD:
+            return "EAP_TLS";
+        case MD5_AUTH_METHOD:
+            return "MD5";
+        default:
+            return "UNKNOWN";
+    }
+}

@@ -23,7 +23,9 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define NTKEY_PR					"NtKey"
 
 #define USERNAME_ATTR				"User-Name"
-#define USER_PWD_ATTR				"User-Password"
+#define USER_PWD_ATTR               "User-Password"
+#define CHAP_RESPONSE_ATTR          "CHAP-Password"
+#define CHAP_CHALLENGE_ATTR         "Packet-Authentication-Vector"
 #define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
 #define CONTEXT_ID_ATTR				"CONTEXT_ID"
 #define PORT_ATTR					"PORT"
@@ -35,11 +37,10 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define RESP_CUSTOM_ATTR_VAL_KEY    "key"
 #define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
 
-#define OPERATION_SUCCESS			0
-#define ORG_ID_NOT_FOUND_ERROR      -1
-#define ORG_ID_NOT_FAILED_GET_ERROR -2
-#define IDENTITY_NOT_FOUND_ERROR    -3
-#define AUTH_REJECT_ERROR    		-4
+#define OPERATION_SUCCESS           0
+#define ORG_ID_FAILED_GET_ERROR     -1
+#define IDENTITY_NOT_FOUND_ERROR    -2
+#define AUTH_REJECT_ERROR           -3
 
 #define PAP_AUTH_METHOD             1
 #define MSCHAP_AUTH_METHOD          2

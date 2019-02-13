@@ -46,7 +46,7 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
     }
 }
 
-cJSON* get_attrs_json(REQUEST *request) {
+cJSON *get_attrs_json(REQUEST *request) {
     cJSON *array = NULL;
     cJSON *item = NULL;
     char val[ATTR_VALUE_BUF_SIZE];
@@ -80,4 +80,20 @@ cJSON* get_attrs_json(REQUEST *request) {
     cJSON_AddItemToArray(array, item);
 
     return array;
+}
+
+char *get_attrs_json_str(REQUEST *request) {
+    cJSON *attrs = NULL;
+    char* json = NULL;
+
+    /* default */
+    json = ""
+
+    attrs = get_attrs_json(request);
+    if (attrs) {
+        json = cJSON_Print(attrs);
+        cJSON_Delete(attrs);
+    }
+
+    return json;
 }

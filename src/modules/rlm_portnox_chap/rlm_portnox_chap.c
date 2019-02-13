@@ -28,10 +28,11 @@ RCSID("$Id$")
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/portnox_auth.h>
 
-/* do pap authentication */
-static int portnox_pap_auth(void *instance, REQUEST *request)
+/* do chap authentication */
+static int portnox_chap_auth(void *instance, REQUEST *request)
 {
-    static auth_attr_proc_t procs[1] = { (auth_attr_proc_t){USER_PWD_ATTR, PLAIN_PWD_PR, NULL} };
+    static auth_attr_proc_t procs[1] = { (auth_attr_proc_t){CHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL},
+    									 (auth_attr_proc_t){CHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL} };
     static auth_attr_proc_list_t proc_list = {procs, sizeof(procs)};
 
 	int result = NULL;
@@ -40,7 +41,7 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
     result = portnox_auth(request, 1, &proc_list, &answer);
 
 	if (result != OPERATION_SUCCESS) {
-		radlog(L_ERR, "portnox_pap_auth failed");
+		radlog(L_ERR, "portnox_chap_auth failed");
 		result = RLM_MODULE_FAIL;
 	}
 	else {
@@ -64,14 +65,14 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
  *	The server will then take care of ensuring that the module
  *	is single-threaded.
  */
-module_t rlm_portnox_pap = {
+module_t rlm_portnox_chap = {
 	RLM_MODULE_INIT,
-	"portnox_pap",					/* Name */
+	"portnox_chap",					/* Name */
 	RLM_TYPE_CHECK_CONFIG_SAFE,   	/* type */
 	NULL,							/* instantiation */
 	NULL,							/* detach */
 	{
-		portnox_pap_auth,			/* authentication */
+		portnox_chap_auth,			/* authentication */
 		NULL,	        			/* authorization */
 		NULL,						/* pre-accounting */
 		NULL,						/* accounting */
