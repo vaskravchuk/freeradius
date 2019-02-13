@@ -63,7 +63,7 @@ int portnox_auth(REQUEST *request,
     fail:
     req_destroy(&call_req);
     resp_destroy(&call_resp);
-    return result
+    return result;
 }
 
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
@@ -149,7 +149,7 @@ static int create_auth_req(REQUEST *request,
     dstr_destroy(&identity);
     dstr_destroy(&url);
     dstr_destroy(&mac);
-    return result
+    return result;
 }
 
 
@@ -166,7 +166,7 @@ static dstr get_mac(REQUEST *request) {
 		dstr_replace_chars(&str, '-', ':');
 		lower(&str);
 	} else {
-		dstr_cat_cstr(&str, "00:00:00:00:00:00")
+		dstr_cat_cstr(&str, "00:00:00:00:00:00");
 	}
 
 	return str;
@@ -188,16 +188,16 @@ static char* get_request_json(REQUEST *request,
 
     /* compose json */
     cJSON_AddNumberToObject(json_obj, AUTH_METHOD_PR, auth_method);
-    if (identity && *identity) cJSON_AddStringToObject(json_obj, CALLER_IP, identity);
-    if (mac && *mac) cJSON_AddStringToObject(json_obj, CALLER_PORT, mac);
+    if (identity && *identity) cJSON_AddStringToObject(json_obj, USERNAME_PR, identity);
+    if (mac && *mac) cJSON_AddStringToObject(json_obj, MAC_ADDRESS_PR, mac);
     if (attrs) cJSON_AddObjectToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
     /* process custom params */
     if (attr_proc_list) {
         for (int i = 0; i < attr_proc_list->count; i++) {
         	auth_attr_proc_t proc = attr_proc_list->items[i];
-        	dstr val = get_vps_attr_or_empty(proc.attr_name);
+        	dstr val = get_vps_attr_or_empty(request, proc.attr_name);
             if (proc.processor) proc.processor(&val);
-            if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, json_attr, dstr_to_cstr(&val));
+            if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, proc.json_attr, dstr_to_cstr(&val));
             dstr_destroy(&val);
         }
     }
