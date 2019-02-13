@@ -63,6 +63,11 @@ int do_get_for_client(const char *client, const char **val, char* format) {
     int result = 0;
     dstr key = {0};
 
+    /*
+     * in case of PORTNOX_INNER_PORT we use static client
+     * so we don't have SHARED_SECRET and CENTRALE_ORGID
+     * use CLUSTER_ID as stub value
+     */
     if (strcmp(client, PORTNOX_INNER_PORT) == 0) {
         *val = strdup(portnox_config.be.cluster_id);
     }

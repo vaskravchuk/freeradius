@@ -87,7 +87,7 @@ char *get_attrs_json_str(REQUEST *request) {
     char* json = NULL;
 
     /* default */
-    json = ""
+    json = "";
 
     attrs = get_attrs_json(request);
     if (attrs) {
