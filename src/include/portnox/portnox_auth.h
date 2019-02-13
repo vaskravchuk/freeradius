@@ -28,6 +28,9 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define CHAP_CHALLENGE_ATTR         "Packet-Authentication-Vector"
 #define MSCHAP_RESPONSE_ATTR        "MS-CHAP-Response"
 #define MSCHAP_CHALLENGE_ATTR       "MS-CHAP-Challenge"
+#define MD5_RESPONSE_ATTR           "MD5-Password"
+#define MD5_CHALLENGE_ATTR          "MD5-Challenge"
+#define EAPTLS_CERT_ATTR            "TLS-Client-Cert-Filename"
 #define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
 #define CONTEXT_ID_ATTR				"CONTEXT_ID"
 #define PORT_ATTR					"PORT"
@@ -55,8 +58,9 @@ RCSIDH(portnox_auth_h, "$Id$")
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_t {
 	char* attr_name;
-	char* json_attr;
-	void (* processor)(dstr*);
+    char* json_attr;
+    void* user_data;
+	void (* processor)(dstr*, void*);
 } AUTH_SP_ATTR;
 
 /* struct to specify concrete attribute processor */

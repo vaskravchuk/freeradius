@@ -202,7 +202,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
         for (int i = 0; i < attr_proc_list->count; i++) {
         	AUTH_SP_ATTR proc = attr_proc_list->items[i];
         	dstr val = get_vps_attr_or_empty(request, proc.attr_name);
-            if (proc.processor) proc.processor(&val);
+            if (proc.processor) proc.processor(&val, proc.user_data);
             if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, proc.json_attr, dstr_to_cstr(&val));
             dstr_destroy(&val);
         }
