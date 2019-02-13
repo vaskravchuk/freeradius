@@ -7,7 +7,7 @@
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
-#include <freeradius-devel/portnox/json_helper.h>
+#include <freeradius-devel/portnox/portnox_auth.h>
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;
