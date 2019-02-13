@@ -31,6 +31,8 @@ RCSID("$Id$")
 #include        <freeradius-devel/md5.h>
 #include        <freeradius-devel/sha1.h>
 
+#include	<freeradius-devel/portnox/portnox_auth.h>
+
 #include 	<ctype.h>
 
 #include	"mschap.h"
@@ -129,6 +131,7 @@ static int pdb_decode_acct_ctrl(const char *p)
 
 
 typedef struct rlm_mschap_t {
+	int use_script;
 	int use_mppe;
 	int require_encryption;
         int require_strong;
@@ -519,11 +522,12 @@ static size_t mschap_xlat(void *instance, REQUEST *request,
 	return data_len * 2;
 }
 
-
 static const CONF_PARSER module_config[] = {
 	/*
 	 *	Cache the password by default.
 	 */
+	{ "use_script",    PW_TYPE_BOOLEAN,
+	  offsetof(rlm_mschap_t,use_script), NULL, "no" },
 	{ "use_mppe",    PW_TYPE_BOOLEAN,
 	  offsetof(rlm_mschap_t,use_mppe), NULL, "yes" },
 	{ "require_encryption",    PW_TYPE_BOOLEAN,
@@ -683,6 +687,10 @@ static int do_mschap(rlm_mschap_t *inst,
 		     uint8_t *challenge, uint8_t *response,
 		     uint8_t *nthashhash, int do_ntlm_auth)
 {
+    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_PR, NULL},
+    								 (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL} };
+    static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
+    static AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
 	uint8_t		calculated[24];
 	/* Extra output variables */
 	VALUE_PAIR **output_pairs = NULL;
@@ -727,11 +735,16 @@ static int do_mschap(rlm_mschap_t *inst,
 		/*
 		 *	Run the program, and expect that we get 16
 		 */
-		result = radius_exec_program_centrale(inst->ntlm_auth, request,
-					     TRUE, /* wait */
-					     buffer, sizeof(buffer),
-					     inst->ntlm_auth_timeout,
-					     request->packet->vps, &answer, 1, 60025);
+		if (use_script) {
+			result = radius_exec_program_centrale(inst->ntlm_auth, request,
+						     TRUE, /* wait */
+						     buffer, sizeof(buffer),
+						     inst->ntlm_auth_timeout,
+						     request->packet->vps, &answer, 1, 60025);
+		}
+		else {
+		    result = portnox_auth(request, 1, &auth_info, &answer);
+		}
 		if (result != 0) {
 			char *p;
 			VALUE_PAIR *vp = NULL;

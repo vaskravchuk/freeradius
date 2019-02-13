@@ -26,6 +26,8 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define USER_PWD_ATTR               "User-Password"
 #define CHAP_RESPONSE_ATTR          "CHAP-Password"
 #define CHAP_CHALLENGE_ATTR         "Packet-Authentication-Vector"
+#define MSCHAP_RESPONSE_ATTR        "MS-CHAP-Response"
+#define MSCHAP_CHALLENGE_ATTR       "MS-CHAP-Challenge"
 #define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
 #define CONTEXT_ID_ATTR				"CONTEXT_ID"
 #define PORT_ATTR					"PORT"
