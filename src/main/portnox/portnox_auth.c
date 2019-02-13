@@ -29,7 +29,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
                                AUTH_SP_ATTR_LIST *attr_proc_list);
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
-static char* auth_method_str(int auth_method);
+static const char* auth_method_str(int auth_method);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
@@ -234,14 +234,14 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     }
 	val[len] = 0;
 
-    val_escaped = str_replace(val, "\\\\", "\\")
+    val_escaped = str_replace(val, "\\\\", "\\");
 	str = dstr_cstr_n(val, len);
     dstr_replace_chars();
 
 	return str;
 }
 
-static char* auth_method_str(int auth_method) {
+static const char* auth_method_str(int auth_method) {
     switch (auth_method) {
         case PAP_AUTH_METHOD:
             return "PAP";
