@@ -177,6 +177,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	MD5_PACKET	*packet;
 	MD5_PACKET	*reply;
 	VALUE_PAIR	*password;
+	int result;
 
 	logs_set_request_desc(handler->request, 1, "MD5 AUTHENTICATE");
 	logs_add_flow(handler->request, "md5_authenticate");
@@ -277,7 +278,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	{
 		logs_add_flow(handler->request, "EAPMD5 BE");
 		if (inst->use_script) {
-			int result = radius_exec_program_centrale(inst->md5_auth, handler->request,
+			result = radius_exec_program_centrale(inst->md5_auth, handler->request,
 				TRUE, /* wait */
 				buffer, sizeof(buffer),
 				EXEC_TIMEOUT,
