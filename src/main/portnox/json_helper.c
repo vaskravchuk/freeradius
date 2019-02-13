@@ -71,12 +71,14 @@ cJSON *get_attrs_json(REQUEST *request) {
 
     /* context id */
     item = cJSON_CreateObject();
-    cJSON_AddStringToObject(item, CONTEXT_ID_ATTR, request->context_id);
+    cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_KEY, CONTEXT_ID_ATTR);
+    cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, request->context_id);
     cJSON_AddItemToArray(array, item);
 
     /* port */
     item = cJSON_CreateObject();
-    cJSON_AddStringToObject(item, PORT_ATTR, request->client_shortname);
+    cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_KEY, PORT_ATTR);
+    cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, request->client_shortname);
     cJSON_AddItemToArray(array, item);
 
     return array;
