@@ -40,14 +40,21 @@ typedef struct portnox_be_config_t {
 	int							need_auth_cache_for_error;
 } PORTNOX_BE_CONFIG_T;
 
+typedef struct portnox_daemon_config_t {
+	char						*logging_url;
+} PORTNOX_DAEMON_CONFIG_T;
+
 typedef struct portnox_log_config_t {
 	int							allow_auth_flow_log;
+	int 						use_script;
 	char						*log_script;
 } PORTNOX_LOG_CONFIG_T;
 
 
 typedef struct portnox_config_t {
+	int 						portnox_inner_port;
 	PORTNOX_REDIS_CONFIG_T		redis;
 	PORTNOX_BE_CONFIG_T			be;
 	PORTNOX_LOG_CONFIG_T		log;
+	portnox_daemon_config_t 	daemon;
 } PORTNOX_CONFIG_T;
