@@ -705,6 +705,7 @@ void cert_processor(dstr* val, void* user_data) {
 	if (row_cert) {
 		dstr_destroy(val);
 		*val = dstr_cstr(row_cert);
+		free(row_cert);
 	}
 }
 
