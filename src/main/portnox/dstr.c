@@ -292,7 +292,7 @@ int dstr_replace_chars(dstr *str, char orig, char rep) {
     char *ix = NULL;
     int n = 0;
     /* Are we not a string? */
-    if (is_nas(s)) return;
+    if (is_nas(str)) return;
 
     *ix = str;
     while((ix = strchr(ix, orig)) != NULL && n < str->size) {
@@ -306,7 +306,7 @@ void dstr_to_lower(dstr *str) {
     int i = 0;
 
     /* Are we not a string? */
-    if (is_nas(s)) return;
+    if (is_nas(str)) return;
 
     for(; str->s[i] && i < str->size; i++) {
         str->s[i] = tolower(str->s[i]);
