@@ -93,7 +93,7 @@ int portnox_auth(REQUEST *request,
         radius_exec_logger_centrale(request, 
                                     "60002", 
                                     "CURL_ERR: %d %ld while connecting to service_url/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
-                                    call_resp.return_code, call_resp.http_code, org_id, identity, request->client_shortname, mac,
+                                    call_resp.return_code, call_resp.http_code, org_id, dstr_to_cstr(&identity), request->client_shortname, dstr_to_cstr(&mac),
                                     get_attrs_json_str(request));
         result = AUTH_REJECT_ERROR;
         goto fail;
@@ -210,6 +210,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
 
     /* create json string */
     json = cJSON_Print(json_obj);
+    cJSON_Minify(json);
 
     cJSON_Delete(json_obj);
 

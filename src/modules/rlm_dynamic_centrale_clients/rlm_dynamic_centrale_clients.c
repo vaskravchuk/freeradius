@@ -270,6 +270,7 @@ static char* get_request_json(char *hostname, int port, char *cluster_id) {
     if (cluster_id) cJSON_AddStringToObject(request_data, CLUSTER_ID, cluster_id);
 
     json = cJSON_Print(request_data);
+    cJSON_Minify(json);
     cJSON_Delete(request_data);
 
     return json;

@@ -54,7 +54,7 @@ RCSIDH(portnox_auth_h, "$Id$")
 typedef struct auth_attr_proc_t {
 	char* attr_name;
 	char* json_attr;
-	void (* processor)(dstr*)
+	void (* processor)(dstr*);
 } auth_attr_proc_t;
 
 /* struct to specify concrete attribute processor */

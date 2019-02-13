@@ -31,9 +31,9 @@ RCSID("$Id$")
 /* do chap authentication */
 static int portnox_chap_auth(void *instance, REQUEST *request)
 {
-    static auth_attr_proc_t procs[1] = { (auth_attr_proc_t){CHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL},
+    static auth_attr_proc_t procs[2] = { (auth_attr_proc_t){CHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL},
     									 (auth_attr_proc_t){CHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL} };
-    static auth_attr_proc_list_t proc_list = {procs, sizeof(procs)};
+    static auth_attr_proc_list_t proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
 
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
