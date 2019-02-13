@@ -287,3 +287,28 @@ void dstr_cat_dstrs(dstr *s1, ...) {
 
     va_end(v);
 }
+
+int dstr_replace_chars(dstr *str, char orig, char rep) {
+    char *ix = NULL;
+    int n = 0;
+    /* Are we not a string? */
+    if (is_nas(s)) return;
+
+    *ix = str;
+    while((ix = strchr(ix, orig)) != NULL && n < str->size) {
+        *ix++ = rep;
+        n++;
+    }
+    return n;
+}
+
+void dstr_to_lower(dstr *str) {
+    int i = 0;
+
+    /* Are we not a string? */
+    if (is_nas(s)) return;
+
+    for(; str->s[i] && i < str->size; i++) {
+        str->s[i] = tolower(str->s[i]);
+    }
+}
