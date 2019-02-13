@@ -73,7 +73,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     /* will be destroyed with json object */
     cJSON *item = NULL;
 
-    if (!call_resp->data && !(*call_resp->data)) return;
+    if (!call_resp->data || !(*call_resp->data)) return;
 
     json = cJSON_Parse(call_resp->data);
     if (!json) return;
@@ -97,6 +97,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     parse_custom_attr(item, output_pairs);
 
     if (json) cJSON_Delete(json);
+}
 
 static int create_auth_req(REQUEST *request, 
                            int auth_method, 
@@ -120,9 +121,6 @@ static int create_auth_req(REQUEST *request,
         goto fail;
     }
 
-    /* get org id */
-    url = dstr_from_fmt(portnox_config.be.auth_info_url, org_id);
-
     /* get identity */
     identity = get_username(request);
     if (!dstr_size(&identity)) {
@@ -130,14 +128,17 @@ static int create_auth_req(REQUEST *request,
         goto fail;
     }
 
+    /* get org id */
+    url = dstr_from_fmt(portnox_config.be.auth_info_url, org_id);
+
     /* get mac */
     mac = get_mac(request);
 
     /* get request json string */
     json = get_request_json(request, 
                             auth_method, 
-                            identity, 
-                            mac,
+                            dstr_to_cstr(&identity), 
+                            dstr_to_cstr(&mac),
                             attr_proc_list);
 
     /* create request struct & move json scope to req_create */
@@ -178,32 +179,34 @@ static char* get_request_json(REQUEST *request,
                               char* mac, 
                               auth_attr_proc_list_t *attr_proc_list) {
     char *json = NULL;
-    cJSON *request_data = NULL; 
-    cJSON* radius_custom = NULL;
+    cJSON *json_obj = NULL; 
+    cJSON* attrs = NULL;
 
-    request_data = cJSON_CreateObject();
+    json_obj = cJSON_CreateObject();
 
     /* get custom attrs */
-    radius_custom = get_attrs_json(request);
+    attrs = get_attrs_json(request);
 
     /* compose json */
-    cJSON_AddNumberToObject(request_data, AUTH_METHOD_PR, auth_method);
-    if (!is_nas(&username)) cJSON_AddStringToObject(request_data, CALLER_IP, identity);
-    if (!is_nas(&mac)) cJSON_AddStringToObject(request_data, CALLER_PORT, mac);
-    if (radius_custom) cJSON_AddObjectToObject(request_data, RADIUS_CUSTOM_PR, radius_custom);
+    cJSON_AddNumberToObject(json_obj, AUTH_METHOD_PR, auth_method);
+    if (identity && *identity) cJSON_AddStringToObject(json_obj, CALLER_IP, identity);
+    if (mac && *mac) cJSON_AddStringToObject(json_obj, CALLER_PORT, mac);
+    if (attrs) cJSON_AddObjectToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
     /* process custom params */
-    for (int i = 0; i < attr_proc_list->count; i++) {
-    	auth_attr_proc_t proc = attr_proc_list->items[i];
-    	dstr val = get_vps_attr_or_empty(proc.attr_name);
-        if (proc.processor) proc.processor(&val);
-        if (!is_nas(&val)) cJSON_AddStringToObject(request_data, json_attr, dstr_to_cstr(&val));
-        dstr_destroy(&val);
+    if (attr_proc_list) {
+        for (int i = 0; i < attr_proc_list->count; i++) {
+        	auth_attr_proc_t proc = attr_proc_list->items[i];
+        	dstr val = get_vps_attr_or_empty(proc.attr_name);
+            if (proc.processor) proc.processor(&val);
+            if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, json_attr, dstr_to_cstr(&val));
+            dstr_destroy(&val);
+        }
     }
 
     /* create json string */
-    json = cJSON_Print(request_data);
+    json = cJSON_Print(json_obj);
 
-    cJSON_Delete(request_data);
+    cJSON_Delete(json_obj);
 
     return json;
 }

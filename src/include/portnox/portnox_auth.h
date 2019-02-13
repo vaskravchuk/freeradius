@@ -29,8 +29,11 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define PORT_ATTR					"PORT"
 #define NTKEY_ATTR					"Tmp-String-0"
 
-#define REQ_CUSTOM_ATTR_VAL_KEY		"Key"
+#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
 #define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
+
+#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
+#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
 
 #define OPERATION_SUCCESS			0
 #define ORG_ID_NOT_FOUND_ERROR      -1
@@ -49,13 +52,13 @@ typedef struct auth_attr_proc_t {
 	char* attr_name;
 	char* json_attr;
 	void (* processor)(dstr*)
-} auth_attr_proc_t
+} auth_attr_proc_t;
 
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_list_t {
 	auth_attr_proc_t* items;
 	int count;
-} auth_attr_proc_list_t
+} auth_attr_proc_list_t;
 
 
 int portnox_auth(REQUEST *request, 

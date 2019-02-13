@@ -36,8 +36,8 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
     if (!attrs) return;
 
     cJSON_ArrayForEach(item, attrs) {
-        key = cJSON_GetObjectItem(array, "key");
-        val = cJSON_GetObjectItem(array, "value");
+        key = cJSON_GetObjectItem(array, RESP_CUSTOM_ATTR_VAL_KEY);
+        val = cJSON_GetObjectItem(array, RESP_CUSTOM_ATTR_VAL_VALUE);
         if (key && val) {
             vp = pairmake(key->valuestring, val->valuestring, T_OP_ADD);
             pairadd(output_pairs, vp);
@@ -46,12 +46,12 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
 }
 
 cJSON* get_attrs_json(REQUEST *request) {
-    cJSON *rad_custom = NULL;
+    cJSON *array = NULL;
     cJSON *item = NULL;
     char val[ATTR_VALUE_BUF_SIZE];
     int len = 0;
     
-    rad_custom = cJSON_CreateArray();
+    array = cJSON_CreateArray();
 
     for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
         if (!vp->name || !(*vp->name)) continue;
@@ -63,18 +63,18 @@ cJSON* get_attrs_json(REQUEST *request) {
         item = cJSON_CreateObject();
         cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_KEY, vp->name);
         cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, val);
-        cJSON_AddItemToArray(rad_custom, item);
+        cJSON_AddItemToArray(array, item);
     }
 
     /* context id */
     item = cJSON_CreateObject();
     cJSON_AddStringToObject(item, CONTEXT_ID_ATTR, request->context_id);
-    cJSON_AddItemToArray(rad_custom, item);
+    cJSON_AddItemToArray(array, item);
 
     /* port */
     item = cJSON_CreateObject();
     cJSON_AddStringToObject(item, PORT_ATTR, request->client_shortname);
-    cJSON_AddItemToArray(rad_custom, item);
+    cJSON_AddItemToArray(array, item);
 
-    return rad_custom;
+    return array;
 }
