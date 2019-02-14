@@ -688,7 +688,7 @@ static void pwd_processor(dstr* val, void* user_data, size_t size) {
 	hex_str = bytes_to_hex(bytes, size);
 
 	if (hex_str) {
-		dstr_destroy(&val);
+		dstr_destroy(val);
 		*val = dstr_cstr_n(hex_str, size);
 		free(hex_str);
 	}
