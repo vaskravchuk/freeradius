@@ -106,7 +106,7 @@ int portnox_auth(REQUEST *request,
            request->context_id, auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        resp_cache_result = get_response_for_request(dstr_to_cstr(&identity), 
+        resp_cache_result = get_response_for_data(dstr_to_cstr(&identity), 
                                                      dstr_to_cstr(&mac), 
                                                      request->client_shortname, 
                                                      dstr_to_cstr(&nas_port), 
@@ -144,7 +144,7 @@ int portnox_auth(REQUEST *request,
                         request->context_id, auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        set_response_for_request(dstr_to_cstr(&identity), 
+        set_response_for_data(dstr_to_cstr(&identity), 
                                  dstr_to_cstr(&mac), 
                                  request->client_shortname, 
                                  dstr_to_cstr(&nas_port), call_resp.data);
