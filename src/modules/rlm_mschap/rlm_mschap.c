@@ -766,9 +766,9 @@ static int do_mschap(rlm_mschap_t *inst,
 						     request->packet->vps, &answer, 1, 60025);
 		}
 		else {
-		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, challenge, &response_processor},
-		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, challenge, &response_processor},
-		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, response, &challenge_processor} };
+		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, response, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, response, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, challenge, &challenge_processor} };
 		    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
 		    AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
 		    result = portnox_auth(request, MSCHAP_AUTH_METHOD, &auth_info, &answer);
