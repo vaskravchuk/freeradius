@@ -49,7 +49,7 @@ void to_syslog(char* priority, char* message) {
 }
 
 void log_to_portnox(char* message) {
-    srv_req req = req_create(portnox_config.daemon.log_url, message, 0, 0);
+    srv_req req = req_create(portnox_config.daemon.logging_url, message, 0, 0);
 
     srv_resp resp = exec_http_request(&req);
 
