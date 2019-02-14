@@ -14,18 +14,6 @@ RCSID("$Id$")
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-int is_contains(char **arr, int size, char* str) {
-	int found = 0;
-	for (int i = 0; i < size; ++i) {
-		char* item = arr[i];
-		if (strcmp(item, str) == 0) {
-			found = 1;
-			break;
-		}
-	}
-
-	return found;
-}
 
 int vstr_format(char * s, int n, const char *format, va_list ap) {
 	int len = 0;

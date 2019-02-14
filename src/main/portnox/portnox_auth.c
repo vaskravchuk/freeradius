@@ -230,7 +230,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
         for (int i = 0; i < attr_proc_list->count; i++) {
         	AUTH_SP_ATTR proc = attr_proc_list->items[i];
         	dstr val = get_vps_attr_or_empty(request, proc.attr_name);
-            if (proc.processor) proc.processor(&val, proc.user_data);
+            if (!is_nas(&val) && proc.processor) proc.processor(&val, proc.user_data);
             if (!is_nas(&val)) cJSON_AddStringToObject(json_obj, proc.json_attr, dstr_to_cstr(&val));
             dstr_destroy(&val);
         }
@@ -256,16 +256,19 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     		if (!vp->name || !(*vp->name)) continue;
     		if (strcmp(attr, vp->name) == 0) {
     			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
+
+                val[len] = 0;
+
+                val_escaped = str_replace(val, "\\\\", "\\");
+                str = dstr_cstr(val_escaped);
+
+                if (val_escaped) free(val_escaped);
     			break;	
     		}
     	}
     }
-	val[len] = 0;
 
-    val_escaped = str_replace(val, "\\\\", "\\");
-	str = dstr_cstr(val_escaped);
-
-    if (val_escaped) free(val_escaped);
+    
 
 	return str;
 }

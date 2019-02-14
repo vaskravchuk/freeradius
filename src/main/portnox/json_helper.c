@@ -8,6 +8,7 @@
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/portnox/portnox_auth.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;
@@ -47,6 +48,8 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
 }
 
 cJSON *get_attrs_json(REQUEST *request) {
+    static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "Chargeable-User-Identity" };
+    static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
     cJSON *array = NULL;
     cJSON *item = NULL;
     char val[ATTR_VALUE_BUF_SIZE];
@@ -57,6 +60,7 @@ cJSON *get_attrs_json(REQUEST *request) {
     if (request->packet) {
         for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
             if (!vp->name || !(*vp->name)) continue;
+            if (is_contains(except_attrs, except_attrs_size, vp->name)) continue;
             /* get value */
             len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
             val[len] = 0;

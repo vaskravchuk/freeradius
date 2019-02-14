@@ -9,6 +9,7 @@
 #include <freeradius-devel/ident.h>
 RCSIDH(string_helper_h, "$Id$")
 
+int is_contains(char **arr, int size, char* str);
 int json_escape(char* str, char* out, int outlen);
 int replace_char(char *str, char orig, char rep);
 void lower(char *str);

@@ -11,6 +11,19 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 
+int is_contains(char **arr, int size, char* str) {
+    int found = 0;
+    for (int i = 0; i < size; ++i) {
+        char* item = arr[i];
+        if (strcmp(item, str) == 0) {
+            found = 1;
+            break;
+        }
+    }
+
+    return found;
+}
+
 int json_escape(char* str, char* out, int outlen) {
     int offset = 0;
     char* rep = NULL;
