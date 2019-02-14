@@ -200,7 +200,7 @@ static dstr get_mac(REQUEST *request) {
 
 	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
 
-	if (dstr_size(&str) > 0) {
+	if (dstr_size(&str)) {
 		dstr_replace_chars(&str, '-', ':');
 		lower(&str);
 	} else {
