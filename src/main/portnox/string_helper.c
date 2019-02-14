@@ -155,5 +155,6 @@ char* bytes_to_hex (const unsigned char* data, size_t datalen) {
         if (chrs[2*j+1]>57) chrs[2*j+1]+=7;
     }
     chrs[2*j]='\0';
+    lower(chrs);
     return chrs;
 }

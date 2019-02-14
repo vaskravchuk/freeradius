@@ -57,7 +57,7 @@ extern int od_mschap_auth(REQUEST *request, VALUE_PAIR *challenge, VALUE_PAIR * 
 #define ACB_AUTOLOCK   0x0400  /* 1 = Account auto locked */
 
 #define RESPONSE_SIZE	24
-#define CHALLENGE_SIZE	16
+#define CHALLENGE_SIZE	8
 
 static int pdb_decode_acct_ctrl(const char *p)
 {
@@ -689,7 +689,7 @@ static void pwd_processor(dstr* val, void* user_data, size_t size) {
 
 	if (hex_str) {
 		dstr_destroy(val);
-		*val = dstr_cstr_n(hex_str, size);
+		*val = dstr_cstr(hex_str);
 		free(hex_str);
 	}
 }
@@ -766,8 +766,8 @@ static int do_mschap(rlm_mschap_t *inst,
 						     request->packet->vps, &answer, 1, 60025);
 		}
 		else {
-		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, response, &response_processor},
-		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, response, &response_processor},
+		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_RESPONSE_PR, response, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_RESPONSE_PR, response, &response_processor},
 		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, challenge, &challenge_processor} };
 		    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
 		    AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
