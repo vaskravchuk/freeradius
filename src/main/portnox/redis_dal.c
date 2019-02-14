@@ -80,7 +80,7 @@ static int do_get_for_key_format(const char *key_part, const char **val, char* f
      * so we don't have SHARED_SECRET and CENTRALE_ORGID
      * use CLUSTER_ID as stub value
      */
-    if (strcmp(client, PORTNOX_INNER_PORT) == 0) {
+    if (strcmp(key_part, PORTNOX_INNER_PORT) == 0) {
         *val = strdup(portnox_config.be.cluster_id);
     }
     else {
