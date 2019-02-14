@@ -10,6 +10,7 @@
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/portnox/portnox_config.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 #include <stdio.h>
 #include <string.h>
