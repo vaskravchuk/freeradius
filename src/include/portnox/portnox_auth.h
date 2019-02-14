@@ -35,7 +35,8 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
 #define CONTEXT_ID_ATTR				"CONTEXT_ID"
 #define PORT_ATTR					"PORT"
-#define NTKEY_ATTR					"Tmp-String-0"
+#define NTKEY_ATTR                  "Tmp-String-0"
+#define NAS_PORT_ATTR               "NAS-Port-Type"
 
 #define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
 #define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"

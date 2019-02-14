@@ -20,6 +20,7 @@ static int do_set_for_key_format(const char *key_part, const char *val, int need
 static int do_get_for_key_format(const char *client, const char **val, char* format);
 static int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)(const char*, const char*));
 static int do_get_for_port(const int port, char **val, int (*getter)(const char*, const char*));
+static dstr get_response_key_part(const char* username, const char* mac, const char* port, const char* nas_type);
 
 /* shared secret redis dal */
 int get_shared_secret_for_client(const char *client, char **val) {
@@ -50,10 +51,43 @@ int set_org_id_for_port(const int port, const char *val) {
 }
 
 /* response cache redis dal */
-int get_response_for_request(REQUEST *request, char **val) {
-    *val = "";
+int get_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, char **val) {
+    dstr key_part = {0};
+    int result = 0;
+
+    key_part = get_response_key_part(username, mac, port, nas_type);
+    result = do_get_for_key_format(dstr_to_cstr(&key_part), val, portnox_config.redis.keys.response_key_format);
+
+    dstr_destroy(&key_part);
+    return result;
 }
-int set_response_for_request(REQUEST *request, const char *val) {
+int set_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, const char *val) {
+    dstr key_part = {0};
+    int result = 0;
+
+    key_part = get_response_key_part(username, mac, port, nas_type);
+    result = do_set_for_key_format(dstr_to_cstr(&key_part), val, 1, portnox_config.redis.keys.response_key_format);
+
+    dstr_destroy(&key_part);
+    return result;
+}
+
+
+//${uname}-${MAC}-${PORT}-${nas_type}
+static dstr get_response_key_part(const char* username, const char* mac, const char* port, const char* nas_type) {
+    char* uname = NULL;
+    dstr key = {0};
+
+    if(!strstr(nas_type, "Ethernet") || !strstr(nas_type, "Wireless")) {
+        uname = trim_to_string(username, "#");
+    } else {
+        uname = strdup(username);
+    }
+
+    key = dstr_from_fmt("%s-%s-%s-%s", uname, mac, port, nas_type);
+
+    if (uname) free(uname);
+    return key;
 }
 
 static int do_set_for_key_format(const char *key_part, const char *val, int need_ttl, char* format) {

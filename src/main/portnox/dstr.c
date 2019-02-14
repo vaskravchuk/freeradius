@@ -123,10 +123,10 @@ dstr dstr_escaped(const char *str) {
 }
 
 dstr dstr_from_fmt(const char* fmt, ...) {
-    char *buf;
+    char *buf = NULL;
     int size;
     va_list v;
-    dstr s;
+    dstr s = {0};
 
     va_start(v, fmt);
 
@@ -134,7 +134,7 @@ dstr dstr_from_fmt(const char* fmt, ...) {
     /* problems occurred? */
     if (size < 0) {
         va_end(v);
-        return;
+        return s;
     }
 
     s = dstr_create(size+1);
@@ -212,7 +212,7 @@ void dstr_cat_cstr_n(dstr *s, size_t len, const char *str) {
 }
 
 void dstr_cat_fmt(dstr *s, const char* fmt, ...) {
-    char *buf;
+    char *buf = NULL;
     int size;
     va_list v;
 

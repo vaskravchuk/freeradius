@@ -19,8 +19,8 @@ int set_shared_secret_for_client(const char *client, const char *val);
 int get_shared_secret_for_port(const int port, char **val);
 int set_shared_secret_for_port(const int port, const char *val);
 /* WARNING. 'val' is dynamic allocated string, should be freed. */
-int get_response_for_request(REQUEST *request, char **val);
-int set_response_for_request(REQUEST *request, const char *val);
+int get_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, char **val);
+int set_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, const char *val);
 
 /* organization id redis dal */
 /* WARNING. 'val' is dynamic allocated string, should be freed. */

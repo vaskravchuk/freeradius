@@ -24,6 +24,7 @@ RCSID("$Id$")
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 static dstr get_username(REQUEST *request);
 static dstr get_mac(REQUEST *request);
+static dstr get_nas_port(REQUEST *request);
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list);
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
@@ -91,30 +92,42 @@ int portnox_auth(REQUEST *request,
 
     radlog(L_INFO, "portnox_auth_call: AUTH_CALL_ERR=%d result=%ld", call_resp.return_code, call_resp.http_code);
 
-    /* try use reponse cache from redis */
-    if (portnox_config.be.need_auth_cache_for_error && call_resp.return_code != 0 &&
+    /* try use reponse cache from redis (optional) */
+    if (portnox_config.be.need_auth_cache_for_error && 
+        call_resp.return_code != 0 &&
         (call_resp.return_code  != 22 || call_resp.http_code == 404 || 
          call_resp.http_code == 405 || call_resp.http_code == 500)) {
         char* cached_data = NULL;
+        dstr nas_port = {0}
+        int resp_cache_result = 0
+
         radlog(L_INFO, 
            "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
            request->context_id, auth_method_str(auth_method));
-        if (get_response_for_request(request, &cached_data) == 0 && cached_data) {
+
+        nas_port = get_nas_port(request);
+        resp_cache_result = get_response_for_request(dstr_to_cstr(&username), 
+                                                     dstr_to_cstr(&mac), 
+                                                     equest->client_shortname, 
+                                                     dstr_to_cstr(&nas_port), 
+                                                     &cached_data);
+        if (resp_cache_result == 0 && cached_data) {
             radlog(L_INFO, 
                "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
                request->context_id, auth_method_str(auth_method));
+
             resp_destroy(&call_resp);
             call_resp.return_code = 0;
             call_resp.http_code = 200;
             call_resp.data = cached_data;
             resp_from_cache = 1;
         }
+
+        dstr_destroy(&nas_port);
     }
 
+    /* we get fail -> log and goto fail */
     if (call_resp.return_code != 0) {
-        radlog(L_INFO, 
-           "ContextId: %s; portnox_auth move response to redis auth_method: %s", 
-           request->context_id, auth_method_str(auth_method));
         radius_exec_logger_centrale(request, 
                                     auth_info->failed_auth_error_code, 
                                     "CURL_ERR: %d %ld",
@@ -123,8 +136,20 @@ int portnox_auth(REQUEST *request,
         goto fail;
     }
 
+    /* auth is OK, cache response if need */
     if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error) {
-        set_response_for_request(request, call_resp.data);
+        dstr nas_port = {0}
+
+        radlog(L_INFO, "ContextId: %s; portnox_auth save response to redis auth_method: %s", 
+                        request->context_id, auth_method_str(auth_method));
+
+        nas_port = get_nas_port(request);
+        set_response_for_request(dstr_to_cstr(&username), 
+                                 dstr_to_cstr(&mac), 
+                                 request->client_shortname, 
+                                 dstr_to_cstr(&nas_port), call_resp.data);
+
+        dstr_destroy(&nas_port);
     }
 
     /* process response */
@@ -191,7 +216,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
 }
 
 static dstr get_username(REQUEST *request) {
-	return get_vps_attr_or_empty(request, USERNAME_ATTR);
+    return get_vps_attr_or_empty(request, USERNAME_ATTR);
 }
 
 static dstr get_mac(REQUEST *request) {
@@ -207,6 +232,10 @@ static dstr get_mac(REQUEST *request) {
 	}
 
 	return str;
+}
+
+static dstr get_nas_port(REQUEST *request) {
+    return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
 }
 
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
@@ -267,8 +296,6 @@ static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     		}
     	}
     }
-
-    
 
 	return str;
 }
