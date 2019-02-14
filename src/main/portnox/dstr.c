@@ -123,10 +123,10 @@ dstr dstr_escaped(const char *str) {
 }
 
 dstr dstr_from_fmt(const char* fmt, ...) {
-    char *buf;
+    char *buf = NULL;
     int size;
     va_list v;
-    dstr s;
+    dstr s = {0};
 
     va_start(v, fmt);
 
@@ -134,7 +134,7 @@ dstr dstr_from_fmt(const char* fmt, ...) {
     /* problems occurred? */
     if (size < 0) {
         va_end(v);
-        return;
+        return s;
     }
 
     s = dstr_create(size+1);
@@ -212,7 +212,7 @@ void dstr_cat_cstr_n(dstr *s, size_t len, const char *str) {
 }
 
 void dstr_cat_fmt(dstr *s, const char* fmt, ...) {
-    char *buf;
+    char *buf = NULL;
     int size;
     va_list v;
 
@@ -286,4 +286,29 @@ void dstr_cat_dstrs(dstr *s1, ...) {
     }
 
     va_end(v);
+}
+
+int dstr_replace_chars(dstr *str, char orig, char rep) {
+    char *ix = NULL;
+    int n = 0;
+    /* Are we not a string? */
+    if (is_nas(str)) return;
+
+    ix = str->s;
+    while((ix = strchr(ix, orig)) != NULL && n < str->size) {
+        *ix++ = rep;
+        n++;
+    }
+    return n;
+}
+
+void dstr_to_lower(dstr *str) {
+    int i = 0;
+
+    /* Are we not a string? */
+    if (is_nas(str)) return;
+
+    for(; str->s[i] && i < str->size; i++) {
+        str->s[i] = tolower(str->s[i]);
+    }
 }

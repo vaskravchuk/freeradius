@@ -74,6 +74,7 @@ typedef struct eap_tls_conf {
 
 	char		*verify_tmp_dir;
 	char		*verify_client_cert_cmd;
+	int			use_script;
 
 #ifdef HAVE_OPENSSL_OCSP_H
 	/*

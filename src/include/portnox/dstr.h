@@ -74,5 +74,8 @@ void dstr_cat_dstr(dstr *s, const dstr *s2);
 void dstr_cat_cstrs(dstr *s, ...);
 void dstr_cat_dstrs(dstr *s1, ...);
 
+/* Operations */
+int dstr_replace_chars(dstr *str, char orig, char rep);
+void dstr_to_lower(dstr *str);
 
 #endif //DSTR_H

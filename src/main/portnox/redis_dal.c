@@ -14,12 +14,20 @@
 #include <stdio.h>
 #include <string.h>
 
+#define PORTNOX_INNER_PORT "18122"
+
+static int do_set_for_key_format(const char *key_part, const char *val, int need_ttl, char* format);
+static int do_get_for_key_format(const char *client, const char **val, char* format);
+static int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)(const char*, const char*));
+static int do_get_for_port(const int port, char **val, int (*getter)(const char*, const char*));
+static dstr get_response_key_part(const char* username, const char* mac, const char* port, const char* nas_type);
+
 /* shared secret redis dal */
 int get_shared_secret_for_client(const char *client, char **val) {
-    return do_get_for_client(client, val, portnox_config.redis.keys.shared_secret_key_format);
+    return do_get_for_key_format(client, val, portnox_config.redis.keys.shared_secret_key_format);
 }
 int set_shared_secret_for_client(const char *client, const char *val) {
-    return do_set_for_client(client, val, 1, portnox_config.redis.keys.shared_secret_key_format);
+    return do_set_for_key_format(client, val, 1, portnox_config.redis.keys.shared_secret_key_format);
 }
 int get_shared_secret_for_port(const int port, char **val) {
     return do_get_for_port(port, val, &get_shared_secret_for_client);
@@ -30,10 +38,10 @@ int set_shared_secret_for_port(const int port, const char *val) {
 
 /* organization id redis dal */
 int get_org_id_for_client(const char *client, char **val) {
-    return do_get_for_client(client, val, portnox_config.redis.keys.org_id_key_format);
+    return do_get_for_key_format(client, val, portnox_config.redis.keys.org_id_key_format);
 }
 int set_org_id_for_client(const char *client, const char *val) {
-    return do_set_for_client(client, val, 0, portnox_config.redis.keys.org_id_key_format);
+    return do_set_for_key_format(client, val, 0, portnox_config.redis.keys.org_id_key_format);
 }
 int get_org_id_for_port(const int port, char **val) {
     return do_get_for_port(port, val, &get_org_id_for_client);
@@ -42,11 +50,51 @@ int set_org_id_for_port(const int port, const char *val) {
     return do_set_for_port(port, val, 0, &set_org_id_for_client);
 }
 
-int do_set_for_client(const char *client, const char *val, int need_ttl, char* format) {
+/* response cache redis dal */
+int get_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, char **val) {
+    dstr key_part = {0};
+    int result = 0;
+
+    key_part = get_response_key_part(username, mac, port, nas_type);
+    result = do_get_for_key_format(dstr_to_cstr(&key_part), val, portnox_config.redis.keys.response_key_format);
+
+    dstr_destroy(&key_part);
+    return result;
+}
+int set_response_for_data(const char* username, const char* mac, const char* port, const char* nas_type, const char *val) {
+    dstr key_part = {0};
+    int result = 0;
+
+    key_part = get_response_key_part(username, mac, port, nas_type);
+    result = do_set_for_key_format(dstr_to_cstr(&key_part), val, 1, portnox_config.redis.keys.response_key_format);
+
+    dstr_destroy(&key_part);
+    return result;
+}
+
+
+//${uname}-${MAC}-${PORT}-${nas_type}
+static dstr get_response_key_part(const char* username, const char* mac, const char* port, const char* nas_type) {
+    char* uname = NULL;
+    dstr key = {0};
+
+    if(!strstr(nas_type, "Ethernet") || !strstr(nas_type, "Wireless")) {
+        uname = trim_to_string(username, "#");
+    } else {
+        uname = strdup(username);
+    }
+
+    key = dstr_from_fmt("%s-%s-%s-%s", uname, mac, port, nas_type);
+
+    if (uname) free(uname);
+    return key;
+}
+
+static int do_set_for_key_format(const char *key_part, const char *val, int need_ttl, char* format) {
     int result;
     dstr key;
 
-    key = dstr_from_fmt(format, client);
+    key = dstr_from_fmt(format, key_part);
     if (need_ttl) {
         result = redis_setex(dstr_to_cstr(&key), val, portnox_config.redis.keys.cache_ttl);
     } else {
@@ -57,18 +105,28 @@ int do_set_for_client(const char *client, const char *val, int need_ttl, char* f
 
     return result;
 }
-int do_get_for_client(const char *client, const char **val, char* format) {
-    int result;
-    dstr key;
+static int do_get_for_key_format(const char *key_part, const char **val, char* format) {
+    int result = 0;
+    dstr key = {0};
 
-    key = dstr_from_fmt(format, client);
-    result = redis_get(dstr_to_cstr(&key), val);
+    /*
+     * in case of PORTNOX_INNER_PORT we use static client
+     * so we don't have SHARED_SECRET and CENTRALE_ORGID
+     * use CLUSTER_ID as stub value
+     */
+    if (strcmp(key_part, PORTNOX_INNER_PORT) == 0) {
+        *val = strdup(portnox_config.be.cluster_id);
+    }
+    else {
+        key = dstr_from_fmt(format, key_part);
+        result = redis_get(dstr_to_cstr(&key), val);
+    }
 
     dstr_destroy(&key);
 
     return result;
 }
-int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)(const char*, const char*)) {
+static int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)(const char*, const char*)) {
     int result;
     dstr client;
 
@@ -79,7 +137,7 @@ int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)
 
     return result;
 }
-int do_get_for_port(const int port, char **val, int (*getter)(const char*, const char*)) {
+static int do_get_for_port(const int port, char **val, int (*getter)(const char*, const char*)) {
     int result;
     dstr client;
 

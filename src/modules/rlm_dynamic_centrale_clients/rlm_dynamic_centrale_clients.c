@@ -8,7 +8,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/redis_dal.h>
-#include <freeradius-devel/portnox/json_p.h>
+#include <freeradius-devel/portnox/json_helper.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -265,17 +265,12 @@ static char* get_request_json(char *hostname, int port, char *cluster_id) {
 
     request_data = cJSON_CreateObject();
 
-    if (hostname) {
-        cJSON_AddStringToObject(request_data, CALLER_IP, hostname);
-    }
-    if (port > 0) {
-        cJSON_AddNumberToObject(request_data, CALLER_PORT, port);
-    }
-    if (cluster_id) {
-        cJSON_AddStringToObject(request_data, CLUSTER_ID, cluster_id);
-    }
+    if (hostname) cJSON_AddStringToObject(request_data, CALLER_IP, hostname);
+    if (port > 0) cJSON_AddNumberToObject(request_data, CALLER_PORT, port);
+    if (cluster_id) cJSON_AddStringToObject(request_data, CLUSTER_ID, cluster_id);
 
     json = cJSON_Print(request_data);
+    cJSON_Minify(json);
     cJSON_Delete(request_data);
 
     return json;

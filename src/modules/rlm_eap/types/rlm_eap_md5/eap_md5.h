@@ -47,6 +47,7 @@ typedef struct md5_packet {
 
 /* This structure gets stored in arg */
 typedef struct _eap_md5_t {
+	int use_script;
 	char *md5_auth;
 } eap_md5_t;
 

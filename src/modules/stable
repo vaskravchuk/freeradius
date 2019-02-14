@@ -12,7 +12,6 @@ rlm_dbm
 rlm_detail
 rlm_digest
 rlm_dynamic_clients
-rlm_dynamic_centrale_clients
 rlm_eap
 rlm_exec
 rlm_expiration
@@ -44,3 +43,6 @@ rlm_sqlippool
 rlm_sql_log
 rlm_unix
 rlm_wimax
+rlm_dynamic_centrale_clients
+rlm_portnox_pap
+rlm_portnox_chap

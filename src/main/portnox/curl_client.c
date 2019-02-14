@@ -90,6 +90,8 @@ srv_resp exec_http_request(srv_req* req) {
         data = dstr_create(START_BUF_SIZE);
         /* curl_easy_perform will return "22" if http_code will be >= 400 */
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+        /* setup timeout */
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, portnox_config.be.timeout);
         curl_easy_setopt(curl, CURLOPT_VERBOSE, req->is_debug ? 1L : 0L);
         /* Perform the request, res will get the return code */
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_callback_string);
