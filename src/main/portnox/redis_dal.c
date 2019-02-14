@@ -17,13 +17,13 @@
 #define PORTNOX_INNER_PORT "18122"
 
 static int do_set_for_key_format(const char *key_part, const char *val, int need_ttl, char* format);
-static int do_get_for_client(const char *client, const char **val, char* format);
+static int do_get_for_key_format(const char *client, const char **val, char* format);
 static int do_set_for_port(const int port, const char *val, int need_ttl, int (*setter)(const char*, const char*));
 static int do_get_for_port(const int port, char **val, int (*getter)(const char*, const char*));
 
 /* shared secret redis dal */
 int get_shared_secret_for_client(const char *client, char **val) {
-    return do_get_for_client(client, val, portnox_config.redis.keys.shared_secret_key_format);
+    return do_get_for_key_format(client, val, portnox_config.redis.keys.shared_secret_key_format);
 }
 int set_shared_secret_for_client(const char *client, const char *val) {
     return do_set_for_key_format(client, val, 1, portnox_config.redis.keys.shared_secret_key_format);
@@ -37,7 +37,7 @@ int set_shared_secret_for_port(const int port, const char *val) {
 
 /* organization id redis dal */
 int get_org_id_for_client(const char *client, char **val) {
-    return do_get_for_client(client, val, portnox_config.redis.keys.org_id_key_format);
+    return do_get_for_key_format(client, val, portnox_config.redis.keys.org_id_key_format);
 }
 int set_org_id_for_client(const char *client, const char *val) {
     return do_set_for_key_format(client, val, 0, portnox_config.redis.keys.org_id_key_format);
@@ -71,7 +71,7 @@ static int do_set_for_key_format(const char *key_part, const char *val, int need
 
     return result;
 }
-static int do_get_for_client(const char *client, const char **val, char* format) {
+static int do_get_for_key_format(const char *key_part, const char **val, char* format) {
     int result = 0;
     dstr key = {0};
 
@@ -84,7 +84,7 @@ static int do_get_for_client(const char *client, const char **val, char* format)
         *val = strdup(portnox_config.be.cluster_id);
     }
     else {
-        key = dstr_from_fmt(format, client);
+        key = dstr_from_fmt(format, key_part);
         result = redis_get(dstr_to_cstr(&key), val);
     }
 
