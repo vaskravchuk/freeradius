@@ -12,7 +12,7 @@
 #define TAG "radiusd.script"
 
 void to_syslog(char* priority, char* message);
-void to_portnox_logger(char* message);
+void log_to_portnox(char* message);
 
 void log(char* code, char* message, char* priority, REQUEST* req) {
     char * full_message = calloc(1024, sizeof(char *));
@@ -49,11 +49,11 @@ void to_syslog(char* priority, char* message) {
 }
 
 void log_to_portnox(char* message) {
-    srv_req eq = req_create(portnox_config.rad_daemon.log_url, message, 0, 0);
+    srv_req req = req_create(portnox_config.rad_daemon.log_url, message, 0, 0);
 
-    srv_resp resp = exec_http_request(log_req);
+    srv_resp resp = exec_http_request(req);
 
-    req_destroy(eq);
+    req_destroy(req);
     req_destroy(resp);
 }
 
