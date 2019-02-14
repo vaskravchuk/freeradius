@@ -224,11 +224,11 @@ static dstr get_mac(REQUEST *request) {
 
 	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
 
-	if (dstr_size(&str)) {
+	if (!is_nas(&str)) {
 		dstr_replace_chars(&str, '-', ':');
-		lower(&str);
+		dstr_to_lower(&str);
 	} else {
-		dstr_cat_cstr(&str, "00:00:00:00:00:00");
+		str = dstr_cstr("00:00:00:00:00:00");
 	}
 
 	return str;
