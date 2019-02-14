@@ -87,7 +87,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
                  username, port, mac, custom_json);
 
         log_error(error_code, full_message, request);
-    } else if (estrcmp(error_code, "60031") == 0) {
+    } else if (strcmp(error_code, "60031") == 0) {
         snprintf(full_message, 5000 * sizeof(char *),
                  "Radius request wrong eap auth type error for %s on port %s with mac %s and attributes %s",
                  username, port, mac, custom_json);
