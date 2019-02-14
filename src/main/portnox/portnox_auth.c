@@ -99,16 +99,16 @@ int portnox_auth(REQUEST *request,
          call_resp.http_code == 405 || call_resp.http_code == 500)) {
         char* cached_data = NULL;
         dstr nas_port = {0}
-        int resp_cache_result = 0
+        int resp_cache_result = 0;
 
         radlog(L_INFO, 
            "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
            request->context_id, auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        resp_cache_result = get_response_for_request(dstr_to_cstr(&username), 
+        resp_cache_result = get_response_for_request(dstr_to_cstr(&identity), 
                                                      dstr_to_cstr(&mac), 
-                                                     equest->client_shortname, 
+                                                     request->client_shortname, 
                                                      dstr_to_cstr(&nas_port), 
                                                      &cached_data);
         if (resp_cache_result == 0 && cached_data) {
@@ -144,7 +144,7 @@ int portnox_auth(REQUEST *request,
                         request->context_id, auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        set_response_for_request(dstr_to_cstr(&username), 
+        set_response_for_request(dstr_to_cstr(&identity), 
                                  dstr_to_cstr(&mac), 
                                  request->client_shortname, 
                                  dstr_to_cstr(&nas_port), call_resp.data);
