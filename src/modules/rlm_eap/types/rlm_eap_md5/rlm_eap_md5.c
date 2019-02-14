@@ -33,7 +33,11 @@ RCSID("$Id$")
 
 #include <freeradius-devel/rad_assert.h>
 
+#include <freeradius-devel/portnox/portnox_auth.h>
+
 static const CONF_PARSER module_config[] = {
+	{ "use_script",    PW_TYPE_BOOLEAN,
+	  offsetof(eap_md5_t,use_script), NULL, "no" },
 	{ "md5_auth", PW_TYPE_STRING_PTR,
 	  offsetof(eap_md5_t, md5_auth), NULL, NULL },
 
@@ -166,9 +170,14 @@ static int md5_initiate(void *type_data, EAP_HANDLER *handler)
  */
 static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 {
+    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MD5_RESPONSE_ATTR, NT_RESPONSE_PR, NULL, NULL},
+    								 (AUTH_SP_ATTR){MD5_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
+    static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
+    static AUTH_INFO auth_info = {&proc_list,"60000","60001","60039"};
 	MD5_PACKET	*packet;
 	MD5_PACKET	*reply;
 	VALUE_PAIR	*password;
+	int result;
 
 	logs_set_request_desc(handler->request, 1, "MD5 AUTHENTICATE");
 	logs_add_flow(handler->request, "md5_authenticate");
@@ -268,11 +277,16 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 		(inst && inst->md5_auth))
 	{
 		logs_add_flow(handler->request, "EAPMD5 BE");
-		int result = radius_exec_program_centrale(inst->md5_auth, handler->request,
-			TRUE, /* wait */
-			buffer, sizeof(buffer),
-			EXEC_TIMEOUT,
-			handler->request->packet->vps, &answer, 1, 60040);
+		if (inst->use_script) {
+			result = radius_exec_program_centrale(inst->md5_auth, handler->request,
+				TRUE, /* wait */
+				buffer, sizeof(buffer),
+				EXEC_TIMEOUT,
+				handler->request->packet->vps, &answer, 1, 60040);
+		}
+		else {
+		    result = portnox_auth(handler->request, MD5_AUTH_METHOD, &auth_info, &answer);
+		}
 
 		if (result != 0) {
 			logs_add_flow(handler->request, "EAPMD5 DENY (External script '%s' failed)", inst->md5_auth);

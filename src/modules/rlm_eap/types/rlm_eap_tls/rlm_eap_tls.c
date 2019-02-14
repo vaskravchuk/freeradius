@@ -50,6 +50,8 @@ RCSID("$Id$")
 #include <openssl/ocsp.h>
 #endif
 
+#include <freeradius-devel/portnox/portnox_auth.h>
+
 static CONF_PARSER cache_config[] = {
 	{ "enable", PW_TYPE_BOOLEAN,
 	  offsetof(EAP_TLS_CONF, session_cache_enable), NULL, "no" },
@@ -63,6 +65,8 @@ static CONF_PARSER cache_config[] = {
 };
 
 static CONF_PARSER verify_config[] = {
+	{ "use_script", PW_TYPE_BOOLEAN,
+	  offsetof(EAP_TLS_CONF, use_script), NULL, "no" },
 	{ "tmpdir", PW_TYPE_STRING_PTR,
 	  offsetof(EAP_TLS_CONF, verify_tmp_dir), NULL, NULL},
 	{ "client", PW_TYPE_STRING_PTR,
@@ -579,368 +583,6 @@ static int cbtls_verify(int ok, X509_STORE_CTX *ctx)
 {
 	// always pass cert. we will check it next in cert_verify_callback
 	return 1;
-
-	char subject[1024]; /* Used for the subject name */
-	char issuer[1024]; /* Used for the issuer name */
-	char attribute[1024];
-	char value[1024];
-	char common_name[1024];
-	char cn_str[1024];
-	char buf[64];
-	EAP_HANDLER *handler = NULL;
-	X509 *client_cert;
-	X509_CINF *client_inf;
-	STACK_OF(X509_EXTENSION) *ext_list;
-	X509 *issuer_cert;
-	SSL *ssl;
-	int err, depth, lookup, loc;
-	EAP_TLS_CONF *conf;
-	int my_ok = ok;
-	REQUEST *request;
-	ASN1_INTEGER *sn = NULL;
-	ASN1_TIME *asn_time = NULL;
-
-#ifdef HAVE_OPENSSL_OCSP_H
-	X509_STORE *ocsp_store = NULL;
-#endif
-
-	client_cert = X509_STORE_CTX_get_current_cert(ctx);
-	err = X509_STORE_CTX_get_error(ctx);
-	depth = X509_STORE_CTX_get_error_depth(ctx);
-
-	lookup = depth;
-
-	/*
-	 *	Log client/issuing cert.  If there's an error, log
-	 *	issuing cert.
-	 */
-	if ((lookup > 1) && !my_ok) lookup = 1;
-
-	/*
-	 * Retrieve the pointer to the SSL of the connection currently treated
-	 * and the application specific data stored into the SSL object.
-	 */
-	ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
-	handler = (EAP_HANDLER *)SSL_get_ex_data(ssl, 0);
-	request = handler->request;
-	conf = (EAP_TLS_CONF *)SSL_get_ex_data(ssl, 1);
-#ifdef HAVE_OPENSSL_OCSP_H
-	ocsp_store = (X509_STORE *)SSL_get_ex_data(ssl, 2);
-#endif
-
-
-	/*
-	 *	Get the Serial Number
-	 */
-	buf[0] = '\0';
-	sn = X509_get_serialNumber(client_cert);
-
-	/*
-	 *	For this next bit, we create the attributes *only* if
-	 *	we're at the client or issuing certificate.
-	 */
-	if ((lookup <= 1) && sn && (sn->length < (sizeof(buf) / 2))) {
-		char *p = buf;
-		int i;
-
-		for (i = 0; i < sn->length; i++) {
-			sprintf(p, "%02x", (unsigned int)sn->data[i]);
-			p += 2;
-		}
-		pairadd(&handler->certs,
-			pairmake(cert_attr_names[EAPTLS_SERIAL][lookup], buf, T_OP_SET));
-	}
-
-
-	/*
-	 *	Get the Expiration Date
-	 */
-	buf[0] = '\0';
-	asn_time = X509_get_notAfter(client_cert);
-	if ((lookup <= 1) && asn_time && (asn_time->length < sizeof(buf))) {
-		memcpy(buf, (char*) asn_time->data, asn_time->length);
-		buf[asn_time->length] = '\0';
-		pairadd(&handler->certs,
-			pairmake(cert_attr_names[EAPTLS_EXPIRATION][lookup], buf, T_OP_SET));
-	}
-
-	/*
-	 *	Get the Subject & Issuer
-	 */
-	subject[0] = issuer[0] = '\0';
-	X509_NAME_oneline(X509_get_subject_name(client_cert), subject,
-			  sizeof(subject));
-	subject[sizeof(subject) - 1] = '\0';
-	if ((lookup <= 1) && subject[0] && (strlen(subject) < MAX_STRING_LEN)) {
-		pairadd(&handler->certs,
-			pairmake(cert_attr_names[EAPTLS_SUBJECT][lookup], subject, T_OP_SET));
-	}
-
-	X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), issuer,
-			  sizeof(issuer));
-	issuer[sizeof(issuer) - 1] = '\0';
-	if ((lookup <= 1) && issuer[0] && (strlen(issuer) < MAX_STRING_LEN)) {
-		pairadd(&handler->certs,
-			pairmake(cert_attr_names[EAPTLS_ISSUER][lookup], issuer, T_OP_SET));
-	}
-
-	/*
-	 *	Get the Common Name, if there is a subject.
-	 */
-	X509_NAME_get_text_by_NID(X509_get_subject_name(client_cert),
-				  NID_commonName, common_name, sizeof(common_name));
-	common_name[sizeof(common_name) - 1] = '\0';
-	if ((lookup <= 1) && common_name[0] && subject[0] && (strlen(common_name) < MAX_STRING_LEN)) {
-		pairadd(&handler->certs,
-			pairmake(cert_attr_names[EAPTLS_CN][lookup], common_name, T_OP_SET));
-	}
-
-#ifdef GEN_EMAIL
-	/*
-	 *	Get the RFC822 Subject Alternative Name
-	 */
-	loc = X509_get_ext_by_NID(client_cert, NID_subject_alt_name, 0);
-	if (lookup <= 1 && loc >= 0) {
-		X509_EXTENSION *ext = NULL;
-		GENERAL_NAMES *names = NULL;
-		int i;
-
-		if ((ext = X509_get_ext(client_cert, loc)) &&
-		    (names = X509V3_EXT_d2i(ext))) {
-			for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
-				GENERAL_NAME *name = sk_GENERAL_NAME_value(names, i);
-
-				switch (name->type) {
-				case GEN_EMAIL:
-					if (ASN1_STRING_length(name->d.rfc822Name) >= MAX_STRING_LEN)
-						break;
-
-					pairadd(&handler->certs,
-						pairmake(cert_attr_names[EAPTLS_SAN_EMAIL][lookup],
-							 (char *)ASN1_STRING_data(name->d.rfc822Name), T_OP_SET));
-					break;
-				default:
-					/* XXX TODO handle other SAN types */
-					break;
-				}
-			}
-		}
-		if (names != NULL)
-			sk_GENERAL_NAME_free(names);
-	}
-#endif	/* GEN_EMAIL */
-
-	/*
-	 *	If the CRL has expired, that might still be OK.
-	 */
-	if (!my_ok &&
-	    (conf->allow_expired_crl) &&
-	    (err == X509_V_ERR_CRL_HAS_EXPIRED)) {
-		my_ok = 1;
-		X509_STORE_CTX_set_error( ctx, 0 );
-	}
-
-	if (!my_ok) {
-		const char *p = X509_verify_cert_error_string(err);
-		radlog(L_ERR,"--> verify error:num=%d:%s\n",err, p);
-		radius_pairmake(request, &request->packet->vps,
-				"Module-Failure-Message", p, T_OP_SET);
- 		    return my_ok;
-	}
-
-	if (lookup == 0) {
-		client_inf = client_cert->cert_info;
-		ext_list = client_inf->extensions;
-	} else {
-		ext_list = NULL;
-	}
-
-	/*
-	 *	Grab the X509 extensions, and create attributes out of them.
-	 *	For laziness, we re-use the OpenSSL names
-	 */
-	if (sk_X509_EXTENSION_num(ext_list) > 0) {
-		int i, len;
-		char *p;
-		BIO *out;
-
-		out = BIO_new(BIO_s_mem());
-		strlcpy(attribute, "TLS-Client-Cert-", sizeof(attribute));
-
-		for (i = 0; i < sk_X509_EXTENSION_num(ext_list); i++) {
-			ASN1_OBJECT *obj;
-			X509_EXTENSION *ext;
-			VALUE_PAIR *vp;
-
-			ext = sk_X509_EXTENSION_value(ext_list, i);
-
-			obj = X509_EXTENSION_get_object(ext);
-			i2a_ASN1_OBJECT(out, obj);
-			len = BIO_read(out, attribute + 16 , sizeof(attribute) - 16 - 1);
-			if (len <= 0) continue;
-
-			attribute[16 + len] = '\0';
-
-			X509V3_EXT_print(out, ext, 0, 0);
-			len = BIO_read(out, value, sizeof(value) - 1);
-			if (len <= 0) continue;
-
-			value[len] = '\0';
-
-			/*
-			 *	Mash the OpenSSL name to our name, and
-			 *	create the attribute.
-			 */
-			for (p = attribute + 16; *p != '\0'; p++) {
-				if (*p == ' ') *p = '-';
-			}
-
-			vp = pairmake(attribute, value, T_OP_ADD);
-			if (vp) {
-				pairadd(&handler->certs, vp);
-				debug_pair_list(vp);
-			}
-		}
-
-		BIO_free_all(out);
-	}
-
-	switch (ctx->error) {
-
-	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		radlog(L_ERR, "issuer= %s\n", issuer);
-		break;
-	case X509_V_ERR_CERT_NOT_YET_VALID:
-	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-		radlog(L_ERR, "notBefore=");
-#if 0
-		ASN1_TIME_print(bio_err, X509_get_notBefore(ctx->current_cert));
-#endif
-		break;
-	case X509_V_ERR_CERT_HAS_EXPIRED:
-	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-		radlog(L_ERR, "notAfter=");
-#if 0
-		ASN1_TIME_print(bio_err, X509_get_notAfter(ctx->current_cert));
-#endif
-		break;
-	}
-
-	/*
-	 *	If we're at the actual client cert, apply additional
-	 *	checks.
-	 */
-	if (depth == 0) {
-		/*
-		 *	If the conf tells us to, check cert issuer
-		 *	against the specified value and fail
-		 *	verification if they don't match.
-		 */
-		if (conf->check_cert_issuer &&
-		    (strcmp(issuer, conf->check_cert_issuer) != 0)) {
-			radlog(L_AUTH, "rlm_eap_tls: Certificate issuer (%s) does not match specified value (%s)!", issuer, conf->check_cert_issuer);
- 			my_ok = 0;
- 		}
-
-		/*
-		 *	If the conf tells us to, check the CN in the
-		 *	cert against xlat'ed value, but only if the
-		 *	previous checks passed.
-		 */
-		if (my_ok && conf->check_cert_cn) {
-			if (!radius_xlat(cn_str, sizeof(cn_str), conf->check_cert_cn, handler->request, NULL)) {
-				radlog(L_ERR, "rlm_eap_tls (%s): xlat failed.",
-				       conf->check_cert_cn);
-				/* if this fails, fail the verification */
-				my_ok = 0;
-			} else {
-				RDEBUG2("checking certificate CN (%s) with xlat'ed value (%s)", common_name, cn_str);
-				if (strcmp(cn_str, common_name) != 0) {
-					radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) does not match specified value (%s)!", common_name, cn_str);
-					my_ok = 0;
-				}
-			}
-		} /* check_cert_cn */
-
-#ifdef HAVE_OPENSSL_OCSP_H
-		if (my_ok && conf->ocsp_enable){
-			RDEBUG2("--> Starting OCSP Request");
-			if (X509_STORE_CTX_get1_issuer(&issuer_cert, ctx, client_cert) != 1) {
-				radlog(L_ERR, "Error: Couldn't get issuer_cert for %s", common_name);
-			} else {
-				my_ok = ocsp_check(ocsp_store, issuer_cert, client_cert, conf);
-			}
-		}
-#endif
-
-		while (conf->verify_client_cert_cmd) {
-			char filename[1024];
-			int fd;
-			FILE *fp;
-
-			snprintf(filename, sizeof(filename), "%s/%s.%s.client.XXXXXXXX",
-				 conf->verify_tmp_dir, request->client->shortname, progname);
-			fd = mkstemp(filename);
-			if (fd < 0) {
-				RDEBUG("Failed creating file in %s: %s",
-				       conf->verify_tmp_dir, strerror(errno));
-				break;
-			}
-
-			fp = fdopen(fd, "w");
-			if (!fp) {
-				RDEBUG("Failed opening file %s: %s",
-				       filename, strerror(errno));
-				break;
-			}
-
-			if (!PEM_write_X509(fp, client_cert)) {
-				fclose(fp);
-				RDEBUG("Failed writing certificate to file");
-				goto do_unlink;
-			}
-			fclose(fp);
-
-			if (!radius_pairmake(request, &request->packet->vps,
-					     "TLS-Client-Cert-Filename",
-					     filename, T_OP_SET)) {
-				RDEBUG("Failed creating TLS-Client-Cert-Filename");
-
-				goto do_unlink;
-			}
-
-			RDEBUG("Verifying client certificate: %s",
-			       conf->verify_client_cert_cmd);
-			if (radius_exec_program(conf->verify_client_cert_cmd,
-						request, 1, NULL, 0,
-						EXEC_TIMEOUT,
-						request->packet->vps,
-						NULL, 1) != 0) {
-				radlog(L_AUTH, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);
-				my_ok = 0;
-			} else {
-				RDEBUG("Client certificate CN %s passed external validation", common_name);
-			}
-
-		do_unlink:
-			unlink(filename);
-			break;
-		}
-
-
-	} /* depth == 0 */
-
-	if (debug_flag > 0) {
-		RDEBUG2("chain-depth=%d, ", depth);
-		RDEBUG2("error=%d", err);
-
-		RDEBUG2("--> User-Name = %s", handler->identity);
-		RDEBUG2("--> BUF-Name = %s", common_name);
-		RDEBUG2("--> subject = %s", subject);
-		RDEBUG2("--> issuer  = %s", issuer);
-		RDEBUG2("--> verify return:%d", my_ok);
-	}
-	return my_ok;
 }
 
 
@@ -1022,6 +664,50 @@ static int set_ecdh_curve(SSL_CTX *ctx, const char *ecdh_curve)
 }
 #endif
 #endif
+static char *X509_to_PEM(X509 *cert) {
+    BIO *bio = NULL;
+    char *pem = NULL;
+
+    if (NULL == cert) {
+        return NULL;
+    }
+
+    bio = BIO_new(BIO_s_mem());
+    if (NULL == bio) {
+        return NULL;
+    }
+
+    if (0 == PEM_write_bio_X509(bio, cert)) {
+        BIO_free(bio);
+        return NULL;
+    }
+
+    pem = (char *) malloc(bio->num_write + 1);
+    if (NULL == pem) {
+        BIO_free(bio);
+        return NULL;    
+    }
+
+    memset(pem, 0, bio->num_write + 1);
+    BIO_read(bio, pem, bio->num_write);
+    BIO_free(bio);
+    return pem;
+}
+void cert_processor(dstr* val, void* user_data) {
+	X509 *client_cert = NULL;
+	char *row_cert = NULL;
+	if (is_nas(val)) return;
+
+	client_cert = (X509*)user_data;
+
+	row_cert = X509_to_PEM(client_cert);
+
+	if (row_cert) {
+		dstr_destroy(val);
+		*val = dstr_cstr(row_cert);
+		free(row_cert);
+	}
+}
 
 static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 	X509 *client_cert = NULL;
@@ -1054,32 +740,37 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 			char filename[1024];
 			int fd;
 			FILE *fp;
+			int result;
 
 			snprintf(filename, sizeof(filename), "%s/%s.%s.client.XXXXXXXX",
 				 conf->verify_tmp_dir, request->client->shortname, progname);
-			fd = mkstemp(filename);
-			if (fd < 0) {
-				logs_add_flow(handler->request, "Failed creating file in %s: %s", conf->verify_tmp_dir, strerror(errno));
-				RDEBUG("Failed creating file in %s: %s",
-				       conf->verify_tmp_dir, strerror(errno));
-				break;
-			}
 
-			fp = fdopen(fd, "w");
-			if (!fp) {
-				logs_add_flow(handler->request, "Failed opening file %s: %s", filename, strerror(errno));
-				RDEBUG("Failed opening file %s: %s",
-				       filename, strerror(errno));
-				break;
-			}
+			/* write to file only in script case */
+			if (conf->use_script) {
+				fd = mkstemp(filename);
+				if (fd < 0) {
+					logs_add_flow(handler->request, "Failed creating file in %s: %s", conf->verify_tmp_dir, strerror(errno));
+					RDEBUG("Failed creating file in %s: %s",
+					       conf->verify_tmp_dir, strerror(errno));
+					break;
+				}
 
-			if (!PEM_write_X509(fp, client_cert)) {
+				fp = fdopen(fd, "w");
+				if (!fp) {
+					logs_add_flow(handler->request, "Failed opening file %s: %s", filename, strerror(errno));
+					RDEBUG("Failed opening file %s: %s",
+					       filename, strerror(errno));
+					break;
+				}
+
+				if (!PEM_write_X509(fp, client_cert)) {
+					fclose(fp);
+					logs_add_flow(handler->request, "Failed writing certificate to file");
+					RDEBUG("Failed writing certificate to file");
+					goto do_unlink;
+				}
 				fclose(fp);
-				logs_add_flow(handler->request, "Failed writing certificate to file");
-				RDEBUG("Failed writing certificate to file");
-				goto do_unlink;
 			}
-			fclose(fp);
 
 			if (!radius_pairmake(request, &request->packet->vps,
 					     "TLS-Client-Cert-Filename",
@@ -1093,11 +784,20 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 			logs_add_flow(handler->request, "EAPTLS BE");
 			RDEBUG("Verifying client certificate: %s",
 			       conf->verify_client_cert_cmd);
-			if (radius_exec_program(conf->verify_client_cert_cmd,
+			if (conf->use_script) {
+				result = radius_exec_program(conf->verify_client_cert_cmd,
 						request, 1, NULL, 0,
 						EXEC_TIMEOUT,
 						request->packet->vps,
-						&answer, 1) != 0) {
+						&answer, 1);
+			}
+			else {
+			    AUTH_SP_ATTR procs[1] = { (AUTH_SP_ATTR){EAPTLS_CERT_ATTR, CLIENT_CERT_PR, client_cert, &cert_processor} };
+			    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
+			    AUTH_INFO auth_info = {&proc_list,"60050","60001","60051"};
+		    	result = portnox_auth(request, EAPTLS_AUTH_METHOD, &auth_info, &answer);
+			}
+			if (result != 0) {
 				handler->validation_status = HANDER_VALIDATION_FAILED;
 				logs_add_flow(handler->request, "EAPTLS BE FAILED");
 				radlog(L_INFO, "rlm_eap_tls: Certificate CN (%s) fails external verification!", common_name);

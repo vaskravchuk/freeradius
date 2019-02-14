@@ -9,22 +9,11 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/portnox_config.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
-int is_contains(char **arr, int size, char* str) {
-	int found = 0;
-	for (int i = 0; i < size; ++i) {
-		char* item = arr[i];
-		if (strcmp(item, str) == 0) {
-			found = 1;
-			break;
-		}
-	}
-
-	return found;
-}
 
 int vstr_format(char * s, int n, const char *format, va_list ap) {
 	int len = 0;
@@ -45,52 +34,6 @@ int str_format(char * s, int n, const char *format, ...) {
 	va_end(ap);
 
 	return len;
-}
-
-int json_escape(char* str, char* out, int outlen) {
-	int offset = 0;
-	char* rep = NULL;
-	int i = 0;
-	char chr = 0;
-
-	for(;(chr = str[i]) && (i < outlen); i++) {
-		switch (chr) {
-            case '\\': rep = "\\\\"; break;
-            case '"': rep = "\\\""; break;
-            case '/': rep = "\\/"; break;
-            case '\b': rep = "\\b"; break;
-            case '\f': rep = "\\f"; break;
-            case '\n': rep = "\\n"; break;
-            case '\r': rep = "\\r"; break;
-            case '\t': rep = "\\t"; break;
-            default: rep = NULL; break;
-        }
-
-		if (rep != NULL) {
-			offset += str_format(out + offset, outlen - offset, "%s", rep);
-        }
-		else {
-			out[offset++] = chr;
-        }
-	}
-
-	return offset;
-}
-
-int replace_char(char *str, char orig, char rep) {
-    char *ix = str;
-    int n = 0;
-    while((ix = strchr(ix, orig)) != NULL) {
-        *ix++ = rep;
-        n++;
-    }
-    return n;
-}
-
-void lower(char *str) {
-	for(int i = 0; str[i]; i++) {
-		str[i] = tolower(str[i]);
-	}
 }
 
 inline int close_str(char *out, int outlen) {
@@ -148,7 +91,7 @@ int log_add_json_vps(char *out, int outlen, const char *key, VALUE_PAIR *vps, in
 	 * Remove not interested attributes
 	 * skip nt-key as password
 	 */
-	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK", "EAP-EMSK" };
+	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP-Response", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK", "EAP-EMSK" };
 	static char *must_attrs[] = { "State", "User-Name", "NAS-IP-Address", "EAP-Type" };
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
 	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);

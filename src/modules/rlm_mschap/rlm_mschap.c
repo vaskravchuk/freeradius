@@ -31,6 +31,9 @@ RCSID("$Id$")
 #include        <freeradius-devel/md5.h>
 #include        <freeradius-devel/sha1.h>
 
+#include	<freeradius-devel/portnox/portnox_auth.h>
+#include	<freeradius-devel/portnox/string_helper.h>
+
 #include 	<ctype.h>
 
 #include	"mschap.h"
@@ -52,6 +55,9 @@ extern int od_mschap_auth(REQUEST *request, VALUE_PAIR *challenge, VALUE_PAIR * 
 #define ACB_SVRTRUST   0x0100  /* 1 = Server trust account */
 #define ACB_PWNOEXP    0x0200  /* 1 = User password does not expire */
 #define ACB_AUTOLOCK   0x0400  /* 1 = Account auto locked */
+
+#define RESPONSE_SIZE	24
+#define CHALLENGE_SIZE	8
 
 static int pdb_decode_acct_ctrl(const char *p)
 {
@@ -129,6 +135,7 @@ static int pdb_decode_acct_ctrl(const char *p)
 
 
 typedef struct rlm_mschap_t {
+	int use_script;
 	int use_mppe;
 	int require_encryption;
         int require_strong;
@@ -519,11 +526,12 @@ static size_t mschap_xlat(void *instance, REQUEST *request,
 	return data_len * 2;
 }
 
-
 static const CONF_PARSER module_config[] = {
 	/*
 	 *	Cache the password by default.
 	 */
+	{ "use_script",    PW_TYPE_BOOLEAN,
+	  offsetof(rlm_mschap_t,use_script), NULL, "no" },
 	{ "use_mppe",    PW_TYPE_BOOLEAN,
 	  offsetof(rlm_mschap_t,use_mppe), NULL, "yes" },
 	{ "require_encryption",    PW_TYPE_BOOLEAN,
@@ -670,6 +678,29 @@ static void mppe_add_reply(REQUEST *request,
        vp->length = len;
 }
 
+static void pwd_processor(dstr* val, void* user_data, size_t size) {
+	uint8_t *bytes = NULL;
+	char* hex_str = NULL;
+
+	if (user_data == NULL) return;
+
+	bytes = (uint8_t *)user_data;
+	hex_str = bytes_to_hex(bytes, size);
+
+	if (hex_str) {
+		dstr_destroy(val);
+		*val = dstr_cstr(hex_str);
+		free(hex_str);
+	}
+}
+
+static void challenge_processor(dstr* val, void* user_data) {
+	pwd_processor(val, user_data, CHALLENGE_SIZE);
+}
+
+static void response_processor(dstr* val, void* user_data) {
+	pwd_processor(val, user_data, RESPONSE_SIZE);
+}
 
 /*
  *	Do the MS-CHAP stuff.
@@ -727,11 +758,21 @@ static int do_mschap(rlm_mschap_t *inst,
 		/*
 		 *	Run the program, and expect that we get 16
 		 */
-		result = radius_exec_program_centrale(inst->ntlm_auth, request,
-					     TRUE, /* wait */
-					     buffer, sizeof(buffer),
-					     inst->ntlm_auth_timeout,
-					     request->packet->vps, &answer, 1, 60025);
+		if (inst->use_script) {
+			result = radius_exec_program_centrale(inst->ntlm_auth, request,
+						     TRUE, /* wait */
+						     buffer, sizeof(buffer),
+						     inst->ntlm_auth_timeout,
+						     request->packet->vps, &answer, 1, 60025);
+		}
+		else {
+		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_RESPONSE_PR, response, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_RESPONSE_PR, response, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, challenge, &challenge_processor} };
+		    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
+		    AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
+		    result = portnox_auth(request, MSCHAP_AUTH_METHOD, &auth_info, &answer);
+		}
 		if (result != 0) {
 			char *p;
 			VALUE_PAIR *vp = NULL;
