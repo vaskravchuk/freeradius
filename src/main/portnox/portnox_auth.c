@@ -98,7 +98,7 @@ int portnox_auth(REQUEST *request,
         (call_resp.return_code  != 22 || call_resp.http_code == 404 || 
          call_resp.http_code == 405 || call_resp.http_code == 500)) {
         char* cached_data = NULL;
-        dstr nas_port = {0}
+        dstr nas_port = {0};
         int resp_cache_result = 0;
 
         radlog(L_INFO, 
@@ -138,7 +138,7 @@ int portnox_auth(REQUEST *request,
 
     /* auth is OK, cache response if need */
     if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error) {
-        dstr nas_port = {0}
+        dstr nas_port = {0};
 
         radlog(L_INFO, "ContextId: %s; portnox_auth save response to redis auth_method: %s", 
                         request->context_id, auth_method_str(auth_method));
