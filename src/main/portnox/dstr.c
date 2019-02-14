@@ -294,7 +294,7 @@ int dstr_replace_chars(dstr *str, char orig, char rep) {
     /* Are we not a string? */
     if (is_nas(str)) return;
 
-    *ix = str;
+    *ix = str->s;
     while((ix = strchr(ix, orig)) != NULL && n < str->size) {
         *ix++ = rep;
         n++;
