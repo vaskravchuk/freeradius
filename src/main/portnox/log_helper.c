@@ -49,12 +49,12 @@ void to_syslog(char* priority, char* message) {
 }
 
 void log_to_portnox(char* message) {
-    srv_req req = req_create(portnox_config.rad_daemon.log_url, message, 0, 0);
+    srv_req req = req_create(portnox_config.daemon.log_url, message, 0, 0);
 
-    srv_resp resp = exec_http_request(req);
+    srv_resp resp = exec_http_request(&req);
 
-    req_destroy(req);
-    req_destroy(resp);
+    req_destroy(&req);
+    req_destroy(&resp);
 }
 
 void log_info(char* message,  REQUEST* req) {
