@@ -249,7 +249,7 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, ch
 
     output_file = fopen(file, "w");
 
-    formated_output = dstr_from_fmt(format, hostname, shared_secret, port);
+    formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
 
     if (!is_nas(&formated_output)) {
         fputs(dstr_to_cstr(&formated_output), output_file);

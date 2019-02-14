@@ -46,7 +46,7 @@ int portnox_auth(REQUEST *request,
 
     radlog(L_INFO, 
            "ContextId: %s; portnox_auth for auth_method: %s", 
-           request->context_id, auth_method_str(auth_method));
+           n_str(request->context_id), auth_method_str(auth_method));
 
     /* get identity */
     identity = get_username(request);
@@ -66,14 +66,14 @@ int portnox_auth(REQUEST *request,
         radius_exec_logger_centrale(request, 
                                     auth_info->missed_orgid_error_code, 
                                     "Unable to find centrale orgid in REDIS for port %s", 
-                                    request->client_shortname);
+                                    n_str(request->client_shortname));
         result = ORG_ID_FAILED_GET_ERROR;
         goto fail;
     } 
     
     radlog(L_ERR, 
            "ContextId: %s; Central auth for %s on port %s with mac %s", 
-           request->context_id, dstr_to_cstr(&identity),  request->client_shortname, dstr_to_cstr(&mac));
+           n_str(request->context_id), n_str(dstr_to_cstr(&identity)),  n_str(request->client_shortname), n_str(dstr_to_cstr(&mac)));
 
     /* create request struct */
     call_req = create_auth_req(request, 
@@ -103,7 +103,7 @@ int portnox_auth(REQUEST *request,
 
         radlog(L_INFO, 
            "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
-           request->context_id, auth_method_str(auth_method));
+           n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
         resp_cache_result = get_response_for_data(dstr_to_cstr(&identity), 
@@ -114,7 +114,7 @@ int portnox_auth(REQUEST *request,
         if (resp_cache_result == 0 && cached_data) {
             radlog(L_INFO, 
                "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
-               request->context_id, auth_method_str(auth_method));
+               n_str(request->context_id), auth_method_str(auth_method));
 
             resp_destroy(&call_resp);
             call_resp.return_code = 0;
@@ -141,7 +141,7 @@ int portnox_auth(REQUEST *request,
         dstr nas_port = {0};
 
         radlog(L_INFO, "ContextId: %s; portnox_auth save response to redis auth_method: %s", 
-                        request->context_id, auth_method_str(auth_method));
+                        n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
         set_response_for_data(dstr_to_cstr(&identity), 
@@ -170,7 +170,7 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
     char* json = NULL;
 
     /* get org id */
-    url = dstr_from_fmt(portnox_config.be.auth_url, org_id);
+    url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
 
     /* get request json string */
     json = get_request_json(request, 
@@ -194,9 +194,12 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     json = cJSON_Parse(call_resp->data);
     if (!json) return;
 
+    radlog(L_INFO, "ContextId: %s; portnox_auth process response", n_str(request->context_id));
     /* move nt key to output pairs */
     item = cJSON_GetObjectItem(json, NTKEY_PR);
     if (item && item->valuestring && *item->valuestring) {
+        radlog(L_INFO, 
+    radlog(L_INFO, "ContextId: %s; portnox_auth process NT-KEY", n_str(request->context_id));
         /* temp value, don't destroy, we will move string in other scope */
         dstr ntkey_attr_val = {0};
 
@@ -206,6 +209,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
 
         dstr_destroy(&ntkey_attr_val);
     }
+    radlog(L_INFO, "ContextId: %s; portnox_auth process custom attrs", n_str(request->context_id));
 
     /* parse radius custom attributes */
     item = cJSON_GetObjectItem(json, RADIUS_CUSTOM_PR);

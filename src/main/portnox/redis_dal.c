@@ -84,7 +84,7 @@ static dstr get_response_key_part(const char* username, const char* mac, const c
         uname = strdup(username);
     }
 
-    key = dstr_from_fmt("%s-%s-%s-%s", uname, mac, port, nas_type);
+    key = dstr_from_fmt("%s-%s-%s-%s", n_str(uname), n_str(mac), n_str(port), n_str(nas_type));
 
     if (uname) free(uname);
     return key;
@@ -94,7 +94,7 @@ static int do_set_for_key_format(const char *key_part, const char *val, int need
     int result;
     dstr key;
 
-    key = dstr_from_fmt(format, key_part);
+    key = dstr_from_fmt(format, n_str(key_part));
     if (need_ttl) {
         result = redis_setex(dstr_to_cstr(&key), val, portnox_config.redis.keys.cache_ttl);
     } else {
@@ -118,7 +118,7 @@ static int do_get_for_key_format(const char *key_part, const char **val, char* f
         *val = strdup(portnox_config.be.cluster_id);
     }
     else {
-        key = dstr_from_fmt(format, key_part);
+        key = dstr_from_fmt(format, n_str(key_part));
         result = redis_get(dstr_to_cstr(&key), val);
     }
 
