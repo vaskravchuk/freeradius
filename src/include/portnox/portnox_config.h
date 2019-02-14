@@ -56,5 +56,5 @@ typedef struct portnox_config_t {
 	PORTNOX_REDIS_CONFIG_T		redis;
 	PORTNOX_BE_CONFIG_T			be;
 	PORTNOX_LOG_CONFIG_T		log;
-	portnox_daemon_config_t 	daemon;
+	PORTNOX_DAEMON_CONFIG_T 	daemon;
 } PORTNOX_CONFIG_T;
