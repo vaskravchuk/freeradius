@@ -220,7 +220,7 @@ static dstr get_username(REQUEST *request) {
 }
 
 static dstr get_mac(REQUEST *request) {
-	dstr str;
+	dstr str = {0};
 
 	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
 
