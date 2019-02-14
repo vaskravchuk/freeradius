@@ -94,3 +94,35 @@ char* str_replace(char* string, const char* substr, const char* replacement) {
 
     return newstr;
 }
+
+char* trim_to_string(char* string, char* substr) {
+    char* tok = NULL;
+    char* newstr = NULL;
+    int   oldstr_len = 0;
+    int   substr_len = 0;
+    int   size = 0;
+
+    oldstr_len = strlen(string);
+    substr_len = strlen(substr);
+
+    if (substr == NULL) {
+        return strdup(string);
+    }
+
+    tok = strstr(string, substr);
+    if (tok) {
+        size = oldstr_len - substr_len - (tok - string) + 1;
+        newstr = (char*)malloc(sizeof(char) * size);
+
+        if (newstr == NULL) {
+            return NULL;
+        }
+
+        memcpy(newstr, tok + substr_len, size - 1);
+        newstr[size - 1] = 0;
+    } else {
+        return strdup(string);
+    }
+
+    return newstr;
+}

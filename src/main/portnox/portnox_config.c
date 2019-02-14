@@ -41,7 +41,7 @@ static const CONF_PARSER portnox_be_config_nodest[] = {
 	{ "auth_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.auth_url, NULL},
 	{ "event_url", PW_TYPE_STRING_PTR, 0, &portnox_config.be.event_url, NULL},
 	{ "timeout", PW_TYPE_INTEGER, 0, &portnox_config.be.timeout, Stringify(30)},
-	{ "need_auth_cache_for_error", PW_TYPE_BOOLEAN, 0, &portnox_config.be.need_auth_cache_for_error, "yes"},
+	{ "need_auth_cache_for_error", PW_TYPE_BOOLEAN, 0, &portnox_config.be.need_auth_cache_for_error, "no"},
 
 	{ NULL, -1, 0, NULL, NULL }
 };

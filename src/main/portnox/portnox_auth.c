@@ -41,6 +41,7 @@ int portnox_auth(REQUEST *request,
     dstr identity = {0};
     dstr mac = {0};
     char *org_id = NULL;
+    int resp_from_cache = 0;
 
     radlog(L_INFO, 
            "ContextId: %s; portnox_auth for auth_method: %s", 
@@ -92,7 +93,7 @@ int portnox_auth(REQUEST *request,
 
     /* try use reponse cache from redis */
     if (portnox_config.be.need_auth_cache_for_error && call_resp.return_code != 0 &&
-        (call_resp.return_code != 22 || call_resp.http_code == 404 || 
+        (call_resp.return_code  != 22 || call_resp.http_code == 404 || 
          call_resp.http_code == 405 || call_resp.http_code == 500)) {
         char* cached_data = NULL;
         radlog(L_INFO, 
@@ -107,6 +108,7 @@ int portnox_auth(REQUEST *request,
             call_resp.respond_code = 0;
             call_resp.http_code = 200;
             call_resp.data = cached_data;
+            resp_from_cache = 1;
         }
     }
 
@@ -122,7 +124,7 @@ int portnox_auth(REQUEST *request,
         goto fail;
     }
 
-    if (portnox_config.be.need_auth_cache_for_error) {
+    if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error) {
         set_response_for_request(request, call_resp.data);
     }
 
