@@ -104,7 +104,6 @@ int portnox_auth(REQUEST *request,
                "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
                request->context_id, auth_method_str(auth_method));
             resp_destroy(&call_resp);
-            call_resp = 
             call_resp.return_code = 0;
             call_resp.http_code = 200;
             call_resp.data = cached_data;
