@@ -32,6 +32,7 @@ RCSID("$Id$")
 #include        <freeradius-devel/sha1.h>
 
 #include	<freeradius-devel/portnox/portnox_auth.h>
+#include	<freeradius-devel/portnox/string_helper.h>
 
 #include 	<ctype.h>
 
@@ -54,6 +55,9 @@ extern int od_mschap_auth(REQUEST *request, VALUE_PAIR *challenge, VALUE_PAIR * 
 #define ACB_SVRTRUST   0x0100  /* 1 = Server trust account */
 #define ACB_PWNOEXP    0x0200  /* 1 = User password does not expire */
 #define ACB_AUTOLOCK   0x0400  /* 1 = Account auto locked */
+
+#define RESPONSE_SIZE	24
+#define CHALLENGE_SIZE	16
 
 static int pdb_decode_acct_ctrl(const char *p)
 {
@@ -674,6 +678,30 @@ static void mppe_add_reply(REQUEST *request,
        vp->length = len;
 }
 
+static void pwd_processor(dstr* val, void* user_data, size_t size) {
+	uint8_t *bytes = NULL;
+	char* hex_str = NULL;
+
+	if (user_data == NULL) return;
+
+	bytes = (uint8_t *)user_data;
+	hex_str = bytes_to_hex(bytes, size);
+
+	if (hex_str) {
+		dstr_destroy(&val);
+		*val = dstr_cstr_n(hex_str, size);
+		free(hex_str);
+	}
+}
+
+static void challenge_processor(dstr* val, void* user_data) {
+	pwd_processor(val, user_data, CHALLENGE_SIZE);
+}
+
+static void response_processor(dstr* val, void* user_data) {
+	pwd_processor(val, user_data, RESPONSE_SIZE);
+}
+
 /*
  *	Do the MS-CHAP stuff.
  *
@@ -686,10 +714,6 @@ static int do_mschap(rlm_mschap_t *inst,
 		     uint8_t *challenge, uint8_t *response,
 		     uint8_t *nthashhash, int do_ntlm_auth)
 {
-    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL, NULL},
-    								 (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
-    static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
-    static AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
 	uint8_t		calculated[24];
 	/* Extra output variables */
 	VALUE_PAIR **output_pairs = NULL;
@@ -742,6 +766,11 @@ static int do_mschap(rlm_mschap_t *inst,
 						     request->packet->vps, &answer, 1, 60025);
 		}
 		else {
+		    AUTH_SP_ATTR procs[3] = { (AUTH_SP_ATTR){MSCHAP2_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, challenge, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, challenge, &response_processor},
+		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, response, &challenge_processor} };
+		    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
+		    AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
 		    result = portnox_auth(request, MSCHAP_AUTH_METHOD, &auth_info, &answer);
 		}
 		if (result != 0) {

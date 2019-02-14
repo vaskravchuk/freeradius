@@ -139,3 +139,21 @@ char* trim_to_string(char* string, char* substr) {
 
     return newstr;
 }
+
+char* bytes_to_hex (const unsigned char* data, size_t datalen) {
+    size_t final_len = 0;
+    char* chrs = NULL;
+    unsigned int j = 0;
+    
+    final_len = datalen * 2;
+    chrs = (unsigned char *) malloc((final_len + 1) * sizeof(*chrs));
+
+    for(j = 0; j<datalen; j++) {
+        chrs[2*j] = (data[j]>>4)+48;
+        chrs[2*j+1] = (data[j]&15)+48;
+        if (chrs[2*j]>57) chrs[2*j]+=7;
+        if (chrs[2*j+1]>57) chrs[2*j+1]+=7;
+    }
+    chrs[2*j]='\0';
+    return chrs;
+}

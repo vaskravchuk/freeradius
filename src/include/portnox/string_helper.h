@@ -15,3 +15,4 @@ int replace_char(char *str, char orig, char rep);
 void lower(char *str);
 char* str_replace(char* string, const char* substr, const char* replacement);
 char* trim_to_string(char* string, char* substr);
+char* bytes_to_hex(const unsigned char* data, size_t datalen);
