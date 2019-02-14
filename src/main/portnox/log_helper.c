@@ -5,7 +5,7 @@
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/log_helper.h>
 #include <stdio.h>
-#include <mem.h>
+#include <string.h>
 #include <malloc.h>
 #include <syslog.h>
 
