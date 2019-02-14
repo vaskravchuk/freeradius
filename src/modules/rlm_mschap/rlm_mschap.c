@@ -674,12 +674,6 @@ static void mppe_add_reply(REQUEST *request,
        vp->length = len;
 }
 
-
-void resp_processor(dstr* val, void* user_data) {
-	radlog(L_ERR, "resp_processor '%s'", dstr_to_cstr(val));
-	if (is_nas(val)) return;
-
-}
 /*
  *	Do the MS-CHAP stuff.
  *
@@ -692,7 +686,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		     uint8_t *challenge, uint8_t *response,
 		     uint8_t *nthashhash, int do_ntlm_auth)
 {
-    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL, &resp_processor},
+    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MSCHAP_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL, NULL},
     								 (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
     static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
     static AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
