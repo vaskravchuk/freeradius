@@ -105,7 +105,7 @@ int portnox_auth(REQUEST *request,
                request->context_id, auth_method_str(auth_method));
             resp_destroy(&call_resp);
             call_resp = 
-            call_resp.respond_code = 0;
+            call_resp.return_code = 0;
             call_resp.http_code = 200;
             call_resp.data = cached_data;
             resp_from_cache = 1;
