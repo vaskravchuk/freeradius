@@ -17,7 +17,7 @@ struct portnox_config_t portnox_config;
 static const CONF_PARSER portnox_redis_keys_config_nodest[] = {
 	{ "cache_ttl", PW_TYPE_INTEGER, 0, &portnox_config.redis.keys.cache_ttl, Stringify(3600) },
 	{ "shared_secret_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.shared_secret_key_format, "ss_%s"},
-	{ "org_id_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.org_id_key_format, "oid_%s"}
+	{ "org_id_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.org_id_key_format, "oid_%s"},
 	{ "response_key_format", PW_TYPE_STRING_PTR, 0, &portnox_config.redis.keys.response_key_format, "r_%s"},
 
 	{ NULL, -1, 0, NULL, NULL }
