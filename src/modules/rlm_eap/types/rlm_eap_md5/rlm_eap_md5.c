@@ -170,8 +170,8 @@ static int md5_initiate(void *type_data, EAP_HANDLER *handler)
  */
 static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 {
-    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MD5_RESPONSE_ATTR, NT_CHALLENGE_PR, NULL, NULL},
-    								 (AUTH_SP_ATTR){MD5_CHALLENGE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL, NULL} };
+    static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){MD5_RESPONSE_ATTR, NT_CHALLENGE_RESPONSE_PR, NULL, NULL},
+    								 (AUTH_SP_ATTR){MD5_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
     static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
     static AUTH_INFO auth_info = {&proc_list,"60000","60001","60039"};
 	MD5_PACKET	*packet;
