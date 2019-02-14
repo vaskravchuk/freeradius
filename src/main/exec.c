@@ -26,7 +26,7 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/rad_assert.h>
 #include <freeradius-devel/portnox/portnox_config.h>
-#include <freeradius-devel/portnox/log_p.h>
+#include <freeradius-devel/portnox/log_helper.h>
 
 #include <sys/file.h>
 
