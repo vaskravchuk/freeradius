@@ -91,7 +91,7 @@ int log_add_json_vps(char *out, int outlen, const char *key, VALUE_PAIR *vps, in
 	 * Remove not interested attributes
 	 * skip nt-key as password
 	 */
-	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK", "EAP-EMSK" };
+	static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "MS-CHAP-Challenge", "MS-CHAP-Response", "MS-CHAP2-Response", "MD5-Challenge", "MD5-Password", "CHAP-Challenge", "CHAP-Password", "User-Password", "Tmp-String-0", "MS-MPPE-Recv-Key", "MS-MPPE-Send-Key", "EAP-MSK", "EAP-EMSK" };
 	static char *must_attrs[] = { "State", "User-Name", "NAS-IP-Address", "EAP-Type" };
 	static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
 	static char *must_attrs_size = sizeof(must_attrs) / sizeof(must_attrs[0]);
