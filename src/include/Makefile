@@ -12,7 +12,7 @@ HEADERS	= autoconf.h conf.h conffile.h detail.h dhcp.h event.h hash.h heap.h \
 	portnox/dep/credis.h portnox/dep/cJSON.h \
 	portnox/redis_client.h portnox/redis_dal.h \
 	portnox/curl_client.h portnox/dstr.h portnox/portnox_config.h \
-	portnox/portnox_auth.h portnox/string_helper.h
+	portnox/portnox_auth.h portnox/string_helper.h portnox/log_helper.h
 
 include ../../Make.inc
 .PHONY: all clean distclean install
