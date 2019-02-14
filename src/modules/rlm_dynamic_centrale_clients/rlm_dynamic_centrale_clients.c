@@ -9,6 +9,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
+#include <freeradius-devel/portnox/string_helper.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>

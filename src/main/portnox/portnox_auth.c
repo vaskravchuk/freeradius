@@ -194,11 +194,11 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     json = cJSON_Parse(call_resp->data);
     if (!json) return;
 
-    radlog(L_INFO, "portnox_auth process response");
+    radlog(L_DBG, "portnox_auth process response");
     /* move nt key to output pairs */
     item = cJSON_GetObjectItem(json, NTKEY_PR);
     if (item && item->valuestring && *item->valuestring) {
-        radlog(L_INFO, "portnox_auth process NT-KEY");
+        radlog(L_DBG, "portnox_auth process NT-KEY");
         /* temp value, don't destroy, we will move string in other scope */
         dstr ntkey_attr_val = {0};
 
@@ -208,7 +208,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
 
         dstr_destroy(&ntkey_attr_val);
     }
-    radlog(L_INFO, "portnox_auth process custom attrs");
+    radlog(L_DBG, "portnox_auth process custom attrs");
 
     /* parse radius custom attributes */
     item = cJSON_GetObjectItem(json, RADIUS_CUSTOM_PR);
