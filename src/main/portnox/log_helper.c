@@ -24,8 +24,6 @@ void log(char* code, dstr *message, char* priority, REQUEST* req) {
 
     // to portnox
     log_to_portnox(&full_message);
-
-    dstr_destroy(&full_message);
 }
 
 void to_syslog(char* priority, dstr *message) {
