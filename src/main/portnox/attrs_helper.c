@@ -39,7 +39,7 @@ dstr get_nas_port(REQUEST *request) {
     return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
 }
 
-static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
+dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	int len = 0;
     char val[ATTR_VALUE_BUF_SIZE];
     char *val_escaped = NULL;
