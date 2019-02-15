@@ -17,7 +17,7 @@ void log_to_portnox(dstr* message);
 void log(char* code, dstr *message, char* priority, REQUEST* req) {
     dstr full_message = {0};
 
-    full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, dstr_to_cstr(message));
+    full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, dstr_to_cstr(&message));
 
     // to syslog
     to_syslog(priority, message);
@@ -43,11 +43,11 @@ void to_syslog(char* priority, dstr *message) {
     }
 
     openlog(TAG, LOG_PID, LOG_LOCAL1);
-    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", dstr_to_cstr(message));
+    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", dstr_to_cstr(&message));
 }
 
 void log_to_portnox(dstr *message) {
-    srv_req req = req_create(portnox_config.daemon.logging_url, dstr_to_cstr(message), 0, 0);
+    srv_req req = req_create(portnox_config.daemon.logging_url, dstr_to_cstr(&message), 0, 0);
 
     srv_resp resp = exec_http_request(&req);
 
