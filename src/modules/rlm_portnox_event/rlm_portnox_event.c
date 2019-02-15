@@ -54,6 +54,7 @@ static char *type_map[TYPES_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 #define DATA_IN_PR				"DataIn"
 #define DATA_OUT_PR				"DataOut"
 #define DISCONNECTION_REASON_PR	"DisconnectReason"
+#define RADIUS_CUSTOM_PR		"RadiusCustom"
 
 #define TIME_BUFFER_SIZE	32
 
