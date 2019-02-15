@@ -29,6 +29,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 #include <freeradius-devel/portnox/curl_client.h>
+#include <freeradius-devel/portnox/portnox_config.h>
 
 #define ACCEPT_TYPE		0
 #define REJECT_TYPE		1
@@ -178,7 +179,6 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
     /* get org id */
     if (get_org_id_for_client(request->client_shortname, &org_id)) {
         radius_exec_logger_centrale(request, 60013, "Unable to find centrale orgid in REDIS for port %s", n_str(request->client_shortname));
-        result = -1;
         goto fail;
     } 
 
@@ -279,7 +279,6 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
 
 
     cJSON_Delete(json_obj);
-    req_destroy(&call_req);
     dstr_destroy(&identity);
     dstr_destroy(&mac);
     dstr_destroy(&ip);
