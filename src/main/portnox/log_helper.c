@@ -71,8 +71,8 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
     char *custom_json = get_attrs_json_str(request);
 
-    char *username = get_val_by_attr_from_json(custom_json, USERNAME_PR);
-    char *mac = get_val_by_attr_from_json(custom_json, MAC_ADDRESS_PR);
+    char *username = get_val_by_attr_from_json(custom_json, USERNAME_ATTR);
+    char *mac = get_val_by_attr_from_json(custom_json, CALLING_STATION_ID_ATTR);
     char *port = request->client_shortname;
     char *context_id = request->context_id;
 
@@ -96,8 +96,8 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
         log_error(error_code, 5000 * sizeof(char *), request);
     } else if (strcmp(error_code, "1") == 0) {
         snprintf(full_message, 5000 * sizeof(char *),
-                "%s for %s on port %s with mac %s and attributes %s",
-                message, username, port, mac, custom_json);
+                "%s %s for %s on port %s with mac %s and attributes %s",
+                error_code, message, username, port, mac, custom_json);
 
         log_error(error_code, full_message, request);
     } else {
