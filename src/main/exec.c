@@ -26,6 +26,7 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/rad_assert.h>
 #include <freeradius-devel/portnox/portnox_config.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 #include <sys/file.h>
 
@@ -623,7 +624,8 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 
 
 
-int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, const char * format, ...) {
+int radius_exec_logger_centrale(REQUEST * request, const char * error_code, const char * format, ...) {
+	int scr_res = 0;
 
 	if (!radius_pairmake(request, &request->packet->vps, "P-Error-Code", error_code, T_OP_SET)) {
 		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Code");
@@ -642,13 +644,18 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Msg");
 		}
 	}
-
-	int scr_res = radius_exec_program(portnox_config.log.log_script, request,
-        0, /* wait */
-		NULL, 0,
-		45,
-		request->packet->vps, NULL, 1);
-	if (scr_res != 0) {
-		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", portnox_config.log.log_script);
+	if (portnox_config.log.log_script && *portnox_config.log.log_script) {
+		scr_res = radius_exec_program(portnox_config.log.log_script, request,
+	        0, /* wait */
+			NULL, 0,
+			45,
+			request->packet->vps, NULL, 1);
+	} else {
+		scr_res = -1;
 	}
+
+	if (scr_res != 0) {
+		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", n_str(portnox_config.log.log_script));
+	}
+	return scr_res;
 }

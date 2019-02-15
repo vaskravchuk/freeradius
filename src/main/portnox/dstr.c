@@ -90,7 +90,7 @@ dstr dstr_escaped(const char *str) {
     dstr s;
 
     /* Are we not a string? */
-    if (!str || *str) NaS;
+    if (!str || *str) return NaS;
 
     /* create new string */
     size_t len = strlen(str);
@@ -292,7 +292,7 @@ int dstr_replace_chars(dstr *str, char orig, char rep) {
     char *ix = NULL;
     int n = 0;
     /* Are we not a string? */
-    if (is_nas(str)) return;
+    if (is_nas(str)) return 0;
 
     ix = str->s;
     while((ix = strchr(ix, orig)) != NULL && n < str->size) {
