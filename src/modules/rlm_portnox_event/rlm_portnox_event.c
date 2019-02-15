@@ -26,7 +26,9 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/modules.h>
+#include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
+#include <freeradius-devel/portnox/curl_client.h>
 
 #define ACCEPT_TYPE		0
 #define REJECT_TYPE		1
@@ -189,9 +191,9 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
 
 	radlog(L_INFO, call_req.data);
     call_resp = exec_http_request(&call_req);
-    if (call_resp.respond_code != 0) {
+    if (call_resp.return_code != 0) {
 	radlog(L_ERR, "rlm_portnox_event: Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
-			call_resp.respond_code, call_resp.http_code, n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
+			call_resp.return_code, call_resp.http_code, n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
     	goto fail;
     }
 
@@ -278,7 +280,6 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
 
     cJSON_Delete(json_obj);
     req_destroy(&call_req);
-    resp_destroy(&call_resp);
     dstr_destroy(&identity);
     dstr_destroy(&mac);
     dstr_destroy(&ip);
