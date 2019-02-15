@@ -5,6 +5,8 @@
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
+#ifndef PORTNOX_AUTH_H
+#define PORTNOX_AUTH_H
 
 #include <freeradius-devel/ident.h>
 RCSIDH(portnox_auth_h, "$Id$")
@@ -67,3 +69,5 @@ int portnox_auth(REQUEST *request,
                 int auth_method, 
                 AUTH_INFO *auth_info, 
                 VALUE_PAIR **output_pairs);
+
+#endif //PORTNOX_AUTH_H

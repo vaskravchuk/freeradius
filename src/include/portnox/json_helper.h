@@ -2,7 +2,7 @@
 // Created by darya.nekryach on 1/31/2019.
 //
 
-#ifndef JSON_H
+#ifndef JSON_HELPER_H
 #define JSON_H
 
 #include <freeradius-devel/radiusd.h>

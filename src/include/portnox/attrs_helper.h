@@ -5,6 +5,8 @@
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
+#ifndef ATTRS_HELPER_H
+#define ATTRS_HELPER_H
 
 #include <freeradius-devel/ident.h>
 RCSIDH(attrs_helper_h, "$Id$")
@@ -32,3 +34,5 @@ dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 dstr get_username(REQUEST *request);
 dstr get_mac(REQUEST *request);
 dstr get_nas_port(REQUEST *request);
+
+#endif //ATTRS_HELPER_H

@@ -5,6 +5,8 @@
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
+#ifndef PORTNOX_CONFIG_H
+#define PORTNOX_CONFIG_H
 
 #include <freeradius-devel/ident.h>
 RCSIDH(portnox_config_h, "$Id$")
@@ -51,3 +53,5 @@ typedef struct portnox_config_t {
 	PORTNOX_BE_CONFIG_T			be;
 	PORTNOX_LOG_CONFIG_T		log;
 } PORTNOX_CONFIG_T;
+
+#endif //PORTNOX_CONFIG_H
