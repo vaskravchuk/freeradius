@@ -52,8 +52,7 @@ void log_to_portnox(char* message) {
     srv_req req = req_create(portnox_config.daemon.logging_url, message, 0, 0);
 
     srv_resp resp = exec_http_request(&req);
-
-    radlog(L_DBG, "Logging to portnox message '%s' with response %ld and return data %s", message, resp.http_code, resp.data)
+    
     req_destroy(&req);
     resp_destroy(&resp);
 }
