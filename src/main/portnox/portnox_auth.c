@@ -18,13 +18,10 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/attrs_helper.h>
 
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
-static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
-static dstr get_username(REQUEST *request);
-static dstr get_mac(REQUEST *request);
-static dstr get_nas_port(REQUEST *request);
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list);
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
@@ -218,29 +215,6 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     if (json) cJSON_Delete(json);
 }
 
-static dstr get_username(REQUEST *request) {
-    return get_vps_attr_or_empty(request, USERNAME_ATTR);
-}
-
-static dstr get_mac(REQUEST *request) {
-	dstr str = {0};
-
-	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
-
-	if (!is_nas(&str)) {
-		dstr_replace_chars(&str, '-', ':');
-		dstr_to_lower(&str);
-	} else {
-		str = dstr_cstr("00:00:00:00:00:00");
-	}
-
-	return str;
-}
-
-static dstr get_nas_port(REQUEST *request) {
-    return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
-}
-
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list) {
     char *json = NULL;
@@ -275,32 +249,6 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
     cJSON_Delete(json_obj);
 
     return json;
-}
-
-static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
-	int len = 0;
-    char val[ATTR_VALUE_BUF_SIZE];
-    char *val_escaped = NULL;
-	dstr str = {0};
-
-    if (request->packet) {
-    	for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
-    		if (!vp->name || !(*vp->name)) continue;
-    		if (strcmp(attr, vp->name) == 0) {
-    			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
-
-                val[len] = 0;
-
-                val_escaped = str_replace(val, "\\\\", "\\");
-                str = dstr_cstr(val_escaped);
-
-                if (val_escaped) free(val_escaped);
-    			break;	
-    		}
-    	}
-    }
-
-	return str;
 }
 
 static const char* auth_method_str(int auth_method) {

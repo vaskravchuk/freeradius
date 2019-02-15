@@ -11,6 +11,7 @@ RCSIDH(portnox_auth_h, "$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
+#include <freeradius-devel/portnox/attrs_helper.h>
 
 #define AUTH_METHOD_PR				"AuthNMethod"
 #define MAC_ADDRESS_PR				"MacAddress"
@@ -21,22 +22,6 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define NT_RESPONSE_PR	            "NtClientResponse"
 #define RADIUS_CUSTOM_PR			"RadiusCustom"
 #define NTKEY_PR					"NtKey"
-
-#define USERNAME_ATTR				"User-Name"
-#define USER_PWD_ATTR               "User-Password"
-#define CHAP_RESPONSE_ATTR          "CHAP-Password"
-#define CHAP_CHALLENGE_ATTR         "Packet-Authentication-Vector"
-#define MSCHAP2_RESPONSE_ATTR       "MS-CHAP2-Response"
-#define MSCHAP_RESPONSE_ATTR        "MS-CHAP-Response"
-#define MSCHAP_CHALLENGE_ATTR       "MS-CHAP-Challenge"
-#define MD5_RESPONSE_ATTR           "MD5-Password"
-#define MD5_CHALLENGE_ATTR          "MD5-Challenge"
-#define EAPTLS_CERT_ATTR            "TLS-Client-Cert-Filename"
-#define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
-#define CONTEXT_ID_ATTR				"CONTEXT_ID"
-#define PORT_ATTR					"PORT"
-#define NTKEY_ATTR                  "Tmp-String-0"
-#define NAS_PORT_ATTR               "NAS-Port-Type"
 
 #define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
 #define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
