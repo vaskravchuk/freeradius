@@ -7,7 +7,7 @@
  */
 
 #include <freeradius-devel/ident.h>
-RCSIDH(portnox_auth_h, "$Id$")
+RCSIDH(attrs_helper_h, "$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
