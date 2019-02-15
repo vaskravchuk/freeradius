@@ -74,8 +74,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     char *mac = get_val_by_attr_from_json(custom_json, MAC_ADDRESS_PR);
     char *port = request->client_shortname;
     char *context_id = request->context_id;
-    message = get_val_by_attr_from_json(request, "P-Error-Msg");
-    
+
     if (strcmp(error_code, "60029") == 0) {
         snprintf(full_message, 5000 * sizeof(char *),
                  "Radius request timeout error for %s on port %s with mac %s and attributes %s",

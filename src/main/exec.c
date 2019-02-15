@@ -630,8 +630,8 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Code");
 	}
 
+	char buffer[8192];
 	if (format != NULL) {
-		char buffer[8192];
 		*buffer = '\0';
 		va_list ap;
 
@@ -655,7 +655,8 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		}
 	}
 	else {
-		scr_res = radius_internal_logger_centrale(error_code, "test log", request);
+		char * message = buffer;
+		scr_res = radius_internal_logger_centrale(error_code, message, request);
 		if (scr_res != 0) {
 			radlog(L_ERR, "radius_exec_logger_centrale: Internal logging failed");
 		}
