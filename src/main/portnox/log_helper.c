@@ -54,7 +54,6 @@ void log_to_portnox(char* message) {
     srv_resp resp = exec_http_request(&req);
 
     req_destroy(&req);
-    req_destroy(&resp);
 }
 
 void log_info(char* message,  REQUEST* req) {
