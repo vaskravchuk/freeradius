@@ -17,7 +17,7 @@ void log_to_portnox(dstr* message);
 void log(char* code, dstr *message, char* priority, REQUEST* req) {
     dstr full_message = {0};
 
-    full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, dstr_to_cstr(&message));
+    full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, message->s);
 
     // to syslog
     to_syslog(priority, message);
