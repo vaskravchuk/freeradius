@@ -91,7 +91,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
         log_error(error_code, &full_message, request);
     } else {
         dstr d_message = dstr_cstr(message);
-        log_error(error_code, d_message, request);
+        log_error(error_code, &d_message, request);
     }
 
     dstr_destroy(&full_message);
