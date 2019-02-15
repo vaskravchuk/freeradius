@@ -206,15 +206,15 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     dstr identity = {0};
     dstr mac = {0};
     dstr ip = {0};
-    char time[TIME_BUFFER_SIZE] = {0};
-    char date[TIME_BUFFER_SIZE] = {0};
+    char event_time[TIME_BUFFER_SIZE] = {0};
+    char event_date[TIME_BUFFER_SIZE] = {0};
     time_t timer;
     struct tm* tm_info;
     int len = 0;
     cJSON *json_obj = NULL; 
     /* Do not destroy next vars. will be moved out of scope */
     cJSON* attrs = NULL;
-    char* json_str = NULL;
+    char* json = NULL;
     dstr url = {0};
 
     /* get portnox url */
@@ -226,10 +226,10 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     /* date/time */
     time(&timer);
     tm_info = localtime(&timer);
-    len = strftime(date, TIME_BUFFER_SIZE, "%d/%m/%Y", tm_info);
-    date[len] = 0;
-    len = strftime(time, TIME_BUFFER_SIZE, "%H:%M:%S", tm_info);
-    date[len] = 0;
+    len = strftime(event_date, TIME_BUFFER_SIZE, "%d/%m/%Y", tm_info);
+    event_date[len] = 0;
+    len = strftime(event_time, TIME_BUFFER_SIZE, "%H:%M:%S", tm_info);
+    event_time[len] = 0;
     /* custom attributes */
     attrs = get_attrs_json(request);
 
@@ -239,8 +239,8 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     if (dstr_size(&ip) > 0) cJSON_AddStringToObject(json_obj, DEVICE_IP_PR, dstr_to_cstr(&ip));
     if (dstr_size(&mac) > 0) cJSON_AddStringToObject(json_obj, DEVICE_MAC_PR, dstr_to_cstr(&mac));
     if (dstr_size(&identity) > 0) cJSON_AddStringToObject(json_obj, USERNAME_PR, dstr_to_cstr(&identity));
-    if (date && *date) cJSON_AddStringToObject(json_obj, EVENT_DATE_PR, date);
-    if (time && *time) cJSON_AddStringToObject(json_obj, EVENT_TIME_PR, time);
+    if (event_date && *event_date) cJSON_AddStringToObject(json_obj, EVENT_DATE_PR, event_date);
+    if (event_time && *event_time) cJSON_AddStringToObject(json_obj, EVENT_TIME_PR, event_time);
     if (attrs) cJSON_AddItemToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
     switch (inst->type) {
     	case ACCEPT_TYPE:
@@ -249,12 +249,22 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     		cJSON_AddNumberToObject(json_obj, EVENT_SUBTYPE_PR, subtype);
     		break;
     	case ACCT_TYPE: {
-
     		cJSON_AddNumberToObject(json_obj, EVENT_TYPE_PR, TYPE_ACCOUNTING);
     		cJSON_AddNumberToObject(json_obj, EVENT_SUBTYPE_PR, subtype);
 
     		if (subtype == SUBTYPE_STOP) {
+    			dstr data_in = get_acct_data_in(request);
+    			dstr data_out = get_acct_data_out(request);
+    			dstr disc_reason = get_acct_disconnection_reason(request);
 
+    			if (dstr_size(&data_in) > 0) cJSON_AddStringToObject(json_obj, DATA_IN_PR, dstr_to_cstr(&data_in));
+    			if (dstr_size(&data_in) > 0) cJSON_AddStringToObject(json_obj, DATA_OUT_PR, dstr_to_cstr(&data_out));
+    			if (dstr_size(&data_in) > 0) cJSON_AddStringToObject(json_obj, DISCONNECTION_REASON_PR, dstr_to_cstr(&disc_reason));
+
+
+    			dstr_destroy(&data_in);
+    			dstr_destroy(&data_out);
+    			dstr_destroy(&disc_reason);
     		}
 
     		dstr_destroy(&subtype);
@@ -262,18 +272,19 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     	}
     }
 
+    json = cJSON_Print(json_obj);
+    cJSON_Minify(json);
+
+
+    cJSON_Delete(json_obj);
     req_destroy(&call_req);
     resp_destroy(&call_resp);
     dstr_destroy(&identity);
     dstr_destroy(&mac);
     dstr_destroy(&ip);
-	return result;
+    return req_create(dstr_to_cstr(&url), json, 0, 1);
 }
 
-#define EVENT_SUBTYPE_PR		"EventSubType"
-#define DATA_IN_PR				"DataIn"
-#define DATA_OUT_PR				"DataOut"
-#define DISCONNECTION_REASON_PR	"DisconnectReason"
 /*
  *	The module name should be the only globally exported symbol.
  *	That is, everything else should be 'static'.
