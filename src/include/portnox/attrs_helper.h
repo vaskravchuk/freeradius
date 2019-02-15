@@ -29,10 +29,21 @@ RCSIDH(attrs_helper_h, "$Id$")
 #define PORT_ATTR					"PORT"
 #define NTKEY_ATTR                  "Tmp-String-0"
 #define NAS_PORT_ATTR               "NAS-Port-Type"
+#define TUNNEL_CLIENT_ENDPOINT_ATTR "Tunnel-Client-Endpoint"
+#define FRAMED_IP_ADDRESS_ATTR      "Framed-IP-Address"
+#define ACCT_INPUT_OCTETS_ATTR      "Acct-Input-Octets"
+#define ACCT_OUTPUT_OCTETS_ATTR     "Acct-Output-Octets"
+#define ACCT_TERMINATE_CAUSE_ATTR   "Acct-Terminate-Cause"
+#define ACCT_STATUS_TYPE_ATTR       "Acct-Status-Type"
 
 dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
 dstr get_username(REQUEST *request);
 dstr get_mac(REQUEST *request);
 dstr get_nas_port(REQUEST *request);
+dstr get_device_ip(REQUEST *request);
+dstr get_acct_data_in(REQUEST *request);
+dstr get_acct_data_out(REQUEST *request);
+dstr get_acct_disconnection_reason(REQUEST *request);
+dstr get_acct_subtype(REQUEST *request);
 
 #endif //ATTRS_HELPER_H

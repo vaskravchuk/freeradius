@@ -39,6 +39,34 @@ dstr get_nas_port(REQUEST *request) {
     return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
 }
 
+dstr get_device_ip(REQUEST *request) {
+    dstr str = {0};
+
+    str = get_vps_attr_or_empty(request, TUNNEL_CLIENT_ENDPOINT_ATTR);
+
+    if (is_nas(&str)) {
+        str = get_vps_attr_or_empty(request, FRAMED_IP_ADDRESS_ATTR);
+    }
+
+    return str;
+}
+
+dstr get_acct_data_in(REQUEST *request) {
+    return get_vps_attr_or_empty(request, ACCT_INPUT_OCTETS_ATTR);
+}
+
+dstr get_acct_data_out(REQUEST *request) {
+    return get_vps_attr_or_empty(request, ACCT_OUTPUT_OCTETS_ATTR);
+}
+
+dstr get_acct_disconnection_reason(REQUEST *request) {
+    return get_vps_attr_or_empty(request, ACCT_TERMINATE_CAUSE_ATTR);
+}
+
+dstr get_acct_subtype(REQUEST *request) {
+    return get_vps_attr_or_empty(request, ACCT_STATUS_TYPE_ATTR);
+}
+
 dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	int len = 0;
     char val[ATTR_VALUE_BUF_SIZE];

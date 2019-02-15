@@ -28,28 +28,46 @@ RCSID("$Id$")
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 
-#define ACCEPT_IDX	0
-#define REJECT_IDX	1
-#define ACCT_IDX	2
-#define IDX_SIZE	3
+#define ACCEPT_TYPE		0
+#define REJECT_TYPE		1
+#define ACCT_TYPE		2
+#define TYPES_SIZE		3
+static char *type_map[TYPES_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
+
+#define TYPE_ACCESS		0
+#define TYPE_ACCOUNTING	1
+#define SUBTYPE_ACCEPT	0
+#define SUBTYPE_REJECT	1
+#define SUBTYPE_START	2
+#define SUBTYPE_STOP	3
+
+#define EVENT_TYPE_PR			"EventType"
+#define EVENT_SUBTYPE_PR		"EventSubType"
+#define DEVICE_IP_PR			"DeviceIp"
+#define DEVICE_MAC_PR			"DeviceMac"
+#define EVENT_DATE_PR			"EventDate"
+#define EVENT_TIME_PR			"EventTime"
+#define USERNAME_PR				"UserName"
+#define DATA_IN_PR				"DataIn"
+#define DATA_OUT_PR				"DataOut"
+#define DISCONNECTION_REASON_PR	"DisconnectReason"
+
+#define TIME_BUFFER_SIZE	32
 
 /* Define a structure for our module configuration. */
 typedef struct rlm_portnox_event_t {
-	int				type_idx;
-	char			*type_name;
+	int				type;
 	char			*packet_type;
 	unsigned int	packet_code;
 } rlm_portnox_event_t;
 
-static int auth_event_processing(rlm_portnox_event_t *inst, REQUEST *request);
-static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request);
-
-static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
+static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, int subtype);
+static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, char *org_id, int subtype);
 
 /* A mapping of configuration file names to internal variables. */
 static const CONF_PARSER module_config[] = {
 	{ "type",  PW_TYPE_INTEGER,
-	  offsetof(rlm_portnox_event_t,type_idx), NULL, Stringify(0) },
+	  offsetof(rlm_portnox_event_t,type), NULL, Stringify(0) },
 	{ "packet_type", PW_TYPE_STRING_PTR,
 	  offsetof(rlm_portnox_event_t,packet_type), NULL, NULL },
 	{ NULL, -1, 0, NULL, NULL }		/* end the list */
@@ -85,9 +103,6 @@ static int portnox_event_instantiate(CONF_SECTION *conf, void **instance)
 		return -1;
 	}
 
-	/* process type */
-	if (inst->type_idx < IDX_SIZE) inst->type_name = type_map[inst->type_idx];
-
 	/* Get the packet type on which to execute */
 	if (!inst->packet_type) {
 		inst->packet_code = 0;
@@ -109,12 +124,14 @@ static int portnox_event_instantiate(CONF_SECTION *conf, void **instance)
 }
 
 /* do event processing */
-static int event_processing(void *instance, REQUEST *request)
-{
-	int result = 0;
+static int event_processing(void *instance, REQUEST *request){
 	rlm_portnox_event_t	*inst = NULL;
+	int subtype = 0;
 	
 	inst = instance;
+
+	radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
+		n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
 
 	/* See if we're supposed to execute it now. */
 	if (!((inst->packet_code == 0) ||
@@ -124,43 +141,139 @@ static int event_processing(void *instance, REQUEST *request)
 	       (request->proxy->code == inst->packet_code)) ||
 	      (request->proxy_reply &&
 	       (request->proxy_reply->code == inst->packet_code)))) {
-		RDEBUG2("Packet type is not %s. Not executing.", inst->packet_type);
+		RDEBUG2("Packet type is not %s. Not executing, on port %s", n_str(inst->packet_type), n_str(request->client_shortname));
 		return RLM_MODULE_NOOP;
 	}
 
-	switch (inst->type_idx) {
-		case ACCEPT_IDX:
-		case REJECT_IDX:
-			auth_event_processing(inst, request);
-			result = RLM_MODULE_OK;
-			break;
-		case ACCT_IDX:
-			acct_processing(inst, request);
-			result = RLM_MODULE_OK;
-			break;
-		default:
-			RDEBUG2("Event type is not %s. Not executing.", inst->type_idx);
-			result = RLM_MODULE_NOOP;
-			break;
+	if (inst->type >= TYPES_SIZE) {
+		RDEBUG2("Event type is not %s. Not executing, on port %s", type_map[inst->type], n_str(request->client_shortname));
+		return RLM_MODULE_NOOP;
 	}
 
+	if (inst->type == ACCT_TYPE){
+		dstr subtype_val = get_acct_subtype(request);
+		char *subtype_val_str = dstr_to_cstr(&subtype_val);
+
+		if (dstr_size(&subtype) == 0) {
+			
+		}
+
+		dstr_destroy(&subtype_val);
+	}
+
+	sent_event_to_portnox(inst, request, subtype);
+
+	end:
+	return RLM_MODULE_OK;
+}
+
+/* sent event to portnox be */
+static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, int subtype) {
+    char *org_id = NULL;
+    srv_req call_req = {0};
+    srv_resp call_resp = {0};
+
+    /* get org id */
+    if (get_org_id_for_client(request->client_shortname, &org_id)) {
+        radius_exec_logger_centrale(request, 60013, "Unable to find centrale orgid in REDIS for port %s", n_str(request->client_shortname));
+        result = -1;
+        goto fail;
+    } 
+
+    call_req = get_event_request(inst, request, org_id, subtype);
+    if (!call_req.data || !(*call_req.data)) {
+	radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
+			n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
+    	goto fail;
+    }
+
+	radlog(L_INFO, call_req.data);
+    call_resp = exec_http_request(&call_req);
+    if (call_resp.respond_code != 0) {
+	radlog(L_ERR, "rlm_portnox_event: Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
+			call_resp.respond_code, call_resp.http_code, n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
+    	goto fail;
+    }
+
+    fail:
+    if (org_id) free(org_id);
+    req_destroy(&call_req);
+    resp_destroy(&call_resp);
+}
+
+/* sent event to portnox be */
+static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, char *org_id, int subtype) {
+    dstr identity = {0};
+    dstr mac = {0};
+    dstr ip = {0};
+    char time[TIME_BUFFER_SIZE] = {0};
+    char date[TIME_BUFFER_SIZE] = {0};
+    time_t timer;
+    struct tm* tm_info;
+    int len = 0;
+    cJSON *json_obj = NULL; 
+    /* Do not destroy next vars. will be moved out of scope */
+    cJSON* attrs = NULL;
+    char* json_str = NULL;
+    dstr url = {0};
+
+    /* get portnox url */
+    url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
+    /* get main data */
+    identity = get_username(request);
+    mac = get_mac(request);
+    ip = get_device_ip(request);
+    /* date/time */
+    time(&timer);
+    tm_info = localtime(&timer);
+    len = strftime(date, TIME_BUFFER_SIZE, "%d/%m/%Y", tm_info);
+    date[len] = 0;
+    len = strftime(time, TIME_BUFFER_SIZE, "%H:%M:%S", tm_info);
+    date[len] = 0;
+    /* custom attributes */
+    attrs = get_attrs_json(request);
+
+    /* create json */
+    json_obj = cJSON_CreateObject();
+
+    if (dstr_size(&ip) > 0) cJSON_AddStringToObject(json_obj, DEVICE_IP_PR, dstr_to_cstr(&ip));
+    if (dstr_size(&mac) > 0) cJSON_AddStringToObject(json_obj, DEVICE_MAC_PR, dstr_to_cstr(&mac));
+    if (dstr_size(&identity) > 0) cJSON_AddStringToObject(json_obj, USERNAME_PR, dstr_to_cstr(&identity));
+    if (date && *date) cJSON_AddStringToObject(json_obj, EVENT_DATE_PR, date);
+    if (time && *time) cJSON_AddStringToObject(json_obj, EVENT_TIME_PR, time);
+    if (attrs) cJSON_AddItemToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
+    switch (inst->type) {
+    	case ACCEPT_TYPE:
+    	case REJECT_TYPE:
+    		cJSON_AddNumberToObject(json_obj, EVENT_TYPE_PR, TYPE_ACCESS);
+    		cJSON_AddNumberToObject(json_obj, EVENT_SUBTYPE_PR, subtype);
+    		break;
+    	case ACCT_TYPE: {
+
+    		cJSON_AddNumberToObject(json_obj, EVENT_TYPE_PR, TYPE_ACCOUNTING);
+    		cJSON_AddNumberToObject(json_obj, EVENT_SUBTYPE_PR, subtype);
+
+    		if (subtype == SUBTYPE_STOP) {
+
+    		}
+
+    		dstr_destroy(&subtype);
+    		break;
+    	}
+    }
+
+    req_destroy(&call_req);
+    resp_destroy(&call_resp);
+    dstr_destroy(&identity);
+    dstr_destroy(&mac);
+    dstr_destroy(&ip);
 	return result;
 }
 
-/* ACCEPT/REJECT processing */
-static int auth_event_processing(rlm_portnox_event_t *inst, REQUEST *request) {
-	int result = 0;
-
-	return result;
-}
-
-/* ACCT processing */
-static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request) {
-	int result = 0;
-
-	return result;
-}
-
+#define EVENT_SUBTYPE_PR		"EventSubType"
+#define DATA_IN_PR				"DataIn"
+#define DATA_OUT_PR				"DataOut"
+#define DISCONNECTION_REASON_PR	"DisconnectReason"
 /*
  *	The module name should be the only globally exported symbol.
  *	That is, everything else should be 'static'.

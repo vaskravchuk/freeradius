@@ -166,7 +166,7 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
     dstr url = {0};
     char* json = NULL;
 
-    /* get org id */
+    /* get portnox url */
     url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
 
     /* get request json string */
