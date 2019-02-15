@@ -44,6 +44,7 @@ void to_syslog(char* priority, dstr *message) {
 
     openlog(TAG, LOG_PID, LOG_LOCAL1);
     syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", message->s);
+    closelog();
 }
 
 void log_to_portnox(dstr *message) {
