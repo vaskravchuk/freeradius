@@ -25,7 +25,7 @@ void log(char* code, char* message, char* priority, REQUEST* req) {
     // to portnox if not inner port
     log_to_portnox(full_message);
 
-    free(full_message);
+    //free(full_message);
 }
 
 void to_syslog(char* priority, char* message) {
