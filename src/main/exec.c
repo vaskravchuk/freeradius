@@ -655,7 +655,7 @@ int		radius_exec_logger_centrale(REQUEST * request, const char * error_code, con
 		}
 	}
 	else {
-		scr_res = radius_internal_logger_centrale(error_code, NULL, request);
+		scr_res = radius_internal_logger_centrale(error_code, "test log", request);
 		if (scr_res != 0) {
 			radlog(L_ERR, "radius_exec_logger_centrale: Internal logging failed");
 		}
