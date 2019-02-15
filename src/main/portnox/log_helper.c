@@ -17,7 +17,7 @@ void log_to_portnox(char* message);
 void log(char* code, char* message, char* priority, REQUEST* req) {
     char * full_message = calloc(1024, sizeof(char *));
 
-    snprintf(full_message, sizeof(full_message), "%s ContextId: %s; %s", code, req->context_id, message);
+    snprintf(full_message, 1024 * sizeof(char *), "%s ContextId: %s; %s", code, req->context_id, message);
 
     // to syslog
     to_syslog(priority, message);
@@ -33,6 +33,7 @@ void to_syslog(char* priority, char* message) {
 
     if(strcmp(priority, "info") == 0){
         syslog_priority = LOG_INFO;
+
     }
     else if(strcmp(priority, "error") == 0){
         syslog_priority = LOG_ERR;
