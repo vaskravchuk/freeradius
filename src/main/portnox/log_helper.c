@@ -77,19 +77,19 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
     if (strcmp(error_code, "60029") == 0) {
         full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes %s", 
-            dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
+            dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60030") == 0) {
         full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes %s",
-                 dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
+                 dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60031") == 0) {
         full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes %s",
-                 dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
+                 dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "1") == 0) {
         full_message = dstr_from_fmt( "%s %s for %s on port %s with mac %s and attributes %s",
-                error_code, message, dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
+                error_code, message, dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else {
         dstr mess = dstr_cstr(message);
@@ -97,5 +97,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     }
 
     dstr_destroy(&full_message);
+    dstr_destroy(&username);
+    dstr_destroy(&mac);
     return 0;
 }
