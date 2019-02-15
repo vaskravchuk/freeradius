@@ -90,7 +90,7 @@ dstr dstr_escaped(const char *str) {
     dstr s;
 
     /* Are we not a string? */
-    if (!str || *str) return NaS;
+    if (!str) return NaS;
 
     /* create new string */
     size_t len = strlen(str);
