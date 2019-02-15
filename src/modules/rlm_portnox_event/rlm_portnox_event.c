@@ -306,7 +306,7 @@ module_t rlm_portnox_event = {
 		event_processing,	        /* authorization */
 		event_processing,			/* pre-accounting */
 		event_processing,			/* accounting */
-		event_processing,			/* check simul */
+		NULL,						/* check simul */
 		event_processing,			/* pre-proxy */
 		event_processing,			/* post-proxy */
 		event_processing			/* post-auth */
