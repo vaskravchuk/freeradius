@@ -22,8 +22,6 @@ RCSID("$Id$")
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
 static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
-static dstr get_username(REQUEST *request);
-static dstr get_mac(REQUEST *request);
 static dstr get_nas_port(REQUEST *request);
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list);
@@ -215,11 +213,11 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     if (json) cJSON_Delete(json);
 }
 
-static dstr get_username(REQUEST *request) {
+dstr get_username(REQUEST *request) {
     return get_vps_attr_or_empty(request, USERNAME_ATTR);
 }
 
-static dstr get_mac(REQUEST *request) {
+dstr get_mac(REQUEST *request) {
 	dstr str = {0};
 
 	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
