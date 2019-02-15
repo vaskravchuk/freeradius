@@ -41,7 +41,7 @@ typedef struct rlm_portnox_event_t {
 	unsigned int	packet_code;
 } rlm_portnox_event_t;
 
-static int event_processing(rlm_portnox_event_t *inst, REQUEST *request);
+static int auth_event_processing(rlm_portnox_event_t *inst, REQUEST *request);
 static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request);
 
 static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
@@ -49,9 +49,9 @@ static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 /* A mapping of configuration file names to internal variables. */
 static const CONF_PARSER module_config[] = {
 	{ "type",  PW_TYPE_INTEGER,
-	  offsetof(rlm_exec_t,type_idx), NULL, Stringify(0) },
+	  offsetof(rlm_portnox_event_t,type_idx), NULL, Stringify(0) },
 	{ "packet_type", PW_TYPE_STRING_PTR,
-	  offsetof(rlm_exec_t,packet_type), NULL, NULL },
+	  offsetof(rlm_portnox_event_t,packet_type), NULL, NULL },
 	{ NULL, -1, 0, NULL, NULL }		/* end the list */
 };
 
@@ -131,7 +131,7 @@ static int event_processing(void *instance, REQUEST *request)
 	switch (inst->type_idx) {
 		case ACCEPT_IDX:
 		case REJECT_IDX:
-			event_processing(inst, request);
+			auth_event_processing(inst, request);
 			result = RLM_MODULE_OK;
 			break;
 		case ACCT_IDX:
@@ -148,7 +148,7 @@ static int event_processing(void *instance, REQUEST *request)
 }
 
 /* ACCEPT/REJECT processing */
-static int event_processing(rlm_portnox_event_t *inst, REQUEST *request) {
+static int auth_event_processing(rlm_portnox_event_t *inst, REQUEST *request) {
 	int result = 0;
 
 	return result;
