@@ -33,7 +33,6 @@ void to_syslog(char* priority, char* message) {
 
     if(strcmp(priority, "info") == 0){
         syslog_priority = LOG_INFO;
-
     }
     else if(strcmp(priority, "error") == 0){
         syslog_priority = LOG_ERR;
@@ -54,7 +53,9 @@ void log_to_portnox(char* message) {
 
     srv_resp resp = exec_http_request(&req);
 
+    radlog(L_DBG, "Logging to portnox message '%s' with response %ld and return data %s", message, resp.http_code, resp.data)
     req_destroy(&req);
+    resp_destroy(&resp);
 }
 
 void log_info(char* message,  REQUEST* req) {
