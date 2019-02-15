@@ -90,7 +90,8 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
                 error_code, message, dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else {
-        log_error(error_code, message->s, request);
+        dstr d_message = dstr_cstr(message);
+        log_error(error_code, d_message, request);
     }
 
     dstr_destroy(&full_message);
