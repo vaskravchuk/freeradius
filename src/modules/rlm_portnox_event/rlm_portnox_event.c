@@ -28,6 +28,14 @@ RCSID("$Id$")
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 
+/* Define a structure for our module configuration. */
+typedef struct rlm_portnox_event_t {
+	int				type_idx;
+	char			*type_name;
+	char			*packet_type;
+	unsigned int	packet_code;
+} rlm_portnox_event_t;
+
 static int event_processing(rlm_portnox_event_t *inst, REQUEST *request);
 static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request);
 
@@ -38,14 +46,6 @@ static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request);
 
 static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"}
 
-/* Define a structure for our module configuration. */
-typedef struct rlm_portnox_event_t {
-	int		type_idx;
-	char	*type_name;
-	char	*packet_type;
-	unsigned int	packet_code;
-} rlm_portnox_event_t;
-
 /* A mapping of configuration file names to internal variables. */
 static const CONF_PARSER module_config[] = {
 	{ "type",  PW_TYPE_INTEGER,
@@ -55,16 +55,16 @@ static const CONF_PARSER module_config[] = {
 	{ NULL, -1, 0, NULL, NULL }		/* end the list */
 };
 
-
 /* Detach an instance and free it's data. */
 static int portnox_event_detach(void *instance)
 {
-	rlm_portnox_event_t	*inst = instance;
+	rlm_portnox_event_t	*inst = NULL;
+
+	inst = instance;
 
 	free(inst);
 	return 0;
 }
-
 
 /* Do any per-module initialization */
 static int portnox_event_instantiate(CONF_SECTION *conf, void **instance)
@@ -150,8 +150,6 @@ static int event_processing(void *instance, REQUEST *request)
 /* ACCEPT/REJECT processing */
 static int event_processing(rlm_portnox_event_t *inst, REQUEST *request) {
 	int result = 0;
-
-	
 
 	return result;
 }
