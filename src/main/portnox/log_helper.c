@@ -45,8 +45,8 @@ void to_syslog(char* priority, char* message) {
         syslog_priority = LOG_INFO;
     }
 
-    openlog(TAG, LOG_PID, LOG_LOCAL2);
-    syslog(LOG_MAKEPRI(LOG_LOCAL2, syslog_priority), "%s", message);
+    openlog(TAG, LOG_PID, LOG_LOCAL1);
+    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", message);
 }
 
 void log_to_portnox(char* message) {
