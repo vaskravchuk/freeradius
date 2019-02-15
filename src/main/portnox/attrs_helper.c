@@ -1,5 +1,5 @@
 /*
- * portnox_config.c	portnox config.
+ * attrs_helper.c	portnox config.
  *
  * Version:	$Id$t
  *
