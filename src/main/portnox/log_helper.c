@@ -43,11 +43,11 @@ void to_syslog(char* priority, dstr *message) {
     }
 
     openlog(TAG, LOG_PID, LOG_LOCAL1);
-    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", dstr_to_cstr(&message));
+    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", message->s);
 }
 
 void log_to_portnox(dstr *message) {
-    srv_req req = req_create(portnox_config.daemon.logging_url, dstr_to_cstr(&message), 0, 0);
+    srv_req req = req_create(portnox_config.daemon.logging_url, message->s, 0, 0);
 
     srv_resp resp = exec_http_request(&req);
 
@@ -90,8 +90,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
                 error_code, message, dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
         log_error(error_code, &full_message, request);
     } else {
-        dstr mess = dstr_cstr(message);
-        log_error(error_code, &mess, request);
+        log_error(error_code, message->s, request);
     }
 
     dstr_destroy(&full_message);
