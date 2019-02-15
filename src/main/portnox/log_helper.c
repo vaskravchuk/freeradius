@@ -15,7 +15,7 @@ void to_syslog(char* priority, dstr* message);
 void log_to_portnox(dstr* message);
 
 void log(char* code, dstr *message, char* priority, REQUEST* req) {
-    dstr * full_message = {0};
+    dstr full_message = {0};
 
     full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, dstr_to_cstr(message));
 
@@ -70,17 +70,17 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
     char *custom_json = get_attrs_json_str(request);
 
-    dstr *username = get_username(request);
-    dstr *mac = get_mac(request);
+    dstr username = get_username(request);
+    dstr mac = get_mac(request);
     char *port = request->client_shortname;
     char *context_id = request->context_id;
 
     if (strcmp(error_code, "60029") == 0) {
         full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes %s", 
-            dstr_to_cstr(username), port, dstr_to_cstr(mac) custom_json)
+            dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60030") == 0) {
-        ull_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes %s",
+        full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes %s",
                  dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60031") == 0) {
@@ -92,7 +92,8 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
                 error_code, message, dstr_to_cstr(username), port, dstr_to_cstr(mac), custom_json);
         log_error(error_code, &full_message, request);
     } else {
-        log_error(error_code, &dstr_cstr(message), request);
+        dstr mess = dstr_cstr(message);
+        log_error(error_code, &mess, request);
     }
 
     dstr_destroy(&full_message);
