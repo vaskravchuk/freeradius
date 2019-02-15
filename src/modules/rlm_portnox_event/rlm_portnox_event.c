@@ -28,6 +28,11 @@ RCSID("$Id$")
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 
+#define ACCEPT_IDX	0
+#define REJECT_IDX	1
+#define ACCT_IDX	2
+#define IDX_SIZE	3
+
 /* Define a structure for our module configuration. */
 typedef struct rlm_portnox_event_t {
 	int				type_idx;
@@ -39,12 +44,7 @@ typedef struct rlm_portnox_event_t {
 static int event_processing(rlm_portnox_event_t *inst, REQUEST *request);
 static int acct_processing(rlm_portnox_event_t *inst, REQUEST *request);
 
-#define ACCEPT_IDX	0
-#define REJECT_IDX	1
-#define ACCT_IDX	2
-#define IDX_SIZE	3
-
-static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"}
+static char *type_map[IDX_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 
 /* A mapping of configuration file names to internal variables. */
 static const CONF_PARSER module_config[] = {
