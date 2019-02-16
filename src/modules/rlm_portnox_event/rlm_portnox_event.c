@@ -291,8 +291,6 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     			dstr_destroy(&data_out);
     			dstr_destroy(&disc_reason);
     		}
-
-    		dstr_destroy(&subtype);
     		break;
     	}
     }
