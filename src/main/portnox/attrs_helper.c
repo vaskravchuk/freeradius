@@ -12,9 +12,9 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
-#include <freeradius-devel/portnox/portnox_config.h>
-#include <freeradius-devel/portnox/portnox_auth.h>
 #include <freeradius-devel/portnox/string_helper.h>
+
+#define ATTR_VALUE_BUF_SIZE         256
 
 dstr get_username(REQUEST *request) {
     return get_vps_attr_or_empty(request, USERNAME_ATTR);

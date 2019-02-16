@@ -7,8 +7,16 @@
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
-#include <freeradius-devel/portnox/portnox_auth.h>
 #include <freeradius-devel/portnox/string_helper.h>
+
+
+#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
+#define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
+
+#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
+#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
+
+#define ATTR_VALUE_BUF_SIZE         256
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;
@@ -22,7 +30,7 @@ char *get_val_by_attr_from_json(char *json, char *attr) {
     if (!found_item || !found_item->valuestring) goto fail;
 
     /* should be copied */
-    val =  strdup(found_item->valuestring);
+    val = strdup(found_item->valuestring);
 
     fail:
     if (parsed) cJSON_Delete(parsed);
@@ -48,12 +56,17 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
 }
 
 cJSON *get_attrs_json(REQUEST *request) {
+    /*
+     * EMMET MARVIN & MARTIN had problem with parsing
+     * request json bacause of 'Chargeable-User-Identity' attr 
+     * So lets skip it
+     */
     static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "Chargeable-User-Identity" };
     static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
-    cJSON *array = NULL;
-    cJSON *item = NULL;
     char val[ATTR_VALUE_BUF_SIZE];
     int len = 0;
+    cJSON *array = NULL;
+    cJSON *item = NULL;
     
     array = cJSON_CreateArray();
     

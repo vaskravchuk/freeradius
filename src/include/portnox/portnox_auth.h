@@ -25,12 +25,6 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define RADIUS_CUSTOM_PR			"RadiusCustom"
 #define NTKEY_PR					"NtKey"
 
-#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
-#define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
-
-#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
-#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
-
 #define OPERATION_SUCCESS           0
 #define ORG_ID_FAILED_GET_ERROR     -1
 #define IDENTITY_NOT_FOUND_ERROR    -2
@@ -41,8 +35,6 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define CHAP_AUTH_METHOD            4
 #define EAPTLS_AUTH_METHOD          5
 #define MD5_AUTH_METHOD             6
-
-#define ATTR_VALUE_BUF_SIZE         256
 
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_t {
