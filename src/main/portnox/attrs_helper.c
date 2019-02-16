@@ -76,17 +76,16 @@ dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
     if (request->packet) {
     	for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
     		if (!vp->name || !(*vp->name)) continue;
-    		if (strcmp(attr, vp->name) == 0) {
-    			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
+    		if (strcmp(attr, vp->name) != 0) continue;
 
-                val[len] = 0;
+			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
+            val[len] = 0;
 
-                val_escaped = str_replace(val, "\\\\", "\\");
-                str = dstr_cstr(val_escaped);
+            val_escaped = str_replace(val, "\\\\", "\\");
+            str = dstr_cstr(val_escaped);
 
-                if (val_escaped) free(val_escaped);
-    			break;	
-    		}
+            if (val_escaped) free(val_escaped);
+			break;	
     	}
     }
 

@@ -217,11 +217,11 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
 
 /* sent event to portnox be */
 static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, char *org_id, int subtype) {
+    char event_time[TIME_BUFFER_SIZE] = {0};
+    char event_date[TIME_BUFFER_SIZE] = {0};
     dstr identity = {0};
     dstr mac = {0};
     dstr ip = {0};
-    char event_time[TIME_BUFFER_SIZE] = {0};
-    char event_date[TIME_BUFFER_SIZE] = {0};
     time_t timer;
     struct tm* tm_info;
     int len = 0;

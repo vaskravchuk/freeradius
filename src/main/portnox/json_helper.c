@@ -108,11 +108,9 @@ char *get_attrs_json_str(REQUEST *request) {
     json = "";
 
     attrs = get_attrs_json(request);
-    if (attrs) {
-        json = cJSON_Print(attrs);
-        cJSON_Minify(json);
-        cJSON_Delete(attrs);
-    }
+    json = cJSON_Print(attrs);
+    cJSON_Minify(json);
+    cJSON_Delete(attrs);
 
     return json;
 }
