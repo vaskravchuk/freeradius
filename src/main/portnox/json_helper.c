@@ -73,15 +73,20 @@ cJSON *get_attrs_json(REQUEST *request) {
         for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
             if (!vp->name || !(*vp->name)) continue;
             if (is_contains(except_attrs, except_attrs_size, vp->name)) continue;
+            char *val_escaped = NULL;
+            
             /* get value */
             len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
             val[len] = 0;
+            val_escaped = str_replace(val, "\\\\", "\\");
 
             /* to json */
             item = cJSON_CreateObject();
             cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_KEY, vp->name);
-            cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, val);
+            cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, val_escaped);
             cJSON_AddItemToArray(array, item);
+
+            if (val_escaped) free(val_escaped);
         }
     }
 

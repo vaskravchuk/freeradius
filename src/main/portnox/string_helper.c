@@ -57,7 +57,7 @@ int json_escape(char* str, char* out, int outlen) {
 int replace_char(char *str, char orig, char rep) {
     char *ix = str;
     int n = 0;
-    while((ix = strchr(ix, orig)) != NULL) {
+    while((ix = strchr(ix, orig))) {
         *ix++ = rep;
         n++;
     }

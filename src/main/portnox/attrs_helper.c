@@ -70,13 +70,13 @@ dstr get_acct_subtype(REQUEST *request) {
 dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	int len = 0;
     char val[ATTR_VALUE_BUF_SIZE];
-    char *val_escaped = NULL;
 	dstr str = {0};
 
     if (request->packet) {
     	for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
     		if (!vp->name || !(*vp->name)) continue;
     		if (strcmp(attr, vp->name) != 0) continue;
+            char *val_escaped = NULL;
 
 			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
             val[len] = 0;
