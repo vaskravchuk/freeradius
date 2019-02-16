@@ -57,6 +57,10 @@ static char *type_map[TYPES_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 #define DISCONNECTION_REASON_PR	"DisconnectReason"
 #define RADIUS_CUSTOM_PR		"RadiusCustom"
 
+
+#define START_ACCT_SUBTYPE		"Start"
+#define STOP_ACCT_SUBTYPE		"Stop"
+
 #define TIME_BUFFER_SIZE	32
 
 /* Define a structure for our module configuration. */
@@ -135,8 +139,8 @@ static int event_processing(void *instance, REQUEST *request){
 	
 	inst = instance;
 
-	radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
-		n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
+	radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%d', on port %s", 
+		n_str(inst->packet_type), inst->type, n_str(request->client_shortname));
 
 	/* See if we're supposed to execute it now. */
 	if (!((inst->packet_code == 0) ||
@@ -146,29 +150,46 @@ static int event_processing(void *instance, REQUEST *request){
 	       (request->proxy->code == inst->packet_code)) ||
 	      (request->proxy_reply &&
 	       (request->proxy_reply->code == inst->packet_code)))) {
-		RDEBUG2("Packet type is not %s. Not executing, on port %s", n_str(inst->packet_type), n_str(request->client_shortname));
+		RDEBUG2("Packet type %s is wrong. Not executing, on port %s", n_str(inst->packet_type), n_str(request->client_shortname));
 		return RLM_MODULE_NOOP;
 	}
 
+	/* check valid type */
 	if (inst->type >= TYPES_SIZE) {
-		RDEBUG2("Event type is not %s. Not executing, on port %s", type_map[inst->type], n_str(request->client_shortname));
+		RDEBUG2("Event type %d is wrong. Not executing, on port %s", inst->type, n_str(request->client_shortname));
 		return RLM_MODULE_NOOP;
 	}
 
-	if (inst->type == ACCT_TYPE){
+
+	if (inst->type == ACCT_TYPE) {
+		/* accounting subtype should be only start or stop */
 		dstr subtype_val = get_acct_subtype(request);
 		char *subtype_val_str = dstr_to_cstr(&subtype_val);
+		int subtype_result = 0;
 
-		if (dstr_size(&subtype) == 0) {
+		if (dstr_size(&subtype_val) == 0) {
+			RDEBUG2("Event type %s should contains 'Acct-Status-Type' attribute, on port %s", type_map[inst->type], n_str(request->client_shortname));
+			subtype_result = -1;
+		} else if (strcmp(subtype_val_str, START_ACCT_SUBTYPE) == 0) {
+			subtype = SUBTYPE_START;
 			
+		} else if (strcmp(subtype_val_str, STOP_ACCT_SUBTYPE) == 0) {
+			subtype = SUBTYPE_STOP;
+		} else {
+			RDEBUG2("Event type %s contains wrong 'Acct-Status-Type' attribute '%s', should be 'Start' or 'Stop', on port %s", 
+						type_map[inst->type], subtype_val_str, n_str(request->client_shortname));
+			subtype_result = -1;
 		}
 
 		dstr_destroy(&subtype_val);
+		if (subtype_result != 0) return RLM_MODULE_NOOP;
+	}
+	else {
+		subtype = inst->packet_type == REJECT_TYPE ? SUBTYPE_REJECT : SUBTYPE_ACCEPT;
 	}
 
 	sent_event_to_portnox(inst, request, subtype);
 
-	end:
 	return RLM_MODULE_OK;
 }
 
