@@ -207,15 +207,15 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
 
     call_req = get_event_request(inst, request, org_id, subtype);
     if (!call_req.data || !(*call_req.data)) {
-	radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
-			n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
+		radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
+				n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
     	goto fail;
     }
 
 	radlog(L_INFO, call_req.data);
     call_resp = exec_http_request(&call_req);
     if (call_resp.return_code != 0) {
-	radlog(L_ERR, "rlm_portnox_event: Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
+		radlog(L_ERR, "rlm_portnox_event: Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
 			call_resp.return_code, call_resp.http_code, n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
     	goto fail;
     }
