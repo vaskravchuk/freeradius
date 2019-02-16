@@ -243,7 +243,7 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     dstr url = {0};
 
     /* get portnox url */
-    url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
+    url = dstr_from_fmt(portnox_config.be.event_url, n_str(org_id));
     /* get main data */
     identity = get_username(request);
     mac = get_mac(request);
