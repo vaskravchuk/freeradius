@@ -185,7 +185,7 @@ static int event_processing(void *instance, REQUEST *request){
 		if (subtype_result != 0) return RLM_MODULE_NOOP;
 	}
 	else {
-		subtype = inst->packet_type == REJECT_TYPE ? SUBTYPE_REJECT : SUBTYPE_ACCEPT;
+		subtype = inst->type == REJECT_TYPE ? SUBTYPE_REJECT : SUBTYPE_ACCEPT;
 	}
 
 	sent_event_to_portnox(inst, request, subtype);
