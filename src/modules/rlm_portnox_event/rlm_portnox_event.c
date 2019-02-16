@@ -31,6 +31,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/string_helper.h>
 #include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/portnox_config.h>
+#include <freeradius-devel/portnox/portnox_common.h>
 
 #define ACCEPT_TYPE		0
 #define REJECT_TYPE		1
@@ -44,18 +45,6 @@ static char *type_map[TYPES_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 #define SUBTYPE_REJECT	1
 #define SUBTYPE_START	2
 #define SUBTYPE_STOP	3
-
-#define EVENT_TYPE_PR			"EventType"
-#define EVENT_SUBTYPE_PR		"EventSubType"
-#define DEVICE_IP_PR			"DeviceIp"
-#define DEVICE_MAC_PR			"DeviceMac"
-#define EVENT_DATE_PR			"EventDate"
-#define EVENT_TIME_PR			"EventTime"
-#define USERNAME_PR				"UserName"
-#define DATA_IN_PR				"DataIn"
-#define DATA_OUT_PR				"DataOut"
-#define DISCONNECTION_REASON_PR	"DisconnectReason"
-#define RADIUS_CUSTOM_PR		"RadiusCustom"
 
 
 #define START_ACCT_SUBTYPE		"Start"

@@ -8,6 +8,7 @@
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/portnox_common.h>
 
 
 #define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
@@ -15,8 +16,6 @@
 
 #define RESP_CUSTOM_ATTR_VAL_KEY    "key"
 #define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
-
-#define ATTR_VALUE_BUF_SIZE         256
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;

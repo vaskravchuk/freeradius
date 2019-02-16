@@ -14,16 +14,7 @@ RCSIDH(portnox_auth_h, "$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
-
-#define AUTH_METHOD_PR				"AuthNMethod"
-#define MAC_ADDRESS_PR				"MacAddress"
-#define PLAIN_PWD_PR				"PlainPwd"
-#define USERNAME_PR					"UserName"
-#define CLIENT_CERT_PR				"ClientCertificate"
-#define NT_CHALLENGE_PR				"NtChallenge"
-#define NT_RESPONSE_PR	            "NtClientResponse"
-#define RADIUS_CUSTOM_PR			"RadiusCustom"
-#define NTKEY_PR					"NtKey"
+#include <freeradius-devel/portnox/portnox_common.h>
 
 #define OPERATION_SUCCESS           0
 #define ORG_ID_FAILED_GET_ERROR     -1
