@@ -155,6 +155,7 @@ int portnox_auth(REQUEST *request,
     process_response(&call_resp, output_pairs);
 
     fail:
+    process_result(result, user_msg, msg_len);
     if (org_id) free(org_id);
     req_destroy(&call_req);
     resp_destroy(&call_resp);
