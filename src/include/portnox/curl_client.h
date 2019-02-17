@@ -36,8 +36,8 @@ typedef struct srv_resp {
 /* Create/destroy structs */
 srv_req req_create(char* url, char* data, int is_debug, int need_crt_auth);
 srv_resp resp_create(int return_code, int http_code, char* data);
-req_destroy(srv_req* req);
-resp_destroy(srv_resp* resp);
+void req_destroy(srv_req* req);
+void resp_destroy(srv_resp* resp);
 
 /* Do curl http call */
 srv_resp exec_http_request(srv_req* req);

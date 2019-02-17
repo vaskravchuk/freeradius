@@ -24,7 +24,7 @@ srv_resp resp_create(int return_code, int http_code, char* data) {
     return (srv_resp) {return_code, http_code, data};
 }
 
-req_destroy(srv_req* req) {
+void req_destroy(srv_req* req) {
     if (req->data) {
         free(req->data);
         req->data = NULL;
@@ -35,7 +35,7 @@ req_destroy(srv_req* req) {
     }
 }
 
-resp_destroy(srv_resp* resp) {
+void resp_destroy(srv_resp* resp) {
     if (resp->data) {
         free(resp->data);
         resp->data = NULL;
