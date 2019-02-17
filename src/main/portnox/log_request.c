@@ -42,7 +42,7 @@ int log_add_json_mac(char *out, int outlen, const char *key, VALUE_PAIR *vps) {
 	static char *mac_attrs_size = sizeof(mac_attrs) / sizeof(mac_attrs[0]);
 
 	int len = 0;
-	char mac_buffer[24];
+	char mac_buffer[24] = {0};
 
 	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
 		if (!vp->name || !(*vp->name)) return;
