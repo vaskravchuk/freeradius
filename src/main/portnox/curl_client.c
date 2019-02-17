@@ -17,7 +17,7 @@
 static size_t curl_write_callback_string(void *contents, size_t size, size_t nmemb, void *usr_data);
 
 srv_req req_create(char* url, char* data, int is_debug, int need_crt_auth) {
-    return (srv_req) {url, data, is_debug, need_crt_auth};
+    return (srv_req) {srtdup(url), data, is_debug, need_crt_auth};
 }
 
 srv_resp resp_create(int return_code, int http_code, char* data) {
@@ -28,6 +28,10 @@ req_destroy(srv_req* req) {
     if (req->data) {
         free(req->data);
         req->data = NULL;
+    }
+    if (req->url) {
+        free(req->url);
+        req->url = NULL;
     }
 }
 

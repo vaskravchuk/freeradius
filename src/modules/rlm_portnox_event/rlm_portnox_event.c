@@ -230,6 +230,7 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
     cJSON* attrs = NULL;
     char* json = NULL;
     dstr url = {0};
+    srv_req req = {0};
 
     /* get portnox url */
     url = dstr_from_fmt(portnox_config.be.event_url, n_str(org_id));
@@ -286,13 +287,15 @@ static srv_req get_event_request(rlm_portnox_event_t *inst, REQUEST *request, ch
 
     json = cJSON_Print(json_obj);
     cJSON_Minify(json);
+    req = req_create(dstr_to_cstr(&url), json, 0, 1);
 
 
     cJSON_Delete(json_obj);
     dstr_destroy(&identity);
     dstr_destroy(&mac);
     dstr_destroy(&ip);
-    return req_create(dstr_to_cstr(&url), json, 0, 1);
+    dstr_destroy(&url);
+    return req;
 }
 
 /*

@@ -165,6 +165,7 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
                                AUTH_SP_ATTR_LIST *attr_proc_list) {
     dstr url = {0};
     char* json = NULL;
+    srv_req req = {0};
 
     /* get portnox url */
     url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
@@ -177,7 +178,10 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
                             attr_proc_list);
 
     /* create request struct & move json scope to req_create */
-    return req_create(dstr_to_cstr(&url), json, 0, 1);
+    req = req_create(dstr_to_cstr(&url), json, 0, 1);
+
+    dstr_destroy(&url);
+    return req;
 }
 
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
