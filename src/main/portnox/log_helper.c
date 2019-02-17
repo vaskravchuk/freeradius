@@ -107,14 +107,14 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         get_org_id_for_client(request->client_shortname, &org_id);
 
-        full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for ${USERNAME} on port ${PORT} with mac ${MAC} ,\"RadiusCustom\":%s",
+        full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
                  n_str(message), n_str(org_id), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-        full_message = dstr_from_fmt( "%s %s for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
-                n_str(error_code), n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        full_message = dstr_from_fmt( "%s for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+                n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else {
         dstr d_message = {0};
