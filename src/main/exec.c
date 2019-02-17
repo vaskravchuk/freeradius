@@ -27,6 +27,7 @@ RCSID("$Id$")
 #include <freeradius-devel/rad_assert.h>
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/log_helper.h>
 
 #include <sys/file.h>
 
@@ -55,7 +56,7 @@ typedef struct exec_var_t {
 } exec_var_t;
 
 static void tv_sub(struct timeval *end, struct timeval *start,
-		   struct timeval *elapsed)
+                   struct timeval *elapsed)
 {
 	elapsed->tv_sec = end->tv_sec - start->tv_sec;
 	if (elapsed->tv_sec > 0) {
@@ -66,7 +67,7 @@ static void tv_sub(struct timeval *end, struct timeval *start,
 	}
 	elapsed->tv_usec += end->tv_usec;
 	elapsed->tv_usec -= start->tv_usec;
-	
+
 	if (elapsed->tv_usec >= USEC) {
 		elapsed->tv_usec -= USEC;
 		elapsed->tv_sec++;
@@ -76,15 +77,15 @@ static void tv_sub(struct timeval *end, struct timeval *start,
 
 static uint32_t exec_var_hash(const void *data)
 {
-    const exec_var_t *ev = data;
-    return fr_hash_string(ev->name);
+	const exec_var_t *ev = data;
+	return fr_hash_string(ev->name);
 }
 
 static void exec_var_free(const void *data)
 {
-    const exec_var_t *ev = data;
-    free(ev->name);
-    free(ev);
+	const exec_var_t *ev = data;
+	free(ev->name);
+	free(ev);
 }
 
 
@@ -95,14 +96,14 @@ static void exec_var_free(const void *data)
  *	Return -1 on fork/other errors in the parent process.
  */
 int radius_exec_program(const char *cmd, REQUEST *request,
-			int exec_wait,
-			char *user_msg, int msg_len,
-			int timeout,
-			VALUE_PAIR *input_pairs,
-			VALUE_PAIR **output_pairs,
-			int shell_escape)
+                        int exec_wait,
+                        char *user_msg, int msg_len,
+                        int timeout,
+                        VALUE_PAIR *input_pairs,
+                        VALUE_PAIR **output_pairs,
+                        int shell_escape)
 {
-    return radius_exec_program_centrale(cmd, request, exec_wait, user_msg, msg_len, timeout, input_pairs, output_pairs, shell_escape, 0);
+	return radius_exec_program_centrale(cmd, request, exec_wait, user_msg, msg_len, timeout, input_pairs, output_pairs, shell_escape, 0);
 }
 
 /*
@@ -112,13 +113,13 @@ int radius_exec_program(const char *cmd, REQUEST *request,
  *	Return -1 on fork/other errors in the parent process.
  */
 int radius_exec_program_centrale(const char *cmd, REQUEST *request,
-			int exec_wait,
-			char *user_msg, int msg_len,
-			int timeout,
-			VALUE_PAIR *input_pairs,
-			VALUE_PAIR **output_pairs,
-			int shell_escape,
-			int error_code)
+                                 int exec_wait,
+                                 char *user_msg, int msg_len,
+                                 int timeout,
+                                 VALUE_PAIR *input_pairs,
+                                 VALUE_PAIR **output_pairs,
+                                 int shell_escape,
+                                 int error_code)
 {
 	VALUE_PAIR *vp;
 	char *p;
@@ -143,7 +144,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 	if (output_pairs) *output_pairs = NULL;
 
 	argc = rad_expand_xlat(request, cmd, MAX_ARGV, argv, 1,
-				sizeof(argv_buf), argv_buf);
+	                       sizeof(argv_buf), argv_buf);
 	if (argc <= 0) {
 		RDEBUG("Exec: invalid command line '%s'.", cmd);
 		return -1;
@@ -178,7 +179,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 
 		vars_hash = fr_hash_table_create(exec_var_hash, NULL, exec_var_free);
 		if (!vars_hash) {
-		    RDEBUG("ERROR: Failed to set up vars_hash");
+			RDEBUG("ERROR: Failed to set up vars_hash");
 		}
 
 		/*
@@ -198,36 +199,36 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 			 */
 
 			if (vars_hash) {
-			    exec_var_t ev, *oev;
-			    ev.name = vp->name;
-			    oev = fr_hash_table_finddata(vars_hash, &ev);
-			    if (oev) {
-				oev->index++;
-			    } else {
-				oev = rad_malloc(sizeof(*oev));
-				memset(oev, 0, sizeof(*oev));
-				oev->name = strdup(vp->name);
-				oev->index = 0;
-				rcode = fr_hash_table_insert(vars_hash, oev);
-				if (!rcode) {
-				    RDEBUG("Failed to store variable %s in the hash", vp->name);
-				    exec_var_free(oev);
-				    oev = NULL;
+				exec_var_t ev, *oev;
+				ev.name = vp->name;
+				oev = fr_hash_table_finddata(vars_hash, &ev);
+				if (oev) {
+					oev->index++;
+				} else {
+					oev = rad_malloc(sizeof(*oev));
+					memset(oev, 0, sizeof(*oev));
+					oev->name = strdup(vp->name);
+					oev->index = 0;
+					rcode = fr_hash_table_insert(vars_hash, oev);
+					if (!rcode) {
+						RDEBUG("Failed to store variable %s in the hash", vp->name);
+						exec_var_free(oev);
+						oev = NULL;
+					}
 				}
-			    }
-			    if (oev && oev->index > 0) {
-				snprintf(buffer, sizeof(buffer), "%s-%d=", vp->name, oev->index);
-			    } else {
-				snprintf(buffer, sizeof(buffer), "%s=", vp->name);
-			    }
+				if (oev && oev->index > 0) {
+					snprintf(buffer, sizeof(buffer), "%s-%d=", vp->name, oev->index);
+				} else {
+					snprintf(buffer, sizeof(buffer), "%s=", vp->name);
+				}
 			} else {
 				snprintf(buffer, sizeof(buffer), "%s=", vp->name);
 			}
-			
+
 			/** Add variable BEFORE escaping **/
 			k = strlen(all_vars_buf);
 			snprintf(all_vars_buf + k, sizeof(all_vars_buf) - k, "%s", buffer);
-			all_vars_buf[strlen(all_vars_buf)-1]=' ';
+			all_vars_buf[strlen(all_vars_buf) - 1] = ' ';
 
 			if (shell_escape) {
 				for (p = buffer; *p != '='; p++) {
@@ -238,9 +239,9 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 					}
 				}
 			}
-	
+
 			n = strlen(buffer);
-			vp_prints_value(buffer+n, sizeof(buffer) - n, vp, shell_escape);
+			vp_prints_value(buffer + n, sizeof(buffer) - n, vp, shell_escape);
 
 			envp[envlen++] = strdup(buffer);
 
@@ -250,11 +251,11 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 			if (envlen == (MAX_ENVP - 2)) break;
 		}
 		k = strlen(all_vars_buf);
-		all_vars_buf[k - 1]=0;
+		all_vars_buf[k - 1] = 0;
 		envp[envlen++] = strdup(all_vars_buf);
 
 		if (vars_hash) {
-		    fr_hash_table_free(vars_hash);
+			fr_hash_table_free(vars_hash);
 		}
 		envp[envlen] = NULL;
 	}
@@ -385,14 +386,14 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 	 */
 	do {
 		int flags;
-		
+
 		if ((flags = fcntl(pd[0], F_GETFL, NULL)) < 0)  {
 			nonblock = FALSE;
 			break;
 		}
-		
+
 		flags |= O_NONBLOCK;
-		if( fcntl(pd[0], F_SETFL, flags) < 0) {
+		if ( fcntl(pd[0], F_SETFL, flags) < 0) {
 			nonblock = FALSE;
 			break;
 		}
@@ -418,14 +419,14 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 		gettimeofday(&when, NULL);
 		tv_sub(&when, &start, &elapsed);
 		if (elapsed.tv_sec >= timeout) goto too_long;
-		
+
 		when.tv_sec = timeout;
 		when.tv_usec = 0;
 		tv_sub(&when, &elapsed, &wake);
 
 		rcode = select(pd[0] + 1, &fds, NULL, NULL, &wake);
 		if (rcode == 0) {
-		too_long:
+too_long:
 			radlog(L_INFO, "%d Child PID %u (%s) is taking too much time: forcing failure and killing child.", error_code, pid, argv[0]);
 			kill(pid, SIGTERM);
 			close(pd[0]); /* should give SIGPIPE to child, too */
@@ -434,7 +435,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 			 *	Clean up the child entry.
 			 */
 			rad_waitpid(pid, &status);
-			return 1;			
+			return 1;
 		}
 		if (rcode < 0) {
 			if (errno == EINTR) continue;
@@ -448,7 +449,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 		 */
 		if (nonblock) {
 			status = read(pd[0], answer + done, left);
-		} else 
+		} else
 #endif
 			/*
 			 *	There's at least 1 byte ready: read it.
@@ -582,7 +583,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 		RDEBUG("Exec: Wait is not supported");
 		return -1;
 	}
-	
+
 	/*
 	 *	We're not waiting, so we don't look for a
 	 *	message, or VP's.
@@ -604,7 +605,7 @@ int radius_exec_program_centrale(const char *cmd, REQUEST *request,
 		 *	to close your program (_P_OVERLAY), to wait
 		 *	until the new process is finished (_P_WAIT) or
 		 *	for the two to run concurrently (_P_NOWAIT).
-		 
+
 		 *	_spawn and _exec are useful for instances in
 		 *	which you have simple requirements for running
 		 *	the program, don't want the overhead of the
@@ -631,8 +632,8 @@ int radius_exec_logger_centrale(REQUEST * request, const char * error_code, cons
 		radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Code");
 	}
 
+	char buffer[8192];
 	if (format != NULL) {
-		char buffer[8192];
 		*buffer = '\0';
 		va_list ap;
 
@@ -644,18 +645,26 @@ int radius_exec_logger_centrale(REQUEST * request, const char * error_code, cons
 			radlog(L_ERR, "radius_exec_logger_centrale: Failed creating P-Error-Msg");
 		}
 	}
-	if (portnox_config.log.log_script && *portnox_config.log.log_script) {
-		scr_res = radius_exec_program(portnox_config.log.log_script, request,
-	        0, /* wait */
-			NULL, 0,
-			45,
-			request->packet->vps, NULL, 1);
-	} else {
-		scr_res = -1;
+	if (portnox_config.log.use_script) {
+	  if (portnox_config.log.log_script && *portnox_config.log.log_script) {
+		  scr_res = radius_exec_program(portnox_config.log.log_script, request,
+		                                0, /* wait */
+		                                NULL, 0,
+		                                45,
+		                                request->packet->vps, NULL, 1);
+  	} else {
+		  scr_res = -1;
+	  }
+		if (scr_res != 0) {
+			radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", portnox_config.log.log_script);
+		}
 	}
-
-	if (scr_res != 0) {
-		radlog(L_ERR, "radius_exec_logger_centrale: External script '%s' failed", n_str(portnox_config.log.log_script));
+	else {
+		char * message = buffer;
+		scr_res = radius_internal_logger_centrale(error_code, message, request);
+		if (scr_res != 0) {
+			radlog(L_ERR, "radius_exec_logger_centrale: Internal logging failed");
+		}
 	}
 	return scr_res;
 }

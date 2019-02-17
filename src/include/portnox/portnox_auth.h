@@ -48,6 +48,9 @@ typedef struct auth_info_t {
     char* failed_auth_error_code;
 } AUTH_INFO;
 
+dstr get_username(REQUEST *request);
+dstr get_mac(REQUEST *request);
+
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 AUTH_INFO *auth_info, 
