@@ -8,14 +8,18 @@
 
 #define TAG "radiusd"
 
-static void log(char* code, dstr *message, char* priority, REQUEST* req);
-static void to_syslog(char* priority, dstr* message);
+#define DEBUG_PRIORITY  0
+#define INFO_PRIORITY   1
+#define ERROR_PRIORITY  2
+
+static void log(char* code, dstr *message, int priority, REQUEST* req);
+static void to_syslog(int priority, dstr* message);
 static void log_to_portnox(dstr* message);
 
-static void log(char* code, dstr *message, char* priority, REQUEST* req) {
+static void log(char* code, dstr *message, int priority, REQUEST* req) {
     dstr full_message = {0};
 
-    full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, message->s);
+    full_message = dstr_from_fmt("%s ContextId: %s; %s", n_str(code), n_str(req->context_id), n_str(dstr_to_cstr(message)));
 
     // to syslog
     to_syslog(priority, full_message);
@@ -26,24 +30,26 @@ static void log(char* code, dstr *message, char* priority, REQUEST* req) {
     dstr_destroy(&full_message);
 }
 
-static void to_syslog(char* priority, dstr *message) {
+static void to_syslog(int priority, dstr *message) {
     int syslog_priority = 0;
 
-    if(strcmp(priority, "info") == 0){
-        syslog_priority = LOG_INFO;
-    }
-    else if(strcmp(priority, "error") == 0){
-        syslog_priority = LOG_ERR;
-    }
-    else if(strcmp(priority, "debug") == 0){
-        syslog_priority = LOG_DEBUG;
-    }
-    else{
-        syslog_priority = LOG_INFO;
+    switch (priority) {
+        case DEBUG_PRIORITY: 
+            syslog_priority = LOG_DEBUG;
+            break;
+        case INFO_PRIORITY: 
+            syslog_priority = LOG_INFO;
+            break;
+        case ERROR_PRIORITY: 
+            syslog_priority = LOG_ERR;
+            break;
+        default:
+            syslog_priority = LOG_INFO;
+            break;
     }
 
     openlog(TAG, LOG_PID, LOG_LOCAL1);
-    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", message->s);
+    syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", n_str(dstr_to_cstr(message)));
     closelog();
 }
 
@@ -51,7 +57,7 @@ static void log_to_portnox(dstr *message) {
     srv_req req = {0};
     srv_resp resp = {0};
 
-    req = req_create(portnox_config.log.logging_url, message->s, 0, 0);
+    req = req_create(portnox_config.log.logging_url, dstr_to_cstr(message), 0, 0);
     resp = exec_http_request(&req);
 
     req_destroy(&req);
@@ -59,11 +65,11 @@ static void log_to_portnox(dstr *message) {
 }
 
 void log_info(dstr *message,  REQUEST* req) {
-    log("0", message, "info", req);
+    log("0", message, INFO_PRIORITY, req);
 }
 
 void log_error(char* code, dstr *message, REQUEST* req) {
-    log(code, message, "error", req);
+    log(code, message, ERROR_PRIORITY, req);
 }
 
 int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *request) {
