@@ -10,6 +10,10 @@
 RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
+#include <freeradius-devel/portnox/string_helper.h>
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 int is_contains(char **arr, int size, char* str) {
     int found = 0;
@@ -57,7 +61,7 @@ int json_escape(char* str, char* out, int outlen) {
 int replace_char(char *str, char orig, char rep) {
     char *ix = str;
     int n = 0;
-    while((ix = strchr(ix, orig)) != NULL) {
+    while((ix = strchr(ix, orig))) {
         *ix++ = rep;
         n++;
     }
@@ -146,7 +150,7 @@ char* bytes_to_hex (const unsigned char* data, size_t datalen) {
     unsigned int j = 0;
     
     final_len = datalen * 2;
-    chrs = (unsigned char *) malloc((final_len + 1) * sizeof(*chrs));
+    chrs = malloc((final_len + 1) * sizeof(char));
 
     for(j = 0; j<datalen; j++) {
         chrs[2*j] = (data[j]>>4)+48;
@@ -157,4 +161,25 @@ char* bytes_to_hex (const unsigned char* data, size_t datalen) {
     chrs[2*j]='\0';
     lower(chrs);
     return chrs;
+}
+
+int vstr_format(char * s, int n, const char *format, va_list ap) {
+    int len = 0;
+
+    len = vsnprintf(s, n, format, ap);
+    len = MIN(len, n-1);
+    len = len < 0 ? 0 : len;
+
+    return len;
+}
+
+int str_format(char * s, int n, const char *format, ...) {
+    int len = 0;
+
+    va_list ap;
+    va_start(ap, format);
+    len = vstr_format(s, n, format, ap);
+    va_end(ap);
+
+    return len;
 }

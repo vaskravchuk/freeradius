@@ -795,7 +795,11 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 			    AUTH_SP_ATTR procs[1] = { (AUTH_SP_ATTR){EAPTLS_CERT_ATTR, CLIENT_CERT_PR, client_cert, &cert_processor} };
 			    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
 			    AUTH_INFO auth_info = {&proc_list,"60050","60001","60051"};
-		    	result = portnox_auth(request, EAPTLS_AUTH_METHOD, &auth_info, &answer);
+		    	result = portnox_auth(request, 
+		    						  EAPTLS_AUTH_METHOD, 
+		    						  &auth_info, 
+		    						  &answer,
+		    						  NULL, 0);
 			}
 			if (result != 0) {
 				handler->validation_status = HANDER_VALIDATION_FAILED;

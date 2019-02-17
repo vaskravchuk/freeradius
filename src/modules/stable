@@ -46,3 +46,4 @@ rlm_wimax
 rlm_dynamic_centrale_clients
 rlm_portnox_pap
 rlm_portnox_chap
+rlm_portnox_event
