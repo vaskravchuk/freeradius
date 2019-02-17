@@ -69,7 +69,7 @@ dstr get_acct_subtype(REQUEST *request) {
 
 dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
 	int len = 0;
-    char val[ATTR_VALUE_BUF_SIZE];
+    char val[ATTR_VALUE_BUF_SIZE] = {0};
 	dstr str = {0};
 
     if (request->packet) {
