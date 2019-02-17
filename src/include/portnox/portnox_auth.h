@@ -51,6 +51,9 @@ typedef struct auth_info_t {
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 AUTH_INFO *auth_info, 
-                VALUE_PAIR **output_pairs);
+                VALUE_PAIR **output_pairs, 
+                char *user_msg, int msg_len);
+
+const char *get_operation_result_desc(int res);
 
 #endif //PORTNOX_AUTH_H

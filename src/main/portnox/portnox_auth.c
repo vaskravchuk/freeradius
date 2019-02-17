@@ -28,11 +28,13 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
                                AUTH_SP_ATTR_LIST *attr_proc_list);
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
 static const char* auth_method_str(int auth_method);
+static void process_result(int res, char *user_msg, int msg_len);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 AUTH_INFO *auth_info, 
-                VALUE_PAIR **output_pairs) {
+                VALUE_PAIR **output_pairs,
+                char *user_msg, int msg_len) {
     int result = OPERATION_SUCCESS;
     srv_req call_req = {0};
     srv_resp call_resp = {0};
@@ -134,7 +136,7 @@ int portnox_auth(REQUEST *request,
     }
 
     /* auth is OK, cache response if need */
-    if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error) {
+    if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error && call_resp.data) {
         dstr nas_port = {0};
 
         radlog(L_INFO, "ContextId: %s; portnox_auth save response to redis auth_method: %s", 
@@ -267,6 +269,32 @@ static const char* auth_method_str(int auth_method) {
             return "EAP_TLS";
         case MD5_AUTH_METHOD:
             return "MD5";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+static void process_result(int res, char *user_msg, int msg_len) {
+    if (!user_msg || !msg_len) return;
+
+    int n = 0;
+    const char* msg = NULL;
+
+    msg = get_operation_result_desc(res);
+    n = str_format(user_msg, msg_len, msg);
+    user_msg[n] = '\0';
+}
+
+const char *get_operation_result_desc(int res) {
+    switch (res) {
+        case OPERATION_SUCCESS:
+            return "Success";
+        case ORG_ID_FAILED_GET_ERROR:
+            return "Failed to get org id";
+        case IDENTITY_NOT_FOUND_ERROR:
+            return "Identity not found";
+        case AUTH_REJECT_ERROR:
+            return "Fails external verification";
         default:
             return "UNKNOWN";
     }

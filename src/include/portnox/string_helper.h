@@ -21,5 +21,7 @@ void lower(char *str);
 char* str_replace(char* string, const char* substr, const char* replacement);
 char* trim_to_string(char* string, char* substr);
 char* bytes_to_hex(const unsigned char* data, size_t datalen);
+int vstr_format(char * s, int n, const char *format, va_list ap);
+int str_format(char * s, int n, const char *format, ...);
 
 #endif //STRING_HELPER_H

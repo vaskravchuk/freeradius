@@ -268,7 +268,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
     free(response);
     response = NULL;
 
-	char buffer[1024];
+	char buffer[1024] = {0};
 	eap_md5_t *inst = arg;
 	VALUE_PAIR *answer = NULL;
 	VALUE_PAIR **output_pairs = NULL;
@@ -285,7 +285,11 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 				handler->request->packet->vps, &answer, 1, 60040);
 		}
 		else {
-		    result = portnox_auth(handler->request, MD5_AUTH_METHOD, &auth_info, &answer);
+		    result = portnox_auth(handler->request, 
+		    					  MD5_AUTH_METHOD, 
+		    					  &auth_info, 
+		    					  &answer,
+		    					  buffer, sizeof(buffer));
 		}
 
 		if (result != 0) {

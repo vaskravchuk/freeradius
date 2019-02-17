@@ -11,6 +11,9 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+
 int is_contains(char **arr, int size, char* str) {
     int found = 0;
     for (int i = 0; i < size; ++i) {
@@ -157,4 +160,25 @@ char* bytes_to_hex (const unsigned char* data, size_t datalen) {
     chrs[2*j]='\0';
     lower(chrs);
     return chrs;
+}
+
+int vstr_format(char * s, int n, const char *format, va_list ap) {
+    int len = 0;
+
+    len = vsnprintf(s, n, format, ap);
+    len = MIN(len, n-1);
+    len = len < 0 ? 0 : len;
+
+    return len;
+}
+
+int str_format(char * s, int n, const char *format, ...) {
+    int len = 0;
+
+    va_list ap;
+    va_start(ap, format);
+    len = vstr_format(s, n, format, ap);
+    va_end(ap);
+
+    return len;
 }
