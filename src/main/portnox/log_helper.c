@@ -1,32 +1,32 @@
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/curl_client.h>
-#include <freeradius-devel/portnox/portnox_auth.h>
 #include <freeradius-devel/portnox/json_helper.h>
+#include <freeradius-devel/portnox/attrs_helper.h>
+#include <freeradius-devel/portnox/string_helper.h>
 #include <freeradius-devel/portnox/log_helper.h>
-#include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include <syslog.h>
 
 #define TAG "radiusd"
 
-void to_syslog(char* priority, dstr* message);
-void log_to_portnox(dstr* message);
+static void log(char* code, dstr *message, char* priority, REQUEST* req);
+static void to_syslog(char* priority, dstr* message);
+static void log_to_portnox(dstr* message);
 
-void log(char* code, dstr *message, char* priority, REQUEST* req) {
+static void log(char* code, dstr *message, char* priority, REQUEST* req) {
     dstr full_message = {0};
 
     full_message = dstr_from_fmt("%s ContextId: %s; %s", code, req->context_id, message->s);
 
     // to syslog
-    to_syslog(priority, message);
+    to_syslog(priority, full_message);
 
     // to portnox
     log_to_portnox(&full_message);
+
+    dstr_destroy(&full_message);
 }
 
-void to_syslog(char* priority, dstr *message) {
+static void to_syslog(char* priority, dstr *message) {
     int syslog_priority = 0;
 
     if(strcmp(priority, "info") == 0){
@@ -47,10 +47,12 @@ void to_syslog(char* priority, dstr *message) {
     closelog();
 }
 
-void log_to_portnox(dstr *message) {
-    srv_req req = req_create(portnox_config.daemon.logging_url, message->s, 0, 0);
+static void log_to_portnox(dstr *message) {
+    srv_req req = {0};
+    srv_resp resp = {0};
 
-    srv_resp resp = exec_http_request(&req);
+    req = req_create(portnox_config.log.logging_url, message->s, 0, 0);
+    resp = exec_http_request(&req);
 
     req_destroy(&req);
     resp_destroy(&resp);
@@ -66,35 +68,54 @@ void log_error(char* code, dstr *message, REQUEST* req) {
 
 int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *request) {
     dstr full_message = {0};
+    dstr username = {0};
+    dstr mac = {0};
+    char *custom_json = NULL;
+    char *port = NULL;
+    char *context_id = NULL;
 
-    char *custom_json = get_attrs_json_str(request);
-
-    dstr username = get_username(request);
-    dstr mac = get_mac(request);
-    char *port = request->client_shortname;
-    char *context_id = request->context_id;
+    custom_json = get_attrs_json_str(request);
+    username = get_username(request);
+    mac = get_mac(request);
+    port = request->client_shortname;
+    context_id = request->context_id;
 
     if (strcmp(error_code, "60029") == 0) {
-        full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes %s", 
-            dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
+        full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s", 
+            n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60030") == 0) {
-        full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes %s",
-                 dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
+        full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), port), n_str(dstr_to_cstr(&mac)), n_str(custom_json);
         log_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60031") == 0) {
-        full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes %s",
-                 dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
+        full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60002") == 0 || strcmp(error_code, "60035") == 0 || strcmp(error_code, "60039") == 0 || strcmp(error_code, "60051") == 0) {
+        char *org_id = NULL;
+
+        get_org_id_for_client(request->client_shortname, &org_id);
+
+        full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for ${USERNAME} on port ${PORT} with mac ${MAC} ,\"RadiusCustom\":%s",
+                 n_str(message), n_str(org_id), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_error(error_code, &full_message, request);
+
+        if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-        full_message = dstr_from_fmt( "%s %s for %s on port %s with mac %s and attributes %s",
-                error_code, message, dstr_to_cstr(&username), port, dstr_to_cstr(&mac), custom_json);
+        full_message = dstr_from_fmt( "%s %s for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+                n_str(error_code), n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_error(error_code, &full_message, request);
     } else {
-        dstr d_message = dstr_cstr(message);
+        dstr d_message = {0};
+
+        d_message = dstr_cstr(message);
         log_error(error_code, &d_message, request);
+
+        dstr_destroy(&d_message);
     }
 
+    if (custom_json) free(custom_json);
     dstr_destroy(&full_message);
     dstr_destroy(&username);
     dstr_destroy(&mac);

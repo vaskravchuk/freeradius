@@ -46,16 +46,11 @@ static const CONF_PARSER portnox_be_config_nodest[] = {
 	{ NULL, -1, 0, NULL, NULL }
 };
 
-static const CONF_PARSER portnox_daemon_config_nodest[] = {
-	{ "logging_url", PW_TYPE_STRING_PTR, 0, &portnox_config.daemon.logging_url, "127.0.0.1:8000/radius/logs"},
-
-	{ NULL, -1, 0, NULL, NULL }
-};
-
 static const CONF_PARSER portnox_log_config_nodest[] = {
 	{ "allow_auth_flow_log", PW_TYPE_BOOLEAN, 0, &portnox_config.log.allow_auth_flow_log, "yes" },
 	{ "use_script", PW_TYPE_BOOLEAN, 0, &portnox_config.log.use_script, "no" },
 	{ "log_script", PW_TYPE_STRING_PTR, 0, &portnox_config.log.log_script, NULL},
+	{ "logging_url", PW_TYPE_STRING_PTR, 0, &portnox_config.log.logging_url, "127.0.0.1:8000/radius/logs"},
 
 	{ NULL, -1, 0, NULL, NULL }
 };
