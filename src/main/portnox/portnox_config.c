@@ -58,7 +58,6 @@ static const CONF_PARSER portnox_log_config_nodest[] = {
 const CONF_PARSER portnox_config_nodest[] = {
 	{ "redis", PW_TYPE_SUBSECTION, 0, NULL, (const void *) portnox_redis_config_nodest },
 	{ "be", PW_TYPE_SUBSECTION, 0, NULL, (const void *) portnox_be_config_nodest },
-	{ "daemon", PW_TYPE_SUBSECTION, 0, NULL, (const void *) portnox_daemon_config_nodest },
 	{ "log", PW_TYPE_SUBSECTION, 0, NULL, (const void *) portnox_log_config_nodest },
 
 	{ NULL, -1, 0, NULL, NULL }
