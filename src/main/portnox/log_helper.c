@@ -5,6 +5,7 @@
 #include <freeradius-devel/portnox/attrs_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
 #include <freeradius-devel/portnox/log_helper.h>
+#include <syslog.h>
 
 #define TAG "radiusd"
 
@@ -22,7 +23,7 @@ static void log(char* code, dstr *message, int priority, REQUEST* req) {
     full_message = dstr_from_fmt("%s ContextId: %s; %s", n_str(code), n_str(req->context_id), n_str(dstr_to_cstr(message)));
 
     // to syslog
-    to_syslog(priority, full_message);
+    to_syslog(priority, &full_message);
 
     // to portnox
     log_to_portnox(&full_message);
