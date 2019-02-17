@@ -45,7 +45,7 @@ static void log_to_portnox(dstr *message) {
     srv_resp resp = {0};
     char* msg_cpy = NULL;
 
-    if (!is_nas(&message)) msg_cpy = strdup(dstr_to_cstr(message));
+    if (!is_nas(message)) msg_cpy = strdup(dstr_to_cstr(message));
 
     req = req_create(portnox_config.log.logging_url, msg_cpy, 0, 0);
     resp = exec_http_request(&req);
