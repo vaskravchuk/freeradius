@@ -28,6 +28,7 @@ RCSID("$Id$")
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/portnox_common.h>
