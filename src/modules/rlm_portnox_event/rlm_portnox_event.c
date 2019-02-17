@@ -26,7 +26,6 @@ RCSID("$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/modules.h>
-#include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/attrs_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
 #include <freeradius-devel/portnox/curl_client.h>
@@ -50,7 +49,7 @@ static char *type_map[TYPES_SIZE] = { "ACCEPT", "REJECT", "ACCT"};
 #define START_ACCT_SUBTYPE		"Start"
 #define STOP_ACCT_SUBTYPE		"Stop"
 
-#define TIME_BUFFER_SIZE	32
+#define TIME_BUFFER_SIZE	16
 
 /* Define a structure for our module configuration. */
 typedef struct rlm_portnox_event_t {
