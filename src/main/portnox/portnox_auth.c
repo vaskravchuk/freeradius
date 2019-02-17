@@ -18,22 +18,23 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/attrs_helper.h>
 
 #define NTKEY_ATTR_STRING_FORMAT    "NT_KEY: %s"
 
-static dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
-static dstr get_nas_port(REQUEST *request);
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list);
 static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, char* identity, char* mac, 
                                AUTH_SP_ATTR_LIST *attr_proc_list);
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
 static const char* auth_method_str(int auth_method);
+static void process_result(int res, char *user_msg, int msg_len);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 AUTH_INFO *auth_info, 
-                VALUE_PAIR **output_pairs) {
+                VALUE_PAIR **output_pairs,
+                char *user_msg, int msg_len) {
     int result = OPERATION_SUCCESS;
     srv_req call_req = {0};
     srv_resp call_resp = {0};
@@ -44,7 +45,7 @@ int portnox_auth(REQUEST *request,
 
     radlog(L_INFO, 
            "ContextId: %s; portnox_auth for auth_method: %s", 
-           request->context_id, auth_method_str(auth_method));
+           n_str(request->context_id), auth_method_str(auth_method));
 
     /* get identity */
     identity = get_username(request);
@@ -64,14 +65,14 @@ int portnox_auth(REQUEST *request,
         radius_exec_logger_centrale(request, 
                                     auth_info->missed_orgid_error_code, 
                                     "Unable to find centrale orgid in REDIS for port %s", 
-                                    request->client_shortname);
+                                    n_str(request->client_shortname));
         result = ORG_ID_FAILED_GET_ERROR;
         goto fail;
     } 
     
     radlog(L_ERR, 
            "ContextId: %s; Central auth for %s on port %s with mac %s", 
-           request->context_id, dstr_to_cstr(&identity),  request->client_shortname, dstr_to_cstr(&mac));
+           n_str(request->context_id), n_str(dstr_to_cstr(&identity)),  n_str(request->client_shortname), n_str(dstr_to_cstr(&mac)));
 
     /* create request struct */
     call_req = create_auth_req(request, 
@@ -101,7 +102,7 @@ int portnox_auth(REQUEST *request,
 
         radlog(L_INFO, 
            "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
-           request->context_id, auth_method_str(auth_method));
+           n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
         resp_cache_result = get_response_for_data(dstr_to_cstr(&identity), 
@@ -112,7 +113,7 @@ int portnox_auth(REQUEST *request,
         if (resp_cache_result == 0 && cached_data) {
             radlog(L_INFO, 
                "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
-               request->context_id, auth_method_str(auth_method));
+               n_str(request->context_id), auth_method_str(auth_method));
 
             resp_destroy(&call_resp);
             call_resp.return_code = 0;
@@ -135,11 +136,11 @@ int portnox_auth(REQUEST *request,
     }
 
     /* auth is OK, cache response if need */
-    if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error) {
+    if (!resp_from_cache && portnox_config.be.need_auth_cache_for_error && call_resp.data) {
         dstr nas_port = {0};
 
         radlog(L_INFO, "ContextId: %s; portnox_auth save response to redis auth_method: %s", 
-                        request->context_id, auth_method_str(auth_method));
+                        n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
         set_response_for_data(dstr_to_cstr(&identity), 
@@ -154,6 +155,7 @@ int portnox_auth(REQUEST *request,
     process_response(&call_resp, output_pairs);
 
     fail:
+    process_result(result, user_msg, msg_len);
     if (org_id) free(org_id);
     req_destroy(&call_req);
     resp_destroy(&call_resp);
@@ -166,9 +168,10 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
                                AUTH_SP_ATTR_LIST *attr_proc_list) {
     dstr url = {0};
     char* json = NULL;
+    srv_req req = {0};
 
-    /* get org id */
-    url = dstr_from_fmt(portnox_config.be.auth_url, org_id);
+    /* get portnox url */
+    url = dstr_from_fmt(portnox_config.be.auth_url, n_str(org_id));
 
     /* get request json string */
     json = get_request_json(request, 
@@ -178,7 +181,10 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
                             attr_proc_list);
 
     /* create request struct & move json scope to req_create */
-    return req_create(dstr_to_cstr(&url), json, 0, 1);
+    req = req_create(dstr_to_cstr(&url), json, 0, 1);
+
+    dstr_destroy(&url);
+    return req;
 }
 
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
@@ -192,9 +198,11 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     json = cJSON_Parse(call_resp->data);
     if (!json) return;
 
+    radlog(L_DBG, "portnox_auth process response");
     /* move nt key to output pairs */
     item = cJSON_GetObjectItem(json, NTKEY_PR);
     if (item && item->valuestring && *item->valuestring) {
+        radlog(L_DBG, "portnox_auth process NT-KEY");
         /* temp value, don't destroy, we will move string in other scope */
         dstr ntkey_attr_val = {0};
 
@@ -204,6 +212,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
 
         dstr_destroy(&ntkey_attr_val);
     }
+    radlog(L_DBG, "portnox_auth process custom attrs");
 
     /* parse radius custom attributes */
     item = cJSON_GetObjectItem(json, RADIUS_CUSTOM_PR);
@@ -211,29 +220,6 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
     parse_custom_attr(item, output_pairs);
 
     if (json) cJSON_Delete(json);
-}
-
-dstr get_username(REQUEST *request) {
-    return get_vps_attr_or_empty(request, USERNAME_ATTR);
-}
-
-dstr get_mac(REQUEST *request) {
-	dstr str = {0};
-
-	str = get_vps_attr_or_empty(request, CALLING_STATION_ID_ATTR);
-
-	if (!is_nas(&str)) {
-		dstr_replace_chars(&str, '-', ':');
-		dstr_to_lower(&str);
-	} else {
-		str = dstr_cstr("00:00:00:00:00:00");
-	}
-
-	return str;
-}
-
-static dstr get_nas_port(REQUEST *request) {
-    return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
 }
 
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
@@ -272,32 +258,6 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
     return json;
 }
 
-static dstr get_vps_attr_or_empty(REQUEST *request, char *attr) {
-	int len = 0;
-    char val[ATTR_VALUE_BUF_SIZE];
-    char *val_escaped = NULL;
-	dstr str = {0};
-
-    if (request->packet) {
-    	for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
-    		if (!vp->name || !(*vp->name)) continue;
-    		if (strcmp(attr, vp->name) == 0) {
-    			len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
-
-                val[len] = 0;
-
-                val_escaped = str_replace(val, "\\\\", "\\");
-                str = dstr_cstr(val_escaped);
-
-                if (val_escaped) free(val_escaped);
-    			break;	
-    		}
-    	}
-    }
-
-	return str;
-}
-
 static const char* auth_method_str(int auth_method) {
     switch (auth_method) {
         case PAP_AUTH_METHOD:
@@ -310,6 +270,32 @@ static const char* auth_method_str(int auth_method) {
             return "EAP_TLS";
         case MD5_AUTH_METHOD:
             return "MD5";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+static void process_result(int res, char *user_msg, int msg_len) {
+    if (!user_msg || !msg_len) return;
+
+    int n = 0;
+    const char* msg = NULL;
+
+    msg = get_operation_result_desc(res);
+    n = str_format(user_msg, msg_len, msg);
+    user_msg[n] = '\0';
+}
+
+const char *get_operation_result_desc(int res) {
+    switch (res) {
+        case OPERATION_SUCCESS:
+            return "Success";
+        case ORG_ID_FAILED_GET_ERROR:
+            return "Failed to get org id";
+        case IDENTITY_NOT_FOUND_ERROR:
+            return "Identity not found";
+        case AUTH_REJECT_ERROR:
+            return "Fails external verification";
         default:
             return "UNKNOWN";
     }

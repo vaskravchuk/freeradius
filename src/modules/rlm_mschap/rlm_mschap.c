@@ -751,7 +751,7 @@ static int do_mschap(rlm_mschap_t *inst,
 		}
 	} else {		/* run ntlm_auth */
 		int	result;
-		char	buffer[256];
+		char	buffer[256] = {0};
 
 		memset(nthashhash, 0, 16);
 
@@ -771,7 +771,11 @@ static int do_mschap(rlm_mschap_t *inst,
 		    						  (AUTH_SP_ATTR){MSCHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, challenge, &challenge_processor} };
 		    AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
 		    AUTH_INFO auth_info = {&proc_list,"60000","60001","60002"};
-		    result = portnox_auth(request, MSCHAP_AUTH_METHOD, &auth_info, &answer);
+		    result = portnox_auth(request, 
+		    					  MSCHAP_AUTH_METHOD, 
+		    					  &auth_info, 
+		    					  &answer, 
+		    					  buffer, sizeof(buffer));
 		}
 		if (result != 0) {
 			char *p;

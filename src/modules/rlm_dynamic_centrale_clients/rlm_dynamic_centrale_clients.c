@@ -9,6 +9,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/curl_client.h>
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
+#include <freeradius-devel/portnox/string_helper.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -176,7 +177,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
 
     /* did not found in redis -> try by REST from BE */
     if (from_cache == 0) {
-        radlog(L_INFO, "Dynamic central clients for ip %s port %d from url", hostname, port);
+        radlog(L_INFO, "Dynamic central clients for ip %s port %d from url", n_str(hostname), port);
 
         /* compose request json */
         req_json = get_request_json(hostname, port, portnox_config.be.cluster_id);
@@ -192,7 +193,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         call_resp = exec_http_request(&call_req);
 
         if (call_resp.return_code != 0 || !call_resp.data || !(*call_resp.data)) {
-            radlog(L_ERR, "Failed curl request with error code '%d', data '%s'", call_resp.return_code, call_resp.data ? call_resp.data : "(null)");
+            radlog(L_ERR, "Failed curl request with error code '%d', data '%s'", call_resp.return_code, n_str(call_resp.data));
             result = 1; 
             goto fail;
         }
@@ -202,7 +203,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         if (!org_id || !(*org_id)) {
             radius_exec_logger_centrale(request, "60007",
                                         "rlm_dynamic_centrale_clients: Unable to get CallerOrgId for client %s on port %d",
-                                        hostname, port);
+                                        n_str(hostname), port);
         }
 
         shared_secret = get_val_by_attr_from_json(call_resp.data, CALLER_SECRET);
@@ -210,7 +211,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         if (!shared_secret || !(*shared_secret)) {
             radius_exec_logger_centrale(request, "60007",
                                         "rlm_dynamic_centrale_clients: Unable to get CallerSecret for client %s on port %d",
-                                        hostname, port);
+                                        n_str(hostname), port);
         }
     }
 
@@ -226,7 +227,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     }
 
     /* save in redis if data come from BE */
-    if (from_cache == 0) {
+    if (!from_cache) {
         set_org_id_for_port(port, org_id);
         set_shared_secret_for_port(port, shared_secret);
     }
@@ -249,7 +250,7 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, ch
 
     output_file = fopen(file, "w");
 
-    formated_output = dstr_from_fmt(format, hostname, shared_secret, port);
+    formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
 
     if (!is_nas(&formated_output)) {
         fputs(dstr_to_cstr(&formated_output), output_file);

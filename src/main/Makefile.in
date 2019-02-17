@@ -12,7 +12,8 @@ SERVER_SRCS	= acct.c auth.c client.c conffile.c crypt.c exec.c files.c \
 		  portnox/dep/credis.c portnox/dep/cJSON.c \
 		  portnox/redis_client.c portnox/redis_dal.c portnox/curl_client.c portnox/dstr.c \
 		  portnox/log_request.c portnox/json_helper.c portnox/portnox_config.c \
-		  portnox/portnox_auth.c portnox/string_helper.c portnox/log_helper.c
+		  portnox/portnox_auth.c portnox/string_helper.c portnox/attrs_helper.c \
+      portnox/log_helper.c
 
 SERVER_OBJS	+= $(SERVER_SRCS:.c=.lo)
 

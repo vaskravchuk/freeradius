@@ -7,8 +7,15 @@
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/dep/cJSON.h>
 #include <freeradius-devel/portnox/dstr.h>
-#include <freeradius-devel/portnox/portnox_auth.h>
 #include <freeradius-devel/portnox/string_helper.h>
+#include <freeradius-devel/portnox/portnox_common.h>
+
+
+#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
+#define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
+
+#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
+#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
 
 char *get_val_by_attr_from_json(char *json, char *attr) {
     cJSON *parsed = NULL;
@@ -22,7 +29,7 @@ char *get_val_by_attr_from_json(char *json, char *attr) {
     if (!found_item || !found_item->valuestring) goto fail;
 
     /* should be copied */
-    val =  strdup(found_item->valuestring);
+    val = strdup(found_item->valuestring);
 
     fail:
     if (parsed) cJSON_Delete(parsed);
@@ -48,12 +55,17 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
 }
 
 cJSON *get_attrs_json(REQUEST *request) {
+    /*
+     * EMMET MARVIN & MARTIN had problem with parsing
+     * request json bacause of 'Chargeable-User-Identity' attr 
+     * So lets skip it
+     */
     static char *except_attrs[] = { "TLS-Client-Cert-Filename", "EAP-Message", "Message-Authenticator", "Chargeable-User-Identity" };
     static char *except_attrs_size = sizeof(except_attrs) / sizeof(except_attrs[0]);
-    cJSON *array = NULL;
-    cJSON *item = NULL;
     char val[ATTR_VALUE_BUF_SIZE];
     int len = 0;
+    cJSON *array = NULL;
+    cJSON *item = NULL;
     
     array = cJSON_CreateArray();
     
@@ -61,15 +73,20 @@ cJSON *get_attrs_json(REQUEST *request) {
         for (VALUE_PAIR *vp = request->packet->vps; vp; vp = vp->next) {
             if (!vp->name || !(*vp->name)) continue;
             if (is_contains(except_attrs, except_attrs_size, vp->name)) continue;
+            char *val_escaped = NULL;
+            
             /* get value */
             len = vp_prints_value(val, ATTR_VALUE_BUF_SIZE, vp, 0);
             val[len] = 0;
+            val_escaped = str_replace(val, "\\\\", "\\");
 
             /* to json */
             item = cJSON_CreateObject();
             cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_KEY, vp->name);
-            cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, val);
+            cJSON_AddStringToObject(item, REQ_CUSTOM_ATTR_VAL_VALUE, val_escaped);
             cJSON_AddItemToArray(array, item);
+
+            if (val_escaped) free(val_escaped);
         }
     }
 
@@ -96,11 +113,9 @@ char *get_attrs_json_str(REQUEST *request) {
     json = "";
 
     attrs = get_attrs_json(request);
-    if (attrs) {
-        json = cJSON_Print(attrs);
-        cJSON_Minify(json);
-        cJSON_Delete(attrs);
-    }
+    json = cJSON_Print(attrs);
+    cJSON_Minify(json);
+    cJSON_Delete(attrs);
 
     return json;
 }
