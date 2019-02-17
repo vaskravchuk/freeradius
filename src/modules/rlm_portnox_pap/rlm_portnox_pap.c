@@ -27,7 +27,6 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/modules.h>
 #include <freeradius-devel/portnox/portnox_auth.h>
-#include <freeradius-devel/portnox/json_helper.h>
 
 /* do pap authentication */
 static int portnox_pap_auth(void *instance, REQUEST *request)
@@ -38,14 +37,6 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
 
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
-
-	cJSON *h = NULL;
-
-		radlog(L_ERR, "portnox_pap_auth test 1");
-		h = get_attrs_json(request);
-		radlog(L_ERR, "portnox_pap_auth test 2 %d", h->type);
-		radlog(L_ERR, "portnox_pap_auth test 3");
-
 
     result = portnox_auth(request, 
     					  PAP_AUTH_METHOD, 
