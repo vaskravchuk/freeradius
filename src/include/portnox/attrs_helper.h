@@ -14,7 +14,7 @@ RCSIDH(attrs_helper_h, "$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
 
-dstr get_vps_attr_or_empty(REQUEST *request, char *attr);
+dstr get_vps_attr_or_empty(REQUEST *request, const char *attr);
 dstr get_username(REQUEST *request);
 dstr get_mac(REQUEST *request);
 dstr get_nas_port(REQUEST *request);
