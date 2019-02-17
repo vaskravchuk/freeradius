@@ -149,7 +149,7 @@ char* bytes_to_hex (const unsigned char* data, size_t datalen) {
     unsigned int j = 0;
     
     final_len = datalen * 2;
-    chrs = (unsigned char *) malloc((final_len + 1) * sizeof(*chrs));
+    chrs = malloc((final_len + 1) * sizeof(char));
 
     for(j = 0; j<datalen; j++) {
         chrs[2*j] = (data[j]>>4)+48;
