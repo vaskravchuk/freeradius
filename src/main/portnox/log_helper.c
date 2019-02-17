@@ -43,8 +43,11 @@ static void to_syslog(int priority, dstr *message) {
 static void log_to_portnox(dstr *message) {
     srv_req req = {0};
     srv_resp resp = {0};
+    char* msg_cpy = NULL;
 
-    req = req_create(portnox_config.log.logging_url, dstr_to_cstr(message), 0, 0);
+    if (!is_nas(&message)) msg_cpy = strdup(dstr_to_cstr(message));
+
+    req = req_create(portnox_config.log.logging_url, msg_cpy, 0, 0);
     resp = exec_http_request(&req);
 
     req_destroy(&req);
