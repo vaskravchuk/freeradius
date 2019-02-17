@@ -7,9 +7,10 @@
 
 #include <freeradius-devel/radiusd.h>
 
-void log_p(char* code, char* message, char* priority, REQUEST* req);
-void log_info_p(char* message,  REQUEST* req);
-void log_error_p(char* code, char* message, REQUEST* req);
+void log_portnox(const char* code, dstr *message, int priority, REQUEST* req);
+void log_portnox_info(dstr *message,  REQUEST* req);
+void log_portnox_error(const char* code, dstr *message, REQUEST* req);
 
-int radius_internal_logger_centrale(char* error_code, char* message, REQUEST *request);
+int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *request);
+
 #endif //LOG_HELPER_H
