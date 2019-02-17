@@ -608,8 +608,6 @@ REQUEST *request_alloc_fake(REQUEST *request)
   memcpy(fake->context_id, request->context_id, sizeof(request->context_id));
   memcpy(fake->request_id, request->request_id, sizeof(request->request_id));
   memcpy(fake->client_shortname, request->client_shortname, sizeof(request->client_shortname));
-
-  fake->logs = rad_malloc(sizeof(LOG_DESC));
   memcpy(fake->logs, request->logs, sizeof(LOG_DESC));
 
   return fake;

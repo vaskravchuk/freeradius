@@ -5,44 +5,16 @@
  *
  * Created by Vasiliy Kravchuk on 1/24/19.
  */
+#ifndef PORTNOX_AUTH_H
+#define PORTNOX_AUTH_H
 
 #include <freeradius-devel/ident.h>
 RCSIDH(portnox_auth_h, "$Id$")
 
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/dstr.h>
-
-#define AUTH_METHOD_PR				"AuthNMethod"
-#define MAC_ADDRESS_PR				"MacAddress"
-#define PLAIN_PWD_PR				"PlainPwd"
-#define USERNAME_PR					"UserName"
-#define CLIENT_CERT_PR				"ClientCertificate"
-#define NT_CHALLENGE_PR				"NtChallenge"
-#define NT_RESPONSE_PR	            "NtClientResponse"
-#define RADIUS_CUSTOM_PR			"RadiusCustom"
-#define NTKEY_PR					"NtKey"
-
-#define USERNAME_ATTR				"User-Name"
-#define USER_PWD_ATTR               "User-Password"
-#define CHAP_RESPONSE_ATTR          "CHAP-Password"
-#define CHAP_CHALLENGE_ATTR         "Packet-Authentication-Vector"
-#define MSCHAP2_RESPONSE_ATTR       "MS-CHAP2-Response"
-#define MSCHAP_RESPONSE_ATTR        "MS-CHAP-Response"
-#define MSCHAP_CHALLENGE_ATTR       "MS-CHAP-Challenge"
-#define MD5_RESPONSE_ATTR           "MD5-Password"
-#define MD5_CHALLENGE_ATTR          "MD5-Challenge"
-#define EAPTLS_CERT_ATTR            "TLS-Client-Cert-Filename"
-#define CALLING_STATION_ID_ATTR		"Calling-Station-Id"
-#define CONTEXT_ID_ATTR				"CONTEXT_ID"
-#define PORT_ATTR					"PORT"
-#define NTKEY_ATTR                  "Tmp-String-0"
-#define NAS_PORT_ATTR               "NAS-Port-Type"
-
-#define REQ_CUSTOM_ATTR_VAL_KEY     "Key"
-#define REQ_CUSTOM_ATTR_VAL_VALUE   "Value"
-
-#define RESP_CUSTOM_ATTR_VAL_KEY    "key"
-#define RESP_CUSTOM_ATTR_VAL_VALUE  "value"
+#include <freeradius-devel/portnox/attrs_helper.h>
+#include <freeradius-devel/portnox/portnox_common.h>
 
 #define OPERATION_SUCCESS           0
 #define ORG_ID_FAILED_GET_ERROR     -1
@@ -54,8 +26,6 @@ RCSIDH(portnox_auth_h, "$Id$")
 #define CHAP_AUTH_METHOD            4
 #define EAPTLS_AUTH_METHOD          5
 #define MD5_AUTH_METHOD             6
-
-#define ATTR_VALUE_BUF_SIZE         256
 
 /* struct to specify concrete attribute processor */
 typedef struct auth_attr_proc_t {
@@ -81,4 +51,9 @@ typedef struct auth_info_t {
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
                 AUTH_INFO *auth_info, 
-                VALUE_PAIR **output_pairs);
+                VALUE_PAIR **output_pairs, 
+                char *user_msg, int msg_len);
+
+const char *get_operation_result_desc(int res);
+
+#endif //PORTNOX_AUTH_H

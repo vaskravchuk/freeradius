@@ -11,30 +11,6 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/portnox_config.h>
 #include <freeradius-devel/portnox/string_helper.h>
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
-
-int vstr_format(char * s, int n, const char *format, va_list ap) {
-	int len = 0;
-
-	len = vsnprintf(s, n, format, ap);
-	len = MIN(len, n-1);
-	len = len < 0 ? 0 : len;
-
-	return len;
-}
-
-int str_format(char * s, int n, const char *format, ...) {
-	int len = 0;
-
-	va_list ap;
-	va_start(ap, format);
-	len = vstr_format(s, n, format, ap);
-	va_end(ap);
-
-	return len;
-}
 
 inline int close_str(char *out, int outlen) {
 	int l = 0;
@@ -66,7 +42,7 @@ int log_add_json_mac(char *out, int outlen, const char *key, VALUE_PAIR *vps) {
 	static char *mac_attrs_size = sizeof(mac_attrs) / sizeof(mac_attrs[0]);
 
 	int len = 0;
-	char mac_buffer[24];
+	char mac_buffer[24] = {0};
 
 	for (VALUE_PAIR *vp = vps; vp; vp = vp->next) {
 		if (!vp->name || !(*vp->name)) return;
