@@ -79,10 +79,12 @@ static dstr get_response_key_part(const char* username, const char* mac, const c
     char* uname = NULL;
     dstr key = {0};
 
-    if(!strstr(nas_type, "Ethernet") || !strstr(nas_type, "Wireless")) {
-        uname = trim_to_string(username, "#");
-    } else {
-        uname = strdup(username);
+    if (username) {
+        if(!nas_type || !strstr(nas_type, "Ethernet") || !strstr(nas_type, "Wireless")) {
+            uname = trim_to_string(username, "#");
+        } else {
+            uname = strdup(username);
+        }
     }
 
     key = dstr_from_fmt("%s-%s-%s-%s", n_str(uname), n_str(mac), n_str(port), n_str(nas_type));

@@ -83,6 +83,8 @@ char* str_replace(char* string, const char* substr, const char* replacement) {
     int   substr_len = 0;
     int   replacement_len = 0;
 
+    if (!string) return NULL;
+
     newstr = strdup(string);
     substr_len = strlen(substr);
     replacement_len = strlen(replacement);
@@ -118,6 +120,8 @@ char* trim_to_string(char* string, char* substr) {
     int   oldstr_len = 0;
     int   substr_len = 0;
     int   size = 0;
+
+    if (!string) return NULL;
 
     oldstr_len = strlen(string);
     substr_len = strlen(substr);
