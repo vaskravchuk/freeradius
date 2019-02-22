@@ -8,8 +8,6 @@
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <syslog.h>
 
-#define TAG "radiusd"
-
 #define DEBUG_PRIORITY  0
 #define INFO_PRIORITY   1
 #define ERROR_PRIORITY  2
@@ -35,7 +33,6 @@ static void to_syslog(int priority, dstr *message) {
             break;
     }
 
-    openlog(TAG, LOG_PID, LOG_LOCAL1);
     syslog(LOG_MAKEPRI(LOG_LOCAL1, syslog_priority), "%s", n_str(dstr_to_cstr(message)));
     closelog();
 }
