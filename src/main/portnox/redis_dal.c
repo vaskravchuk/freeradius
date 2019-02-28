@@ -152,33 +152,7 @@ static int do_get_for_port(const int port, char **val, int (*getter)(const char*
     return result;
 }
 
-
 /* Return string which describes redis Error */
-const char* redis_error_descr(int error) {
-    switch (error) {
-        case CREDIS_OK:
-            return "OK";
-        case CREDIS_KEY_NOT_FOUND:
-            return "Key not found";
-        case CLIENT_CR_ERROR:
-            return "Failed to create client";
-        case CREDIS_ERR:
-            return "Redis common error";
-        case CREDIS_ERR_NOMEM:
-            return "Not enough memory";
-        case CREDIS_ERR_RESOLVE:
-            return "Host resolve error";
-        case CREDIS_ERR_CONNECT:
-            return "Connection error";
-        case CREDIS_ERR_SEND:
-            return "Failed to send data";
-        case CREDIS_ERR_RECV:
-            return "Failed to receive data";
-        case CREDIS_ERR_TIMEOUT:
-            return "Timeout";
-        case CREDIS_ERR_PROTOCOL:
-            return "Protocol error";
-        default:
-            return "Unknown";
-    }
+const char* redis_dal_error_descr(int error) {
+    return redis_error_descr(error);
 }

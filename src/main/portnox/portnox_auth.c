@@ -70,7 +70,7 @@ int portnox_auth(REQUEST *request,
                                     n_str(dstr_to_cstr(&identity)),  
                                     n_str(request->client_shortname), 
                                     n_str(dstr_to_cstr(&mac)), 
-                                    redis_error_descr(redis_result));
+                                    redis_dal_error_descr(redis_result));
         radius_exec_logger_centrale(request, 
                                     auth_info->missed_orgid_error_code, 
                                     "Unable to find centrale orgid in REDIS for port %s", 
@@ -125,7 +125,7 @@ int portnox_auth(REQUEST *request,
                                         n_str(dstr_to_cstr(&identity)),  
                                         n_str(request->client_shortname), 
                                         n_str(dstr_to_cstr(&mac)), 
-                                        redis_error_descr(redis_result));
+                                        redis_dal_error_descr(redis_result));
         }
         else if (cached_data) {
             radlog(L_INFO, 
@@ -171,7 +171,7 @@ int portnox_auth(REQUEST *request,
                                         n_str(dstr_to_cstr(&identity)),  
                                         n_str(request->client_shortname), 
                                         n_str(dstr_to_cstr(&mac)), 
-                                        redis_error_descr(redis_result));
+                                        redis_dal_error_descr(redis_result));
         }
 
         dstr_destroy(&nas_port);

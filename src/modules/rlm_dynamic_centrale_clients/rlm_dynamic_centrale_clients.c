@@ -163,7 +163,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     if (redis_result) 
     {
             radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to get shared secret from redis for ip %s port %d with error '%s'", 
-                        n_str(hostname), port, redis_error_descr(redis_result));
+                        n_str(hostname), port, redis_dal_error_descr(redis_result));
     }
     else {
         /* then if shared secret is ok -> try get shared secret from redis */
@@ -171,7 +171,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         if (redis_result) 
         {
             radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to get org id from redis for ip %s port %d with error '%s'", 
-                            n_str(hostname), port, redis_error_descr(redis_result));
+                            n_str(hostname), port, redis_dal_error_descr(redis_result));
         }
     }
 
@@ -249,7 +249,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         if (redis_result) 
         {
             radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to save shared secret to redis for ip %s port %d with error '%s'", 
-                            n_str(hostname), port, redis_error_descr(redis_result));
+                            n_str(hostname), port, redis_dal_error_descr(redis_result));
         }
 
         /* try save org id */
@@ -257,7 +257,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
         if (redis_result) 
         {
             radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to save org id to redis for ip %s port %d with error '%s'", 
-                            n_str(hostname), port, redis_error_descr(redis_result));
+                            n_str(hostname), port, redis_dal_error_descr(redis_result));
         }
     }
 

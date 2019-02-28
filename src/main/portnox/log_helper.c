@@ -107,7 +107,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
         if (redis_result) 
         {
             radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' ,\"RadiusCustom\":%s", 
-                            n_str(port), n_str(dstr_to_cstr(&mac)), redis_error_descr(redis_result), n_str(custom_json));
+                            n_str(port), n_str(dstr_to_cstr(&mac)), redis_dal_error_descr(redis_result), n_str(custom_json));
         }
 
         full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",

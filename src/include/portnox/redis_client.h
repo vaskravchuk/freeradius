@@ -27,4 +27,7 @@ int redis_get(const char *key, char **val);
 /* DEL redis command */
 int redis_del(const char *key);
 
+/* Return string which describes redis Error */
+const char* redis_error_descr(int error);
+
 #endif //REDIS_CLIENT_H
