@@ -94,7 +94,8 @@ static int perform_redis_operation(redis_op_info* op) {
 
     client = get_redis_client();
     if (!client) {
-        return CLIENT_CR_ERROR;
+        result = CLIENT_CR_ERROR;
+        goto done;
     }
 
     /*
@@ -109,10 +110,11 @@ static int perform_redis_operation(redis_op_info* op) {
     } while (result == CREDIS_ERR_NOMEM);
 
     /* If error case -> invalidate client, maybe something with connection. */
-    if (result <= CREDIS_ERR) {
+    if (result != CREDIS_OK && result != CREDIS_KEY_NOT_FOUND) {
         invalidate_redis_client();
     }
 
+    done:
     REDIS_CLIENT_UNLOCK;
 
     return result;
@@ -206,34 +208,4 @@ int redis_del(const char *key) {
     dstr_destroy(&dkey);
 
     return result;
-}
-
-/* Return string which describes redis Error */
-const char* redis_error_descr(int error) {
-    switch (error) {
-        case CREDIS_OK:
-            return "OK";
-        case CREDIS_KEY_NOT_FOUND:
-            return "Key not found";
-        case CLIENT_CR_ERROR:
-            return "Failed to create client";
-        case CREDIS_ERR:
-            return "Redis common error";
-        case CREDIS_ERR_NOMEM:
-            return "Not enough memory";
-        case CREDIS_ERR_RESOLVE:
-            return "Host resolve error";
-        case CREDIS_ERR_CONNECT:
-            return "Connection error";
-        case CREDIS_ERR_SEND:
-            return "Failed to send data";
-        case CREDIS_ERR_RECV:
-            return "Failed to receive data";
-        case CREDIS_ERR_TIMEOUT:
-            return "Timeout";
-        case CREDIS_ERR_PROTOCOL:
-            return "Protocol error";
-        default:
-            return "Unknown";
-    }
 }

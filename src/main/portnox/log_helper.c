@@ -80,6 +80,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     char *custom_json = NULL;
     char *port = NULL;
     char *context_id = NULL;
+    int redis_result = 0;
 
     custom_json = get_attrs_json_str(request);
     username = get_username(request);
@@ -102,7 +103,12 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     } else if (strcmp(error_code, "60002") == 0 || strcmp(error_code, "60035") == 0 || strcmp(error_code, "60039") == 0 || strcmp(error_code, "60051") == 0) {
         char *org_id = NULL;
 
-        get_org_id_for_client(request->client_shortname, &org_id);
+        redis_result = get_org_id_for_client(request->client_shortname, &org_id);
+        if (redis_result) 
+        {
+            radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' ,\"RadiusCustom\":%s", 
+                            n_str(port), n_str(dstr_to_cstr(&mac)), redis_error_descr(redis_result), n_str(custom_json));
+        }
 
         full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
                  n_str(message), n_str(org_id), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));

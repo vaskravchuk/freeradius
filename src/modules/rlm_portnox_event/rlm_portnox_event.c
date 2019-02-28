@@ -187,9 +187,13 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
     char *org_id = NULL;
     srv_req call_req = {0};
     srv_resp call_resp = {0};
+    int redis_result = 0;
 
     /* get org id */
-    if (get_org_id_for_client(request->client_shortname, &org_id)) {
+    redis_result = get_org_id_for_client(request->client_shortname, &org_id);
+    if (redis_result) {
+        radlog(L_ERR, "rlm_portnox_event: Failed to get org_id from redis on port %s with error '%s'", 
+                            n_str(request->client_shortname), redis_error_descr(redis_result));
         radius_exec_logger_centrale(request, 60013, "Unable to find centrale orgid in REDIS for port %s", n_str(request->client_shortname));
         goto fail;
     } 

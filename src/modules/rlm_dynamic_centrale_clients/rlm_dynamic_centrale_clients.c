@@ -148,7 +148,6 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id) {
     char *shared_secret = NULL;
     char *org_id = NULL;
@@ -157,10 +156,27 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     srv_resp call_resp = {0};
     int from_cache = 0;
     int result = 0;
+    int redis_result = 0;
 
-    /* try get shared secret and org id from redis */
-    if (!get_shared_secret_for_port(port, &shared_secret) &&
-        !get_org_id_for_port(port, &org_id)) {
+    /* first try get shared secret from redis */
+    redis_result = get_shared_secret_for_port(port, &shared_secret);
+    if (redis_result) 
+    {
+            radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to get shared secret from redis for ip %s port %d with error '%s'", 
+                        n_str(hostname), port, redis_error_descr(redis_result));
+    }
+    else {
+        /* then if shared secret is ok -> try get shared secret from redis */
+        redis_result = get_org_id_for_port(port, &org_id);
+        if (redis_result) 
+        {
+            radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to get org id from redis for ip %s port %d with error '%s'", 
+                            n_str(hostname), port, redis_error_descr(redis_result));
+        }
+    }
+
+    /* check redis result */
+    if (!redis_result) {
         from_cache = 1;
     }
     else {
@@ -228,8 +244,21 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
 
     /* save in redis if data come from BE */
     if (!from_cache) {
-        set_org_id_for_port(port, org_id);
-        set_shared_secret_for_port(port, shared_secret);
+        /*  try save shared secret */
+        redis_result = set_shared_secret_for_port(port, shared_secret);
+        if (redis_result) 
+        {
+            radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to save shared secret to redis for ip %s port %d with error '%s'", 
+                            n_str(hostname), port, redis_error_descr(redis_result));
+        }
+
+        /* try save org id */
+        redis_result = set_org_id_for_port(port, org_id);
+        if (redis_result) 
+        {
+            radlog(L_ERR, "rlm_dynamic_centrale_clients: Failed to save org id to redis for ip %s port %d with error '%s'", 
+                            n_str(hostname), port, redis_error_descr(redis_result));
+        }
     }
 
     fail:

@@ -30,4 +30,7 @@ int set_org_id_for_client(const char *client, const char *val);
 int get_org_id_for_port(const int port, char **val);
 int set_org_id_for_port(const int port, const char *val);
 
+/* Return string which describes redis Error */
+const char* redis_error_descr(int error);
+
 #endif //REDIS_DAL_H

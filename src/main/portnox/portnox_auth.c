@@ -42,6 +42,7 @@ int portnox_auth(REQUEST *request,
     dstr mac = {0};
     char *org_id = NULL;
     int resp_from_cache = 0;
+    int redis_result = 0;
 
     radlog(L_INFO, 
            "ContextId: %s; portnox_auth for auth_method: %s", 
@@ -61,7 +62,15 @@ int portnox_auth(REQUEST *request,
     mac = get_mac(request);
 
     /* get org id */
-    if (get_org_id_for_client(request->client_shortname, &org_id)) {
+    redis_result = get_org_id_for_client(request->client_shortname, &org_id);
+    if (redis_result) {
+        radlog(L_ERR, "ContextId: %s; portnox_auth for auth_method: %s failed to get org id from redis for %s on port %s with mac %s with error '%s'", 
+                                    n_str(request->context_id), 
+                                    auth_method_str(auth_method), 
+                                    n_str(dstr_to_cstr(&identity)),  
+                                    n_str(request->client_shortname), 
+                                    n_str(dstr_to_cstr(&mac)), 
+                                    redis_error_descr(redis_result));
         radius_exec_logger_centrale(request, 
                                     auth_info->missed_orgid_error_code, 
                                     "Unable to find centrale orgid in REDIS for port %s", 
@@ -98,19 +107,27 @@ int portnox_auth(REQUEST *request,
          call_resp.http_code == 405 || call_resp.http_code == 500)) {
         char* cached_data = NULL;
         dstr nas_port = {0};
-        int resp_cache_result = 0;
 
         radlog(L_INFO, 
            "ContextId: %s; portnox_auth try get response from redis auth_method: %s", 
            n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        resp_cache_result = get_response_for_data(dstr_to_cstr(&identity), 
+        redis_result = get_response_for_data(dstr_to_cstr(&identity), 
                                                      dstr_to_cstr(&mac), 
                                                      request->client_shortname, 
                                                      dstr_to_cstr(&nas_port), 
                                                      &cached_data);
-        if (resp_cache_result == 0 && cached_data) {
+        if (redis_result) {
+            radlog(L_ERR, "ContextId: %s; portnox_auth for auth_method: %s failed to get response cache from redis for %s on port %s with mac %s with error '%s'", 
+                                        n_str(request->context_id), 
+                                        auth_method_str(auth_method), 
+                                        n_str(dstr_to_cstr(&identity)),  
+                                        n_str(request->client_shortname), 
+                                        n_str(dstr_to_cstr(&mac)), 
+                                        redis_error_descr(redis_result));
+        }
+        else if (cached_data) {
             radlog(L_INFO, 
                "ContextId: %s; portnox_auth use response from redis auth_method: %s", 
                n_str(request->context_id), auth_method_str(auth_method));
@@ -143,10 +160,19 @@ int portnox_auth(REQUEST *request,
                         n_str(request->context_id), auth_method_str(auth_method));
 
         nas_port = get_nas_port(request);
-        set_response_for_data(dstr_to_cstr(&identity), 
+        redis_result = set_response_for_data(dstr_to_cstr(&identity), 
                                  dstr_to_cstr(&mac), 
                                  request->client_shortname, 
                                  dstr_to_cstr(&nas_port), call_resp.data);
+        if (redis_result) {
+            radlog(L_ERR, "ContextId: %s; portnox_auth for auth_method: %s failed to save response cache to redis for %s on port %s with mac %s with error '%s'", 
+                                        n_str(request->context_id), 
+                                        auth_method_str(auth_method), 
+                                        n_str(dstr_to_cstr(&identity)),  
+                                        n_str(request->client_shortname), 
+                                        n_str(dstr_to_cstr(&mac)), 
+                                        redis_error_descr(redis_result));
+        }
 
         dstr_destroy(&nas_port);
     }
