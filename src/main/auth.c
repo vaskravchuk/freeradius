@@ -830,12 +830,11 @@ autz_redo:
 		}
 	} else {
 		rad_authlog("Login OK", request, 1);
-		VALUE_PAIR *auth_type = pairfind(request->config_items, PW_AUTH_TYPE);
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
 			// Success event. Will be send to BE for success alerts
-			radius_exec_logger_centrale(request, "1", "Authenticate status OK %s", dict_valnamebyattr(PW_AUTH_TYPE, auth_type->vp_integer));
+			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
 	}
 
