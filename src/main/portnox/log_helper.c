@@ -124,9 +124,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
         if (auth_type) {
             auth_method = dict_valnamebyattr(PW_AUTH_TYPE, auth_type->vp_integer);
         }
-        else {
-            auth_method = "not defined";
-        }
 
         full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
