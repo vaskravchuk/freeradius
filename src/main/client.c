@@ -1216,4 +1216,46 @@ RADCLIENT *client_read(const char *filename, int in_server, int flag)
 
 	return c;
 }
+
+/*
+ *	Read a client definition from the given CONF_SECTION.
+ */
+RADCLIENT *client_read_from_given_section(const char *filename, int in_server, int flag, CONF_SECTION *cs)
+{
+	RADCLIENT *c;
+	CONF_SECTION *cs2;
+	char buffer[256];
+
+	if (!filename) return NULL;
+
+	cs2 = cf_section_sub_find(cs, "client");
+	if (!cs2) {
+		radlog(L_ERR, "No \"client\" section found in client file");
+		return NULL;
+	}
+
+	c = client_parse(cs2, in_server);
+	if (!c) return NULL;
+	c->cs_base = cs;
+
+	p = strrchr(filename, FR_DIR_SEP);
+	if (p) {
+		p++;
+	} else {
+		p = filename;
+	}
+
+	if (!flag) return c;
+
+	/*
+	 *	Additional validations
+	 */
+	ip_ntoh(&c->ipaddr, buffer, sizeof(buffer));
+	if (strcmp(p, buffer) != 0) {
+		DEBUG("Invalid client definition in %s: IP address %s does not match name %s", filename, buffer, p);
+		client_free(c);
+		return NULL;
+	}
+	return c;
+}
 #endif
