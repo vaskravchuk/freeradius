@@ -24,7 +24,7 @@ RCSID("$Id$")
 #define CALLER_SECRET "CallerSecret"
 
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs);
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file, CONF_SECTION *cs);
+static void write_data_to_file(char *hostname, int port, char *shared_secret, CONF_SECTION *cs);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -238,7 +238,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        write_data_to_file(hostname, port, shared_secret, file, cs);
+        write_data_to_file(hostname, port, shared_secret, cs);
     }
     else {
         radlog(L_ERR, "Failed to get caller_info");
@@ -273,11 +273,12 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file, CONF_SECTION *cs) {
+static void write_data_to_file(char *hostname, int port, char *shared_secret, CONF_SECTION *cs) {
 	static char *format = "%s {\n"
                    "\tsecret = %s\n"
                    "\tshortname = %d\n"
                    "}";
+    CONF_SECTION *cs1;
     dstr formated_output;
     CONF_PAIR *cp;
 
@@ -286,7 +287,7 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, ch
     cs1 = cf_section_alloc("main", NULL, NULL);
     if (!cs1) return;
 
-    cp = cf_pair_alloc("client", formated_output->s, T_OP_SET, T_BARE_WORD, cs1);
+    cp = cf_pair_alloc("client", formated_output.s, T_OP_SET, T_BARE_WORD, cs1);
     if (!cp) return;
 
     dstr_destroy(&formated_output);
