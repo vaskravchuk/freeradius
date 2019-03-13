@@ -86,7 +86,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     custom_json = get_attrs_json_str(request);
     username = get_username(request);
     mac = get_mac(request);
-    client_ip = get_device_ip(request); 
+    client_ip = get_client_ip(request); 
     port = request->client_shortname;
     context_id = request->context_id;
 

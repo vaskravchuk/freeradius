@@ -18,6 +18,7 @@ dstr get_vps_attr_or_empty(REQUEST *request, const char *attr);
 dstr get_username(REQUEST *request);
 dstr get_mac(REQUEST *request);
 dstr get_nas_port(REQUEST *request);
+dstr get_client_ip(REQUEST *request);
 dstr get_device_ip(REQUEST *request);
 dstr get_acct_data_in(REQUEST *request);
 dstr get_acct_data_out(REQUEST *request);
