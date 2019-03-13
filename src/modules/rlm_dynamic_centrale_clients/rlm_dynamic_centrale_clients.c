@@ -278,13 +278,12 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, CO
                    "\tsecret = %s\n"
                    "\tshortname = %d\n"
                    "}";
-    CONF_SECTION *cs1;
     dstr formated_output;
     CONF_PAIR *cp;
 
     formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
 
-    cs1 = cf_section_alloc("main", NULL, NULL);
+    cs = cf_section_alloc("main", NULL, NULL);
     if (!cs1) return;
 
     cp = cf_pair_alloc("client", formated_output.s, T_OP_SET, T_BARE_WORD, cs1);
