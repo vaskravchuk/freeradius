@@ -24,11 +24,7 @@ RCSID("$Id$")
 #define CALLER_SECRET "CallerSecret"
 
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs);
-<<<<<<< HEAD
 static void write_data_to_file(char *hostname, int port, char *shared_secret, CONF_SECTION *cs);
-=======
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file, CONF_SECTION *cs);
->>>>>>> b1eff8102de0a2beb1ef6616262dcf161bbfa508
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
