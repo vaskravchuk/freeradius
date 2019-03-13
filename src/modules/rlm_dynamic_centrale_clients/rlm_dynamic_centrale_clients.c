@@ -284,7 +284,7 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, CO
     formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
 
     cs = cf_section_alloc("main", NULL, NULL);
-    if (!cs1) return;
+    if (!cs) return;
 
     cp = cf_pair_alloc("client", formated_output.s, T_OP_SET, T_BARE_WORD, cs1);
     if (!cp) return;
