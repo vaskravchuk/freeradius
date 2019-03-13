@@ -1222,6 +1222,7 @@ RADCLIENT *client_read(const char *filename, int in_server, int flag)
  */
 RADCLIENT *client_read_from_given_section(const char *filename, int in_server, int flag, CONF_SECTION *cs)
 {
+	const char *p;
 	RADCLIENT *c;
 	CONF_SECTION *cs2;
 	char buffer[256];
