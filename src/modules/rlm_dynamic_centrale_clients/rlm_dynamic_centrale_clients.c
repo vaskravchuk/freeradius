@@ -23,8 +23,8 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id);
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file);
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs);
+static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file, CONF_SECTION *cs)
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -75,6 +75,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     char cmdline[1024];
     rlm_dynamic_centrale_clients_t *inst = instance;
     int result;
+	CONF_SECTION *cs;
 
     if ((request->packet->vps != NULL) || (request->parent != NULL)) {
         radius_exec_logger_centrale(request, "60015", "rlm_dynamic_centrale_clients: Improper configuration");
@@ -111,13 +112,13 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id);
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, cs);
 
         if (result != 0) {
             return RLM_MODULE_FAIL;
         }
 
-        c = client_read(buffer, (request->client->server != NULL), TRUE);
+        c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
 
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: Internal script failed");
@@ -131,14 +132,17 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         }
 
         result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, EXEC_TIMEOUT, NULL, NULL, FALSE, 60026);
-
         if (result != 0) {
             radlog(L_DBG, "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
         }
-
-        c = client_read(buffer, (request->client->server != NULL), TRUE);
-
+		
+		result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, cs);
+		if (result != 0) {
+            return RLM_MODULE_FAIL;
+        }
+		
+        c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
@@ -148,7 +152,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id) {
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs) {
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
@@ -234,7 +238,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        write_data_to_file(hostname, port, shared_secret, file);
+        write_data_to_file(hostname, port, shared_secret, file, cs);
     }
     else {
         radlog(L_ERR, "Failed to get caller_info");
@@ -269,24 +273,25 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file) {
-    static char *format = "client %s {\n"
+static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file, CONF_SECTION *cs) {
+	static char *format = "%s {\n"
                    "\tsecret = %s\n"
                    "\tshortname = %d\n"
                    "}";
     dstr formated_output;
-    FILE *output_file;
-
-    output_file = fopen(file, "w");
+    CONF_PAIR *cp;
 
     formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
 
-    if (!is_nas(&formated_output)) {
-        fputs(dstr_to_cstr(&formated_output), output_file);
-    }
+    cs1 = cf_section_alloc("main", NULL, NULL);
+    if (!cs1) return;
 
-    fclose(output_file);
+    cp = cf_pair_alloc("client", formated_output->s, T_OP_SET, T_BARE_WORD, cs1);
+    if (!cp) return;
+
     dstr_destroy(&formated_output);
+
+    cf_item_add(cs, cf_pairtoitem(cp));
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {
