@@ -77,6 +77,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     dstr full_message = {0};
     dstr username = {0};
     dstr mac = {0};
+    dstr client_ip = {0};
     char *custom_json = NULL;
     char *port = NULL;
     char *context_id = NULL;
@@ -85,6 +86,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     custom_json = get_attrs_json_str(request);
     username = get_username(request);
     mac = get_mac(request);
+    client_ip = get_device_ip(request); 
     port = request->client_shortname;
     context_id = request->context_id;
 
@@ -116,8 +118,19 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-        full_message = dstr_from_fmt( "%s for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
-                n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        char *auth_method = NULL;
+        VALUE_PAIR *auth_type = pairfind(request->config_items, PW_AUTH_TYPE);
+
+        if (auth_type) {
+            auth_method = dict_valnamebyattr(PW_AUTH_TYPE, auth_type->vp_integer);
+        }
+        else {
+            auth_method = "not defined";
+        }
+
+        full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
+                n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
+                n_str(&auth_method), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else {
         dstr d_message = {0};
@@ -132,5 +145,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     dstr_destroy(&full_message);
     dstr_destroy(&username);
     dstr_destroy(&mac);
+    dstr_destroy(&client_ip);
     return 0;
 }
