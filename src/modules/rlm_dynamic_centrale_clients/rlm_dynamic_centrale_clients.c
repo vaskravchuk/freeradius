@@ -10,7 +10,7 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
-#include <freeradius-devel/conffile.h>
+//#include <freeradius-devel/conffile.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -25,8 +25,8 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs);
-static void write_data_to_file(char *hostname, int port, char *shared_secret, CONF_SECTION *cs);
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client);
+static void write_data_to_file(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -77,7 +77,8 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     char cmdline[1024];
     rlm_dynamic_centrale_clients_t *inst = instance;
     int result;
-	CONF_SECTION *cs;
+	//CONF_SECTION *cs;
+    RADCLIENT *local_rad_client;
 
     if ((request->packet->vps != NULL) || (request->parent != NULL)) {
         radius_exec_logger_centrale(request, "60015", "rlm_dynamic_centrale_clients: Improper configuration");
@@ -114,13 +115,14 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, cs);
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, local_rad_client);
 
         if (result != 0) {
             return RLM_MODULE_FAIL;
         }
 
-        c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
+        //c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
+        c = local_rad_client;
 
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: Internal script failed");
@@ -139,12 +141,13 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
             return RLM_MODULE_FAIL;
         }
 		
-		result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, cs);
+		result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, local_rad_client);
 		if (result != 0) {
             return RLM_MODULE_FAIL;
         }
 		
-        c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
+        //c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
+        c = local_rad_client;
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
@@ -154,7 +157,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, CONF_SECTION *cs) {
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client) {
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
@@ -240,7 +243,8 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        write_data_to_file(hostname, port, shared_secret, cs);
+        write_data_to_file(hostname, port, shared_secret, local_rad_client, request);
+
     }
     else {
         radlog(L_ERR, "Failed to get caller_info");
@@ -275,8 +279,8 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void write_data_to_file(char *hostname, int port, char *shared_secret, CONF_SECTION *cs) {
-	static char *format = "%s {\n"
+static void write_data_to_file(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
+	/*static char *format = "%s {\n"
                    "\tsecret = %s\n"
                    "\tshortname = %d\n"
                    "}";
@@ -293,7 +297,20 @@ static void write_data_to_file(char *hostname, int port, char *shared_secret, CO
 
     dstr_destroy(&formated_output);
 
-    cf_item_add(cs, cf_pairtoitem(cp));
+    cf_item_add(cs, cf_pairtoitem(cp));*/
+
+
+    local_rad_client->ipaddr = request->packet->src_ipaddr;
+    local_rad_client->secret = shared_secret;
+    local_rad_client->shortname = port;
+    local_rad_client->cs = request->client->cs;
+
+    if ((request->client->server != NULL) && local_rad_client->server) {
+        client_free(local_rad_client);
+        cf_log_err(cf_sectiontoitem(local_rad_client->cs),
+               "Clients inside of an server section cannot point to a server.");
+        return;
+    }
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {
