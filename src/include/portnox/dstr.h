@@ -77,5 +77,6 @@ void dstr_cat_dstrs(dstr *s1, ...);
 /* Operations */
 int dstr_replace_chars(dstr *str, char orig, char rep);
 void dstr_to_lower(dstr *str);
+void dstr_extract_quoted_str(dstr *str);
 
 #endif //DSTR_H

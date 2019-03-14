@@ -48,8 +48,14 @@ void parse_custom_attr(cJSON *attrs, VALUE_PAIR **output_pairs) {
         key = cJSON_GetObjectItem(item, RESP_CUSTOM_ATTR_VAL_KEY);
         val = cJSON_GetObjectItem(item, RESP_CUSTOM_ATTR_VAL_VALUE);
         if (key && val) {
-            vp = pairmake(key->valuestring, val->valuestring, T_OP_ADD);
+            dstr dval = {0};
+
+            dval = dstr_cstr(val->valuestring);
+            dstr_extract_quoted_str(&dval)
+            vp = pairmake(key->valuestring, dstr_to_cstr(&dval), T_OP_ADD);
             pairadd(output_pairs, vp);
+
+            dstr_destroy(&dval);
         }
     }
 }

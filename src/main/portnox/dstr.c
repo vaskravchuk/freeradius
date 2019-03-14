@@ -312,3 +312,24 @@ void dstr_to_lower(dstr *str) {
         str->s[i] = tolower(str->s[i]);
     }
 }
+
+
+void dstr_extract_quoted_str(dstr *str) {
+    int i = 0;
+
+    /* Are we not a string? */
+    if (is_nas(str)) return;
+
+    /* If string too small -> retunr */
+    if (s->size < 2) return;
+
+    /* remove quotes */
+    if ((*s->s == '\'' && s->[s->size-1] == '\'') ||
+        (*s->s == '\"' && s->[s->size-1] == '\"')) {
+        for (; i < s->size-2; ++i) {
+            s->s[i] = s->s[i+1];
+        }
+        s->s[i] = 0;
+        s->size -= 2;
+    }
+}
