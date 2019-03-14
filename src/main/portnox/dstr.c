@@ -313,7 +313,6 @@ void dstr_to_lower(dstr *str) {
     }
 }
 
-
 void dstr_extract_quoted_str(dstr *str) {
     int i = 0;
 
@@ -324,8 +323,8 @@ void dstr_extract_quoted_str(dstr *str) {
     if (s->size < 2) return;
 
     /* remove quotes */
-    if ((*s->s == '\'' && s->[s->size-1] == '\'') ||
-        (*s->s == '\"' && s->[s->size-1] == '\"')) {
+    if ((*s->s == '\'' && s[s->size-1] == '\'') ||
+        (*s->s == '\"' && s[s->size-1] == '\"')) {
         for (; i < s->size-2; ++i) {
             s->s[i] = s->s[i+1];
         }
