@@ -139,13 +139,13 @@ static int event_processing(void *instance, REQUEST *request){
 	       (request->proxy->code == inst->packet_code)) ||
 	      (request->proxy_reply &&
 	       (request->proxy_reply->code == inst->packet_code)))) {
-		RDEBUG2("Packet type %s is wrong. Not executing, on port %s", n_str(inst->packet_type), n_str(request->client_shortname));
+		radlog(L_ERR, "rlm_portnox_event: FAILED. Packet type %s is wrong. Not executing, on port %s", n_str(inst->packet_type), n_str(request->client_shortname));
 		return RLM_MODULE_NOOP;
 	}
 
 	/* check valid type */
 	if (inst->type >= TYPES_SIZE) {
-		RDEBUG2("Event type %d is wrong. Not executing, on port %s", inst->type, n_str(request->client_shortname));
+		radlog(L_ERR, "rlm_portnox_event: FAILED. Event type %d is wrong. Not executing, on port %s", inst->type, n_str(request->client_shortname));
 		return RLM_MODULE_NOOP;
 	}
 
@@ -157,7 +157,7 @@ static int event_processing(void *instance, REQUEST *request){
 		int subtype_result = 0;
 
 		if (dstr_size(&subtype_val) == 0) {
-			RDEBUG2("Event type %s should contains 'Acct-Status-Type' attribute, on port %s", type_map[inst->type], n_str(request->client_shortname));
+			radlog(L_ERR, "rlm_portnox_event: FAILED. Event type %s should contains 'Acct-Status-Type' attribute, on port %s", type_map[inst->type], n_str(request->client_shortname));
 			subtype_result = -1;
 		} else if (strcmp(subtype_val_str, START_ACCT_SUBTYPE) == 0) {
 			subtype = SUBTYPE_START;
@@ -165,13 +165,13 @@ static int event_processing(void *instance, REQUEST *request){
 		} else if (strcmp(subtype_val_str, STOP_ACCT_SUBTYPE) == 0) {
 			subtype = SUBTYPE_STOP;
 		} else {
-			RDEBUG2("Event type %s contains wrong 'Acct-Status-Type' attribute '%s', should be 'Start' or 'Stop', on port %s", 
+			radlog(L_ERR, "rlm_portnox_event: FAILED. Event type %s contains wrong 'Acct-Status-Type' attribute '%s', should be 'Start' or 'Stop', on port %s", 
 						type_map[inst->type], subtype_val_str, n_str(request->client_shortname));
 			subtype_result = -1;
 		}
 
 		dstr_destroy(&subtype_val);
-		if (subtype_result != 0) return RLM_MODULE_NOOP;
+		if (subtype_result != 0) return RLM_MODULE_OK;
 	}
 	else {
 		subtype = inst->type == REJECT_TYPE ? SUBTYPE_REJECT : SUBTYPE_ACCEPT;
@@ -192,7 +192,7 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
     /* get org id */
     redis_result = get_org_id_for_client(request->client_shortname, &org_id);
     if (redis_result) {
-        radlog(L_ERR, "rlm_portnox_event: Failed to get org_id from redis on port %s with error '%s'", 
+        radlog(L_ERR, "rlm_portnox_event: FAILED. Failed to get org_id from redis on port %s with error '%s'", 
                             n_str(request->client_shortname), redis_dal_error_descr(redis_result));
         radius_exec_logger_centrale(request, "60013", "Unable to find centrale orgid in REDIS for port %s", n_str(request->client_shortname));
         goto fail;
@@ -200,7 +200,7 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
 
     call_req = get_event_request(inst, request, org_id, subtype);
     if (!call_req.data || !(*call_req.data)) {
-		radlog(L_ERR, "rlm_portnox_event: Start event processing packet type '%s', Event type '%s', on port %s", 
+		radlog(L_ERR, "rlm_portnox_event: FAILED. Failed to create request processing packet type '%s', Event type '%s', on port %s", 
 				n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
     	goto fail;
     }
@@ -208,7 +208,7 @@ static void sent_event_to_portnox(rlm_portnox_event_t *inst, REQUEST *request, i
 	radlog(L_INFO, call_req.data);
     call_resp = exec_http_request(&call_req);
     if (call_resp.return_code != 0) {
-		radlog(L_ERR, "rlm_portnox_event: Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
+		radlog(L_ERR, "rlm_portnox_event: FAILED. Failed to send event with curl code %ld, http code %d, packet type '%s', Event type '%s', on port %s", 
 			call_resp.return_code, call_resp.http_code, n_str(inst->packet_type), type_map[inst->type], n_str(request->client_shortname));
     	goto fail;
     }
