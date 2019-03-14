@@ -320,15 +320,15 @@ void dstr_extract_quoted_str(dstr *str) {
     if (is_nas(str)) return;
 
     /* If string too small -> retunr */
-    if (s->size < 2) return;
+    if (str->size < 2) return;
 
     /* remove quotes */
-    if ((*s->s == '\'' && s[s->size-1] == '\'') ||
-        (*s->s == '\"' && s[s->size-1] == '\"')) {
-        for (; i < s->size-2; ++i) {
-            s->s[i] = s->s[i+1];
+    if ((*(str->s) == '\'' && str[str->size-1] == '\'') ||
+        (*(str->s) == '\"' && str[str->size-1] == '\"')) {
+        for (; i < str->size-2; ++i) {
+            s->s[i] = str->s[i+1];
         }
-        s->s[i] = 0;
-        s->size -= 2;
+        str->s[i] = 0;
+        str->size -= 2;
     }
 }
