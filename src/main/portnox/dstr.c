@@ -323,8 +323,8 @@ void dstr_extract_quoted_str(dstr *str) {
     if (str->size < 2) return;
 
     /* remove quotes */
-    if ((*(str->s) == '\'' && str[str->size-1] == '\'') ||
-        (*(str->s) == '\"' && str[str->size-1] == '\"')) {
+    if ((*(str->s) == '\'' && str->s[str->size-1] == '\'') ||
+        (*(str->s) == '\"' && str->s[str->size-1] == '\"')) {
         for (; i < str->size-2; ++i) {
             str->s[i] = str->s[i+1];
         }
