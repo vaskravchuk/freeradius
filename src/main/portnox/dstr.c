@@ -326,7 +326,7 @@ void dstr_extract_quoted_str(dstr *str) {
     if ((*(str->s) == '\'' && str[str->size-1] == '\'') ||
         (*(str->s) == '\"' && str[str->size-1] == '\"')) {
         for (; i < str->size-2; ++i) {
-            s->s[i] = str->s[i+1];
+            str->s[i] = str->s[i+1];
         }
         str->s[i] = 0;
         str->size -= 2;
