@@ -23,8 +23,8 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client);
-static void get_rad_client(int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *client);
+static void get_rad_client(int port, char *shared_secret, RADCLIENT *client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -111,7 +111,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, c);
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, &с);
 
         if (result != 0) {
             return RLM_MODULE_FAIL;
@@ -146,7 +146,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *client) {
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT **client) {
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
@@ -268,18 +268,18 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void get_rad_client(int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
+static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request) {
     char *buf_port;
 
-    local_rad_client = client_alloc();
+    *client = client_alloc();
 
     buf_port = malloc(6);
     memset(buf_port, 0, sizeof(*buf_port));
     sprintf(buf_port, "%d", port);
 
-    local_rad_client->ipaddr = request->packet->src_ipaddr;
-    local_rad_client->secret = strdup(shared_secret);
-    local_rad_client->shortname = buf_port;
+    *client->ipaddr = request->packet->src_ipaddr;
+    *client->secret = strdup(shared_secret);
+    *client->shortname = buf_port;
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {
