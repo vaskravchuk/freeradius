@@ -111,9 +111,8 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        c = client_alloc();
-
         result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, c);
+
         if (result != 0) {
             return RLM_MODULE_FAIL;
         }
@@ -130,12 +129,14 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
         }
 
         result = radius_exec_program_centrale(cmdline, request, TRUE, NULL, 0, EXEC_TIMEOUT, NULL, NULL, FALSE, 60026);
+
         if (result != 0) {
             radlog(L_DBG, "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
         }
-		
-        c = ;
+
+        c = client_read(buffer, (request->client->server != NULL), TRUE);
+
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
@@ -269,6 +270,8 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
 
 static void get_rad_client(int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
     char *buf_port;
+
+    local_rad_client = client_alloc();
 
     buf_port = malloc(6);
     memset(buf_port, 0, sizeof(*buf_port));
