@@ -111,7 +111,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, &с);
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, (&с));
 
         if (result != 0) {
             return RLM_MODULE_FAIL;
