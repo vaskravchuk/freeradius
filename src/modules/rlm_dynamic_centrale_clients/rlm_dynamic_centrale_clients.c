@@ -10,12 +10,10 @@ RCSID("$Id$")
 #include <freeradius-devel/portnox/redis_dal.h>
 #include <freeradius-devel/portnox/json_helper.h>
 #include <freeradius-devel/portnox/string_helper.h>
-//#include <freeradius-devel/conffile.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <signal.h>
-
 
 /* request fields */
 #define CALLER_IP "CallerIp"
@@ -26,7 +24,7 @@ RCSID("$Id$")
 #define CALLER_SECRET "CallerSecret"
 
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client);
-static void fill_rad_client(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
+static void get_rad_client(int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -77,7 +75,6 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     char cmdline[1024];
     rlm_dynamic_centrale_clients_t *inst = instance;
     int result;
-    RADCLIENT *local_rad_client;
 
     if ((request->packet->vps != NULL) || (request->parent != NULL)) {
         radius_exec_logger_centrale(request, "60015", "rlm_dynamic_centrale_clients: Improper configuration");
@@ -114,13 +111,12 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, local_rad_client);
+        c = client_alloc();
 
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, c);
         if (result != 0) {
             return RLM_MODULE_FAIL;
         }
-
-        c = local_rad_client;
 
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: Internal script failed");
@@ -139,12 +135,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
             return RLM_MODULE_FAIL;
         }
 		
-		result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, local_rad_client);
-		if (result != 0) {
-            return RLM_MODULE_FAIL;
-        }
-		
-        c = local_rad_client;
+        c = ;
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
             return RLM_MODULE_FAIL;
@@ -154,7 +145,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client) {
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *client) {
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
@@ -240,7 +231,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        fill_rad_client(hostname, port, shared_secret, local_rad_client, request);
+        get_rad_client(port, shared_secret, client, request);
 
     }
     else {
@@ -276,18 +267,16 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void fill_rad_client(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
-    local_rad_client->ipaddr = request->packet->src_ipaddr;
-    local_rad_client->secret = shared_secret;
-    local_rad_client->shortname = port;
-    local_rad_client->cs = request->client->cs;
+static void get_rad_client(int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
+    char *buf_port;
 
-    if ((request->client->server != NULL) && local_rad_client->server) {
-        client_free(local_rad_client);
-        cf_log_err(cf_sectiontoitem(local_rad_client->cs),
-               "Clients inside of an server section cannot point to a server.");
-        return;
-    }
+    buf_port = malloc(6);
+    memset(buf_port, 0, sizeof(*buf_port));
+    sprintf(buf_port, "%d", port);
+
+    local_rad_client->ipaddr = request->packet->src_ipaddr;
+    local_rad_client->secret = strdup(shared_secret);
+    local_rad_client->shortname = buf_port;
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {

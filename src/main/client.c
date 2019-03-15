@@ -604,6 +604,12 @@ static const CONF_PARSER client_config[] = {
 	{ NULL, -1, 0, NULL, NULL }
 };
 
+RADCLIENT *client_alloc(void) {
+	RADCLIENT	*c;
+	c = rad_malloc(sizeof(*c));
+	memset(c, 0, sizeof(*c));
+	return c;
+}
 
 static RADCLIENT *client_parse(CONF_SECTION *cs, int in_server)
 {

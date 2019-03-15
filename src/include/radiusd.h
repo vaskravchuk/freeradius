@@ -534,6 +534,7 @@ int			rad_expand_xlat(REQUEST *request, const char *cmd,
 					size_t argv_buflen, char *argv_buf);
 
 /* client.c */
+RADCLIENT *client_alloc(void);
 RADCLIENT_LIST	*clients_init(void);
 void		clients_free(RADCLIENT_LIST *clients);
 RADCLIENT_LIST	*clients_parse_section(CONF_SECTION *section);
