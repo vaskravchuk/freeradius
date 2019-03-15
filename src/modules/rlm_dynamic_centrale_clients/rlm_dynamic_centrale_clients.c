@@ -23,8 +23,8 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *client);
-static void get_rad_client(int port, char *shared_secret, RADCLIENT *client, REQUEST *request);
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT **client);
+static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
