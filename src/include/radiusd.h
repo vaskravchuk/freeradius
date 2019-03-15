@@ -551,7 +551,6 @@ RADCLIENT	*client_find_old(const fr_ipaddr_t *ipaddr);
 int		client_validate(RADCLIENT_LIST *clients, RADCLIENT *master,
 				RADCLIENT *c);
 RADCLIENT	*client_read(const char *filename, int in_server, int flag);
-RADCLIENT 	*client_read_from_given_section(const char *filename, int in_server, int flag, CONF_SECTION *cs);
 
 
 /* files.c */

@@ -26,7 +26,7 @@ RCSID("$Id$")
 #define CALLER_SECRET "CallerSecret"
 
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT *local_rad_client);
-static void write_data_to_file(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
+static void fill_rad_client(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -77,7 +77,6 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     char cmdline[1024];
     rlm_dynamic_centrale_clients_t *inst = instance;
     int result;
-	//CONF_SECTION *cs;
     RADCLIENT *local_rad_client;
 
     if ((request->packet->vps != NULL) || (request->parent != NULL)) {
@@ -121,7 +120,6 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
             return RLM_MODULE_FAIL;
         }
 
-        //c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
         c = local_rad_client;
 
         if (!c) {
@@ -146,7 +144,6 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
             return RLM_MODULE_FAIL;
         }
 		
-        //c = client_read_from_given_section(buffer, (request->client->server != NULL), TRUE, cs);
         c = local_rad_client;
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: External script '%s' failed", cmdline);
@@ -243,7 +240,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        write_data_to_file(hostname, port, shared_secret, local_rad_client, request);
+        fill_rad_client(hostname, port, shared_secret, local_rad_client, request);
 
     }
     else {
@@ -279,27 +276,7 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void write_data_to_file(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
-	/*static char *format = "%s {\n"
-                   "\tsecret = %s\n"
-                   "\tshortname = %d\n"
-                   "}";
-    dstr formated_output;
-    CONF_PAIR *cp;
-
-    formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
-
-    cs = cf_section_alloc("main", NULL, NULL);
-    if (!cs) return;
-
-    cp = cf_pair_alloc("client", formated_output.s, T_OP_SET, T_BARE_WORD, cs);
-    if (!cp) return;
-
-    dstr_destroy(&formated_output);
-
-    cf_item_add(cs, cf_pairtoitem(cp));*/
-
-
+static void fill_rad_client(char *hostname, int port, char *shared_secret, RADCLIENT *local_rad_client, REQUEST *request) {
     local_rad_client->ipaddr = request->packet->src_ipaddr;
     local_rad_client->secret = shared_secret;
     local_rad_client->shortname = port;
