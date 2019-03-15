@@ -277,9 +277,9 @@ static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, RE
     memset(buf_port, 0, sizeof(*buf_port));
     sprintf(buf_port, "%d", port);
 
-    *client->ipaddr = request->packet->src_ipaddr;
-    *client->secret = strdup(shared_secret);
-    *client->shortname = buf_port;
+    (*client)->ipaddr = request->packet->src_ipaddr;
+    (*client)->secret = strdup(shared_secret);
+    (*client)->shortname = buf_port;
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {
