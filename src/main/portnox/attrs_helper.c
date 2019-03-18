@@ -41,6 +41,7 @@ dstr get_nas_port(REQUEST *request) {
 
 dstr get_client_ip(REQUEST *request) {
     dstr str = {0};
+    char ip[INET6_ADDRSTRLEN];
 
     RADIUS_PACKET *packet = request->packet;
 
