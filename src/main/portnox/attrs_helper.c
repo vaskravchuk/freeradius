@@ -39,6 +39,27 @@ dstr get_nas_port(REQUEST *request) {
     return get_vps_attr_or_empty(request, NAS_PORT_ATTR);
 }
 
+dstr get_client_ip(REQUEST *request) {
+    dstr str = {0};
+    char ip[INET6_ADDRSTRLEN];
+
+    RADIUS_PACKET *packet = request->packet;
+
+    if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->src_ipaddr.af,
+                 &packet->src_ipaddr.ipaddr,
+                 &ip, sizeof(ip));
+        str = dstr_from_fmt("%s:%d", &ip, packet->src_port);
+    } else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->dst_ipaddr.af,
+                 &packet->dst_ipaddr.ipaddr,
+                 &ip, sizeof(ip));
+       str = dstr_from_fmt("%s:%d", &ip, packet->dst_port);
+    }
+
+    return str;
+}
+
 dstr get_device_ip(REQUEST *request) {
     dstr str = {0};
 

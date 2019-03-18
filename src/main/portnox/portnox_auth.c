@@ -47,7 +47,6 @@ int portnox_auth(REQUEST *request,
     radlog(L_INFO, 
            "ContextId: %s; portnox_auth for auth_method: %s", 
            n_str(request->context_id), auth_method_str(auth_method));
-
     /* get identity */
     identity = get_username(request);
     if (!dstr_size(&identity)) {

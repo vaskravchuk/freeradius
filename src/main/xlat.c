@@ -381,7 +381,7 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 				}
 				strlcpy(out, request->context_id, outlen);
 				return strlen(out);
-
+			
 			case PW_CLIENT_IP_ADDRESS: /* the same as below */
 			case PW_PACKET_SRC_IP_ADDRESS:
 				if (packet->src_ipaddr.af != AF_INET) {

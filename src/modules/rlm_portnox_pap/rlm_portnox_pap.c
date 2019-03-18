@@ -38,6 +38,8 @@ static int portnox_pap_auth(void *instance, REQUEST *request)
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
 
+	request_set_auth_subtype(request, "PAP");
+
     result = portnox_auth(request, 
     					  PAP_AUTH_METHOD, 
     					  &auth_info, 
