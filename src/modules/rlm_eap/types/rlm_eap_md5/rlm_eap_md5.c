@@ -182,7 +182,7 @@ static int md5_authenticate(UNUSED void *arg, EAP_HANDLER *handler)
 	logs_set_request_desc(handler->request, 1, "MD5 AUTHENTICATE");
 	logs_add_flow(handler->request, "md5_authenticate");
 
-	handler->request->auth_subtype = "MD5";
+	request_set_auth_subtype(handler->request, "MD5");
 	
 	/*
 	 *	Get the Cleartext-Password for this user.

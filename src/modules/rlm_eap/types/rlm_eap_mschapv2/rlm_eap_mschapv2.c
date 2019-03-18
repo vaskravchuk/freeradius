@@ -24,6 +24,7 @@
 RCSID("$Id$")
 
 #include <freeradius-devel/autoconf.h>
+#include <freeradius-devel/portnox/string_helper.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -421,8 +422,8 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 	rad_assert(handler->request != NULL);
 	rad_assert(handler->stage == AUTHENTICATE);
 
-	handler->request->auth_subtype = "MSCHAPV2";
-	
+	request_set_auth_subtype(handler->request, "MSCHAPV2");
+
 	data = (mschapv2_opaque_t *) handler->opaque;
 	
 	/*

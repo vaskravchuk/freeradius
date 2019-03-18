@@ -521,6 +521,20 @@ void request_set_client(REQUEST *request, RADCLIENT *client)
 	}
 }
 
+void request_set_auth_subtype(REQUEST *request, char *type)
+{
+	if (!type) {
+		return;
+	}
+
+	size_t len = snprintf(request->auth_subtype, sizeof(request->auth_subtype), "%s", type);
+	//if len < 0 -> error occurs 
+	if (len >= 0) {
+		request->client_shortname[len] = 0;
+	}
+}
+
+
 /*
  *	Create a new REQUEST, based on an old one.
  *
@@ -608,7 +622,7 @@ REQUEST *request_alloc_fake(REQUEST *request)
   memcpy(fake->context_id, request->context_id, sizeof(request->context_id));
   memcpy(fake->request_id, request->request_id, sizeof(request->request_id));
   memcpy(fake->client_shortname, request->client_shortname, sizeof(request->client_shortname));
-  //memcpy(fake->auth_subtype, request->auth_subtype, sizeof(request->auth_subtype));
+  memcpy(fake->auth_subtype, request->auth_subtype, sizeof(request->auth_subtype));
   memcpy(fake->logs, request->logs, sizeof(LOG_DESC));
 
   return fake;

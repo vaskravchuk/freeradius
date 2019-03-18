@@ -209,7 +209,7 @@ static int eappeap_authenticate(void *arg, EAP_HANDLER *handler)
 	peap_tunnel_t *peap = tls_session->opaque;
 	REQUEST *request = handler->request;
 
-	handler->request->auth_subtype = "PEAP";
+	request_set_auth_subtype(request, "PEAP");
 
 	/*
 	 *	Session resumption requires the storage of data, so
