@@ -86,7 +86,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     custom_json = get_attrs_json_str(request);
     username = get_username(request);
     mac = get_mac(request);
-    client_ip = get_client_ip(request); 
     port = request->client_shortname;
     auth_method = request->auth_subtype;
 
@@ -118,7 +117,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-
+        client_ip = get_client_ip(request); 
         full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
                 n_str(auth_method), n_str(custom_json));

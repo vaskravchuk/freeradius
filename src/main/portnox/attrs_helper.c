@@ -54,7 +54,7 @@ dstr get_client_ip(REQUEST *request) {
         inet_ntop(packet->dst_ipaddr.af,
                  &packet->dst_ipaddr.ipaddr,
                  &ip, sizeof(ip));
-       str = dstr_from_fmt("%s:%d", &ip, packet->src_port);
+       str = dstr_from_fmt("%s:%d", &ip, packet->dst_port);
     }
 
     return str;
