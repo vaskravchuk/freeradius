@@ -29,6 +29,7 @@ static srv_req create_auth_req(REQUEST *request, int auth_method, char *org_id, 
 static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs);
 static const char* auth_method_str(int auth_method);
 static void process_result(int res, char *user_msg, int msg_len);
+static char* get_client_ip(REQUEST *request);
 
 int portnox_auth(REQUEST *request, 
                 int auth_method, 
