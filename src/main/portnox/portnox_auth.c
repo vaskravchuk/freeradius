@@ -48,6 +48,8 @@ int portnox_auth(REQUEST *request,
            "ContextId: %s; portnox_auth for auth_method: %s", 
            n_str(request->context_id), auth_method_str(auth_method));
 
+    request->auth_subtype = auth_method_str(auth_method);
+    
     /* get identity */
     identity = get_username(request);
     if (!dstr_size(&identity)) {

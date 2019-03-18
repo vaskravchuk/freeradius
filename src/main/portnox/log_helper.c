@@ -81,6 +81,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     char *custom_json = NULL;
     char *port = NULL;
     char *context_id = NULL;
+    char *auth_method = NULL;
     int redis_result = 0;
 
     custom_json = get_attrs_json_str(request);
@@ -89,6 +90,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     client_ip = get_client_ip(request); 
     port = request->client_shortname;
     context_id = request->context_id;
+    auth_method = request->auth_subtype;
 
     if (strcmp(error_code, "60029") == 0) {
         full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s", 
@@ -118,12 +120,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-        char *auth_method = NULL;
-        VALUE_PAIR *auth_type = pairfind(request->config_items, PW_AUTH_TYPE);
-
-        if (auth_type) {
-            auth_method = dict_valnamebyattr(PW_AUTH_TYPE, auth_type->vp_integer);
-        }
 
         full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
