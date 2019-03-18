@@ -23,8 +23,10 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id);
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file);
+#define PORT_BUFF_SIZE 16
+
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT **client);
+static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
 
 /*
@@ -111,13 +113,11 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     }
 
     if (!inst->use_script) {
-        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id);
+        result = get_caller_info(request, hostname, request->packet->dst_port, buffer, request->context_id, &c);
 
         if (result != 0) {
             return RLM_MODULE_FAIL;
         }
-
-        c = client_read(buffer, (request->client->server != NULL), TRUE);
 
         if (!c) {
             radius_exec_logger_centrale(request, "60023", "rlm_dynamic_centrale_clients: Internal script failed");
@@ -148,7 +148,7 @@ static int dynamic_centrale_client_authorize(UNUSED void *instance, REQUEST *req
     return RLM_MODULE_OK;
 }
 
-static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id) {
+static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT **client) {
     char *shared_secret = NULL;
     char *org_id = NULL;
     char *req_json = NULL;
@@ -234,7 +234,8 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     /* save to file and parse by client */
     if (shared_secret && *shared_secret && 
         org_id && *org_id) {
-        write_data_to_file(hostname, port, shared_secret, file);
+        get_rad_client(port, shared_secret, client, request);
+
     }
     else {
         radlog(L_ERR, "Failed to get caller_info");
@@ -269,24 +270,19 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
     return result;
 }
 
-static void write_data_to_file(char *hostname, int port, char *shared_secret, char *file) {
-    static char *format = "client %s {\n"
-                   "\tsecret = %s\n"
-                   "\tshortname = %d\n"
-                   "}";
-    dstr formated_output;
-    FILE *output_file;
+static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request) {
+    char *buf_port;
 
-    output_file = fopen(file, "w");
+    *client = client_alloc();
 
-    formated_output = dstr_from_fmt(format, n_str(hostname), n_str(shared_secret), port);
+    buf_port = malloc(PORT_BUFF_SIZE);
+    memset(buf_port, 0, PORT_BUFF_SIZE);
+    sprintf(buf_port, "%d", port);
 
-    if (!is_nas(&formated_output)) {
-        fputs(dstr_to_cstr(&formated_output), output_file);
-    }
-
-    fclose(output_file);
-    dstr_destroy(&formated_output);
+    // src_ipaddr is a value, will be copied
+    (*client)->ipaddr = request->packet->src_ipaddr;
+    (*client)->secret = strdup(shared_secret);
+    (*client)->shortname = buf_port;
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {

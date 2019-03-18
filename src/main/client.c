@@ -604,6 +604,24 @@ static const CONF_PARSER client_config[] = {
 	{ NULL, -1, 0, NULL, NULL }
 };
 
+RADCLIENT *client_alloc(void) {
+	RADCLIENT	*c;
+	c = rad_malloc(sizeof(*c));
+	memset(c, 0, sizeof(*c));
+
+
+#ifdef WITH_STATS
+	c->auth = rad_malloc(sizeof(*c->auth));
+	memset(c->auth, 0, sizeof(*c->auth));
+
+#ifdef WITH_ACCOUNTING
+	c->acct = rad_malloc(sizeof(*c->acct));
+	memset(c->acct, 0, sizeof(*c->acct));
+#endif
+#endif
+
+	return c;
+}
 
 static RADCLIENT *client_parse(CONF_SECTION *cs, int in_server)
 {
@@ -620,19 +638,8 @@ static RADCLIENT *client_parse(CONF_SECTION *cs, int in_server)
 	/*
 	 * The size is fine.. Let's create the buffer
 	 */
-	c = rad_malloc(sizeof(*c));
-	memset(c, 0, sizeof(*c));
+	c = client_alloc();
 	c->cs = cs;
-
-#ifdef WITH_STATS
-	c->auth = rad_malloc(sizeof(*c->auth));
-	memset(c->auth, 0, sizeof(*c->auth));
-
-#ifdef WITH_ACCOUNTING
-	c->acct = rad_malloc(sizeof(*c->acct));
-	memset(c->acct, 0, sizeof(*c->acct));
-#endif
-#endif
 
 	memset(&cl_ip4addr, 0, sizeof(cl_ip4addr));
 	memset(&cl_ip6addr, 0, sizeof(cl_ip6addr));
