@@ -14,6 +14,7 @@
 
 static void to_syslog(int priority, dstr* message);
 static void log_to_portnox(dstr* message);
+static dstr get_client_ip_port(REQUEST *request);
 
 static void to_syslog(int priority, dstr *message) {
     int syslog_priority = 0;
@@ -117,7 +118,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
-        client_ip = get_client_ip(request); 
+        client_ip = get_client_ip_port(request); 
         full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
                 n_str(auth_method), n_str(custom_json));
@@ -137,4 +138,26 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     dstr_destroy(&mac);
     dstr_destroy(&client_ip);
     return 0;
+}
+
+static dstr get_client_ip_port(REQUEST *request) {
+    dstr str = {0};
+    RADIUS_PACKET *packet = NULL;
+    char ip[INET_ADDRSTRLEN] = {0};
+
+    packet = request->packet;
+
+    if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->src_ipaddr.af,
+                 &packet->src_ipaddr.ipaddr,
+                 &ip, sizeof(ip));
+        str = dstr_from_fmt("%s:%d", &ip, packet->src_port);
+    } else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->dst_ipaddr.af,
+                 &packet->dst_ipaddr.ipaddr,
+                 &ip, sizeof(ip));
+       str = dstr_from_fmt("%s:%d", &ip, packet->dst_port);
+    }
+
+    return str;
 }

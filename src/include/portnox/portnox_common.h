@@ -43,6 +43,7 @@ RCSIDH(portnox_common_h, "$Id$")
 #define NT_CHALLENGE_PR				"NtChallenge"
 #define NT_RESPONSE_PR	            "NtClientResponse"
 #define RADIUS_CUSTOM_PR			"RadiusCustom"
+#define SRC_IP_ADDRESS_PR			"AuthRequestIp"
 #define NTKEY_PR					"NtKey"
 
 #define EVENT_TYPE_PR               "EventType"

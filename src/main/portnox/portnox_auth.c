@@ -250,6 +250,7 @@ static void process_response(srv_resp* call_resp, VALUE_PAIR **output_pairs) {
 static char* get_request_json(REQUEST *request, int auth_method, char* identity, char* mac, 
                               AUTH_SP_ATTR_LIST *attr_proc_list) {
     char *json = NULL;
+    char *src_ip = NULL;
     cJSON *json_obj = NULL; 
     cJSON* attrs = NULL;
 
@@ -257,12 +258,15 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
 
     /* get custom attrs */
     attrs = get_attrs_json(request);
+    /* get source ip */
+    src_ip = get_client_ip(request);
 
     /* compose json */
     cJSON_AddNumberToObject(json_obj, AUTH_METHOD_PR, auth_method);
     if (identity && *identity) cJSON_AddStringToObject(json_obj, USERNAME_PR, identity);
     if (mac && *mac) cJSON_AddStringToObject(json_obj, MAC_ADDRESS_PR, mac);
     if (attrs) cJSON_AddItemToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
+    if (src_ip && *src_ip) cJSON_AddStringToObject(json_obj, SRC_IP_ADDRESS_PR, src_ip);
     /* process custom params */
     if (attr_proc_list) {
         for (int i = 0; i < attr_proc_list->count; i++) {
@@ -279,8 +283,32 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
     cJSON_Minify(json);
 
     cJSON_Delete(json_obj);
+    if (src_ip) free(src_ip);
 
     return json;
+}
+
+
+static char* get_client_ip(REQUEST *request) {
+    char *ip = NULL;
+    RADIUS_PACKET *packet = NULL;
+    int buf_size = 0;
+
+    buf_size = INET_ADDRSTRLEN;
+    ip = malloc(buf_size);
+    packet = request->packet;
+
+    if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->src_ipaddr.af,
+                 &packet->src_ipaddr.ipaddr,
+                 &ip, buf_size);
+    } else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
+        inet_ntop(packet->dst_ipaddr.af,
+                 &packet->dst_ipaddr.ipaddr,
+                 &ip, buf_size);
+    }
+
+    return ip;
 }
 
 static const char* auth_method_str(int auth_method) {
