@@ -1075,6 +1075,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	 *	do PAP, CHAP, MS-CHAP, etc.
 	 */
 	rad_virtual_server(fake);
+	memcpy(request->auth_subtype, fake->auth_subtype, sizeof(request->auth_subtype));
 
 	/*
 	 *	Note that we don't do *anything* with the reply
@@ -1129,7 +1130,6 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 				 */
 				DEBUG2("  PEAP: Calling authenticate in order to initiate tunneled EAP session.");
 				rcode = module_authenticate(PW_AUTHTYPE_EAP, fake);
-				memcpy(request->auth_subtype, fake->auth_subtype, sizeof(request->auth_subtype));
 
 				
 				if (rcode == RLM_MODULE_OK) {
