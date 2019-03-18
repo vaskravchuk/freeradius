@@ -23,6 +23,8 @@ RCSID("$Id$")
 #define CALLER_ORG_ID "CallerOrgId"
 #define CALLER_SECRET "CallerSecret"
 
+#define PORT_BUFF_SIZE 16
+
 static int get_caller_info(REQUEST *request, char* hostname, int port, char* file, char* context_id, RADCLIENT **client);
 static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request);
 static char* get_request_json(char *hostname, int port, char *cluster_id);
@@ -273,10 +275,11 @@ static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, RE
 
     *client = client_alloc();
 
-    buf_port = malloc(6);
-    memset(buf_port, 0, sizeof(*buf_port));
+    buf_port = malloc(PORT_BUFF_SIZE);
+    memset(buf_port, 0, PORT_BUFF_SIZE);
     sprintf(buf_port, "%d", port);
 
+    // src_ipaddr is a value, will be copied
     (*client)->ipaddr = request->packet->src_ipaddr;
     (*client)->secret = strdup(shared_secret);
     (*client)->shortname = buf_port;
