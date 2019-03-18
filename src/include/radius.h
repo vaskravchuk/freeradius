@@ -243,6 +243,8 @@
 
 #define PW_CONTEXT_ID 9105
 
+#define PW_AUTH_SUBTYPE 9106
+
 /*
  *	Integer Translations
  */

@@ -123,7 +123,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 
         full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
-                n_str(auth_method), n_str(custom_json));
+                n_str(request->auth_subtype), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else {
         dstr d_message = {0};

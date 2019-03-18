@@ -381,7 +381,13 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 				}
 				strlcpy(out, request->context_id, outlen);
 				return strlen(out);
-
+			case PW_AUTH_SUBTYPE:
+				if (request->auth_subtype) {
+					strlcpy(out, request->auth_subtype, outlen);
+				} else {
+					strlcpy(out, "<UNKNOWN-AUTH-SUBTYPE>", outlen);
+				}
+				return strlen(out);
 			case PW_CLIENT_IP_ADDRESS: /* the same as below */
 			case PW_PACKET_SRC_IP_ADDRESS:
 				if (packet->src_ipaddr.af != AF_INET) {
