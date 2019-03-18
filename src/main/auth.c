@@ -193,8 +193,7 @@ static int rad_check_password(REQUEST *request)
 			dict_valnamebyattr(PW_AUTH_TYPE,
 					   auth_type_pair->vp_integer));
 		cur_config_item = auth_type_pair->next;
-		request->auth_subtype = dict_valnamebyattr(PW_AUTH_TYPE,
-					   auth_type_pair->vp_integer);
+		
 		if (auth_type == PW_AUTHTYPE_REJECT) {
 			RDEBUG2("Auth-Type = Reject, rejecting user");
 			return -2;
