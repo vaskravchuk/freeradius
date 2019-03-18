@@ -421,6 +421,8 @@ static int mschapv2_authenticate(void *arg, EAP_HANDLER *handler)
 	rad_assert(handler->request != NULL);
 	rad_assert(handler->stage == AUTHENTICATE);
 
+	handler->request->auth_subtype = "MSCHAPV2";
+	
 	data = (mschapv2_opaque_t *) handler->opaque;
 	
 	/*

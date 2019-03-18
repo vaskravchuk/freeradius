@@ -1556,7 +1556,8 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 	REQUEST *request = handler->request;
 	eap_tls_t *inst = (eap_tls_t *) arg;
 
-
+	handler->request->auth_subtype = "EAP-TLS";
+	
 	logs_add_flow(handler->request, "eaptls_authenticate");
 	RDEBUG2("Authenticate");
 

@@ -39,6 +39,8 @@ static int portnox_chap_auth(void *instance, REQUEST *request)
 	int result = NULL;
 	VALUE_PAIR *answer = NULL;
 
+	request->auth_subtype = "CHAP";
+
     result = portnox_auth(request, 
     					  CHAP_AUTH_METHOD, 
     					  &auth_info, 
