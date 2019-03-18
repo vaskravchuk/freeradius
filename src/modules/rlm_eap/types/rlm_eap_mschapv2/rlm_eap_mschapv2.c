@@ -24,7 +24,6 @@
 RCSID("$Id$")
 
 #include <freeradius-devel/autoconf.h>
-#include <freeradius-devel/portnox/string_helper.h>
 
 #include <stdio.h>
 #include <stdlib.h>

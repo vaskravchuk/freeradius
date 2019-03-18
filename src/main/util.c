@@ -530,7 +530,7 @@ void request_set_auth_subtype(REQUEST *request, char *type)
 	size_t len = snprintf(request->auth_subtype, sizeof(request->auth_subtype), "%s", type);
 	//if len < 0 -> error occurs 
 	if (len >= 0) {
-		request->client_shortname[len] = 0;
+		request->auth_subtype[len] = 0;
 	}
 }
 
