@@ -1068,6 +1068,8 @@ static int mschap_authenticate(void * instance, REQUEST *request)
 	 */
 	do_ntlm_auth = (inst->ntlm_auth != NULL);
 
+	request_set_auth_subtype(request, "MSCHAP");
+
 	/*
 	 *	If we have an ntlm_auth configuration, then we may
 	 *	want to suppress it.
