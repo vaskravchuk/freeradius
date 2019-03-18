@@ -80,7 +80,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     dstr client_ip = {0};
     char *custom_json = NULL;
     char *port = NULL;
-    char *context_id = NULL;
     char *auth_method = NULL;
     int redis_result = 0;
 
@@ -89,7 +88,6 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     mac = get_mac(request);
     client_ip = get_client_ip(request); 
     port = request->client_shortname;
-    context_id = request->context_id;
     auth_method = request->auth_subtype;
 
     if (strcmp(error_code, "60029") == 0) {

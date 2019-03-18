@@ -727,8 +727,6 @@ static int cert_verify_callback(X509_STORE_CTX *ctx, void *arg) {
 	request = handler->request;
 	conf = (EAP_TLS_CONF *)SSL_get_ex_data(ssl, 1);
 
-	//request_set_auth_subtype(request, "EAP-TLS");
-
 	client_cert = ctx->cert;
 
 	if (client_cert != NULL) {

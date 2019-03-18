@@ -381,6 +381,7 @@ static size_t xlat_packet(void *instance, REQUEST *request,
 				}
 				strlcpy(out, request->context_id, outlen);
 				return strlen(out);
+			
 			case PW_CLIENT_IP_ADDRESS: /* the same as below */
 			case PW_PACKET_SRC_IP_ADDRESS:
 				if (packet->src_ipaddr.af != AF_INET) {
@@ -1367,11 +1368,6 @@ int radius_xlat(char *out, int outlen, const char *fmt,
 				break;
 			case 'C': /* ClientName */
 				strlcpy(q,request->client_shortname,freespace);
-				q += strlen(q);
-				p++;
-				break;
-			case 'K': /* AuthSubType */
-				strlcpy(q,request->auth_subtype,freespace);
 				q += strlen(q);
 				p++;
 				break;
