@@ -286,7 +286,7 @@ struct auth_req {
 	const char 				context_id[UUID_SIZE]; /* max unique id for every request (per session can be unique) */
 	char 					client_shortname[CLIENT_NAME_SIZE]; /* client->shortname, Listening port */
 
-	char 					auth_subtype[AUTH_SUBTYPE_SIZE]; /* auth subtype of request */
+	char 					auth_subtype; /* auth subtype of request */
 
 	LOG_DESC 				*logs; /* state description */
 };				/* REQUEST typedef */
