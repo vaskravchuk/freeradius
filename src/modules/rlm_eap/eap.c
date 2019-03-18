@@ -1177,7 +1177,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 	    */
 		memcpy(request->context_id, handler->context_id, sizeof(handler->context_id));
 		if (handler->cached_request) {
-			memcpy(request->auth_subtype, handler->cached_request->auth_subtype, sizeof(handler->auth_subtype));
+			memcpy(request->auth_subtype, handler->cached_request->auth_subtype, sizeof(request->auth_subtype));
 		}
 	}
 
