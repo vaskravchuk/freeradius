@@ -41,20 +41,20 @@ dstr get_nas_port(REQUEST *request) {
 
 dstr get_client_ip(REQUEST *request) {
     dstr str = {0};
-    char* ip = NULL;
+    char ip = NULL;
 
     RADIUS_PACKET *packet = request->packet;
 
     if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
         inet_ntop(packet->src_ipaddr.af,
                  &packet->src_ipaddr.ipaddr,
-                 ip, 500);
-        str = dstr_from_fmt("%s:%d", ip, packet->src_port);
+                 &ip, 500);
+        str = dstr_from_fmt("%s:%d", &ip, packet->src_port);
     } else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
         inet_ntop(packet->dst_ipaddr.af,
                  &packet->dst_ipaddr.ipaddr,
-                 ip, 500);
-       str = dstr_from_fmt("%s:%d", ip, packet->src_port);
+                 &ip, 500);
+       str = dstr_from_fmt("%s:%d", &ip, packet->src_port);
     }
 
     return str;
