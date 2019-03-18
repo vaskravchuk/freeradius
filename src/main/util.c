@@ -608,7 +608,7 @@ REQUEST *request_alloc_fake(REQUEST *request)
   memcpy(fake->context_id, request->context_id, sizeof(request->context_id));
   memcpy(fake->request_id, request->request_id, sizeof(request->request_id));
   memcpy(fake->client_shortname, request->client_shortname, sizeof(request->client_shortname));
-  memcpy(fake->auth_subtype, request->auth_subtype, sizeof(request->auth_subtype));
+  //memcpy(fake->auth_subtype, request->auth_subtype, sizeof(request->auth_subtype));
   memcpy(fake->logs, request->logs, sizeof(LOG_DESC));
 
   return fake;

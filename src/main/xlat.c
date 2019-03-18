@@ -1377,6 +1377,11 @@ int radius_xlat(char *out, int outlen, const char *fmt,
 				q += strlen(q);
 				p++;
 				break;
+			case 'K': /* AuthSubType */
+				strlcpy(q,request->auth_subtype,freespace);
+				q += strlen(q);
+				p++;
+				break;
 			case 'D': /* request date */
 				TM = localtime_r(&request->timestamp, &s_TM);
 				len = strftime(tmpdt, sizeof(tmpdt), "%Y%m%d", TM);
