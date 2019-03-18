@@ -816,13 +816,6 @@ autz_redo:
 		request->reply->code = PW_AUTHENTICATION_ACK;
 	}
 	
-	char *auth_method = NULL;
-    VALUE_PAIR *auth_type = pairfind(request->config_items, PW_AUTH_TYPE);
-
-    if (auth_type) {
-        auth_method = dict_valnamebyattr(PW_AUTH_TYPE, auth_type->vp_integer);
-    }
-
 	if ((module_msg = pairfind(request->packet->vps, PW_MODULE_SUCCESS_MESSAGE)) != NULL) {
 		char msg[MAX_STRING_LEN+12];
 
@@ -833,7 +826,7 @@ autz_redo:
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
 			// Success event. Will be send to BE for success alerts
-			radius_exec_logger_centrale(request, "1", "Authenticate status OK, method %s", auth_method);
+			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
 	} else {
 		rad_authlog("Login OK", request, 1);
@@ -841,7 +834,7 @@ autz_redo:
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
 			// Success event. Will be send to BE for success alerts
-			radius_exec_logger_centrale(request, "1", "Authenticate status OK, method %s", auth_method);
+			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
 	}
 
