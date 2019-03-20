@@ -272,17 +272,31 @@ static int get_caller_info(REQUEST *request, char* hostname, int port, char* fil
 
 static void get_rad_client(int port, char *shared_secret, RADCLIENT **client, REQUEST *request) {
     char *buf_port;
+    RADCLIENT *cln;
 
-    *client = client_alloc();
+    cln = client_alloc();
 
     buf_port = malloc(PORT_BUFF_SIZE);
     memset(buf_port, 0, PORT_BUFF_SIZE);
     sprintf(buf_port, "%d", port);
 
     // src_ipaddr is a value, will be copied
-    (*client)->ipaddr = request->packet->src_ipaddr;
-    (*client)->secret = strdup(shared_secret);
-    (*client)->shortname = buf_port;
+    cln->ipaddr = request->packet->src_ipaddr;
+    cln->secret = strdup(shared_secret);
+    cln->shortname = buf_port;
+
+    switch (cln->ipaddr.af) {
+        case AF_INET:
+            cln->prefix = 32;
+            break;
+        case AF_INET6:
+            cln->prefix = 128;
+            break;
+        default:
+            break;
+    }
+
+    *client = cln;
 }
 
 static char* get_request_json(char *hostname, int port, char *cluster_id) {

@@ -297,6 +297,7 @@ static char* get_client_ip(REQUEST *request) {
 
     buf_size = INET_ADDRSTRLEN;
     ip = malloc(buf_size);
+    memset(ip, 0, buf_size);
     packet = request->packet;
 
     if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
