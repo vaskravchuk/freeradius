@@ -303,11 +303,11 @@ static char* get_client_ip(REQUEST *request) {
     if (*((uint32_t*)&packet->src_ipaddr.ipaddr) != INADDR_ANY) {
         inet_ntop(packet->src_ipaddr.af,
                  &packet->src_ipaddr.ipaddr,
-                 &ip, buf_size);
+                 ip, buf_size);
     } else if (*((uint32_t*)&packet->dst_ipaddr.ipaddr) != INADDR_ANY) {
         inet_ntop(packet->dst_ipaddr.af,
                  &packet->dst_ipaddr.ipaddr,
-                 &ip, buf_size);
+                 ip, buf_size);
     }
 
     return ip;
