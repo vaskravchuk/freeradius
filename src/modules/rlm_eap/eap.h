@@ -137,8 +137,6 @@ typedef struct _eap_handler {
 	char 			ssl_error_desc[SSL_ERROR_SIZE];
 } EAP_HANDLER;
 
-void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description);
-
 /*
  * Interface to call EAP sub mdoules
  */

@@ -28,6 +28,24 @@ RCSID("$Id$")
 
 #ifndef NO_OPENSSL
 
+void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description)
+{
+	if (!error && !description) {
+		return;
+	}
+
+	size_t len_error = snprintf(handler->ssl_error, sizeof(handler->ssl_error), "%s", error);
+	size_t len_desc = snprintf(handler->ssl_error_desc, sizeof(handler->ssl_error_desc), "%s", description);
+
+	//if len < 0 -> error occurs 
+	if (len_error >= 0) {
+		handler->ssl_error[len_error] = 0;
+	}
+	else if(len_desc >= 0) {
+		handler->ssl_error_desc[len_desc] = 0;
+	}
+}
+
 void cbtls_info(const SSL *s, int where, int ret)
 {
 	const char *str, *state;
