@@ -183,7 +183,7 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 char *ssl_error_to_error_id(char *ssl_error){
     char *error_id = NULL;
 
-    switch (priority) {
+    switch (ssl_error) {
         case "UM": 
             error_id = "60032";
             break;
