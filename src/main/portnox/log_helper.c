@@ -91,15 +91,55 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     auth_method = request->auth_subtype;
 
     if (strcmp(error_code, "60029") == 0) {
-        full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s", 
+        full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s", 
             n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60030") == 0) {
-        full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+        full_message = dstr_from_fmt("Radius eap-tls handshake error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
                  n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60031") == 0) {
-        full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
+        full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    }  else if (strcmp(error_code, "60032") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls unexpected message error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60033") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls wrong protocol version error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60034") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls ssl handshake failure error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60036") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls bad certificate error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60037") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls certificate unknown error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60038") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls illegal parameter error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60040") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls unknown CA error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60041") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls decrtypt error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60042") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls internal error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                 n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+        log_portnox_error(error_code, &full_message, request);
+    } else if (strcmp(error_code, "60042") == 0) {
+        full_message = dstr_from_fmt("Radius eap-tls internal error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
                  n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
     } else if (strcmp(error_code, "60002") == 0 || strcmp(error_code, "60035") == 0 || strcmp(error_code, "60039") == 0 || strcmp(error_code, "60051") == 0) {
@@ -108,18 +148,18 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
         redis_result = get_org_id_for_client(request->client_shortname, &org_id);
         if (redis_result) 
         {
-            radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' ,\"RadiusCustom\":%s", 
+            radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' \"RadiusCustom\":%s", 
                             n_str(port), n_str(dstr_to_cstr(&mac)), redis_dal_error_descr(redis_result), n_str(custom_json));
         }
 
-        full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
+        full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s \"RadiusCustom\":%s",
                  n_str(message), n_str(org_id), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
 
         if (org_id) free(org_id);
     } else if (strcmp(error_code, "1") == 0) {
         client_ip = get_client_ip_port(request); 
-        full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
+        full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes \"RadiusCustom\":%s",
                 n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)), 
                 n_str(auth_method), n_str(custom_json));
         log_portnox_error(error_code, &full_message, request);
@@ -138,6 +178,48 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
     dstr_destroy(&mac);
     dstr_destroy(&client_ip);
     return 0;
+}
+
+char *ssl_error_to_error_id(char *ssl_error){
+    char *error_id = NULL;
+
+    switch (priority) {
+        case "UM": 
+            error_id = "60032";
+            break;
+        case "PU": 
+            error_id = "60033";
+            break;
+        case "HF": 
+            error_id = "60034";
+            break;
+        case "BC": 
+            error_id = "60036";
+            break;
+        case "CU": 
+            error_id = "60037";
+            break;
+        case "IP": 
+            error_id = "60038";
+            break;
+        case "CA": 
+            error_id = "60040";
+            break;
+        case "CY": 
+            error_id = "60041";
+            break;
+        case "IE": 
+            error_id = "60042";
+            break;
+        case "AD": 
+            error_id = "60043";
+            break;
+        default:
+            error_id = "60030";
+            break;
+    }
+
+    return error_id;
 }
 
 static dstr get_client_ip_port(REQUEST *request) {
