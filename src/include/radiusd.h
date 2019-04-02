@@ -522,7 +522,6 @@ REQUEST		*request_alloc(void);
 REQUEST		*request_alloc_fake(REQUEST *oldreq);
 REQUEST		*request_alloc_coa(REQUEST *request);
 void		request_set_client(REQUEST *request, RADCLIENT *client);
-void 		handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description)
 int			request_data_add(REQUEST *request,
 					void *unique_ptr, int unique_int,
 					void *opaque, void (*free_opaque)(void *));
