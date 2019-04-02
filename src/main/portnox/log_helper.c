@@ -206,7 +206,7 @@ char *ssl_error_to_error_id(char *ssl_error){
     } else {
         error_id = "60030";
     }
-    +
+    
     return error_id;
 }
 
