@@ -1680,8 +1680,8 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 				}
 
 				char *error_id = ssl_error_to_error_id(handler->ssl_error);
-				char description = strcmp(error_id, "60030") == 0 ? handler->ssl_error_desc : NULL;
-				radlog(L_INFO, "errorid %s and description %s", error_id, description);
+				char description = strcmp(error_id, "60040") == 0 ? handler->ssl_error_desc : NULL;
+
 				radius_exec_logger_centrale(handler->request, error_id, description);
 			}
 		}
