@@ -183,42 +183,30 @@ int radius_internal_logger_centrale(char *error_code, char *message, REQUEST *re
 char *ssl_error_to_error_id(char *ssl_error){
     char *error_id = NULL;
 
-    switch (ssl_error) {
-        case "UM": 
+    if (strcmp(ssl_error, "UM") == 0){
             error_id = "60032";
-            break;
-        case "PU": 
+    } else if(strcmp(ssl_error, "PU") == 0){
             error_id = "60033";
-            break;
-        case "HF": 
+    }  else if(strcmp(ssl_error, "HF") == 0){
             error_id = "60034";
-            break;
-        case "BC": 
+    }  else if(strcmp(ssl_error, "BC") == 0){
             error_id = "60036";
-            break;
-        case "CU": 
+    }  else if(strcmp(ssl_error, "CU") == 0){
             error_id = "60037";
-            break;
-        case "IP": 
+    }  else if(strcmp(ssl_error, "IP") == 0){
             error_id = "60038";
-            break;
-        case "CA": 
+    }  else if(strcmp(ssl_error, "CA") == 0){
             error_id = "60040";
-            break;
-        case "CY": 
+    }  else if(strcmp(ssl_error, "CY") == 0){
             error_id = "60041";
-            break;
-        case "IE": 
+    }  else if(strcmp(ssl_error, "IE") == 0){
             error_id = "60042";
-            break;
-        case "AD": 
+    }  else if(strcmp(ssl_error, "AD") == 0){
             error_id = "60043";
-            break;
-        default:
-            error_id = "60030";
-            break;
+    } else {
+        error_id = "60030";
     }
-
+    +
     return error_id;
 }
 
