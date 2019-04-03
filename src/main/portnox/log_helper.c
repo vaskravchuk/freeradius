@@ -52,10 +52,10 @@ static void log_to_portnox(dstr *message) {
     resp_destroy(&resp);
 }
 
-void log_portnox(const char* code, dstr *message, int priority, REQUEST* req) {
+void log_portnox(int code, dstr *message, int priority, REQUEST* req) {
     dstr full_message = {0};
 
-    full_message = dstr_from_fmt("%s ContextId: %s; %s", n_str(code), n_str(req->context_id), n_str(dstr_to_cstr(message)));
+    full_message = dstr_from_fmt("%d ContextId: %s; %s", code, n_str(req->context_id), n_str(dstr_to_cstr(message)));
 
     // to syslog
     to_syslog(priority, &full_message);
@@ -67,10 +67,10 @@ void log_portnox(const char* code, dstr *message, int priority, REQUEST* req) {
 }
 
 void log_portnox_info(dstr *message,  REQUEST* req) {
-    log_portnox("0", message, INFO_PRIORITY, req);
+    log_portnox(0, message, INFO_PRIORITY, req);
 }
 
-void log_portnox_error(const char* code, dstr *message, REQUEST* req) {
+void log_portnox_error(int code, dstr *message, REQUEST* req) {
     log_portnox(code, message, ERROR_PRIORITY, req);
 }
 
