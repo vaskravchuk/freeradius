@@ -108,10 +108,9 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
             break;
         case 60060 ... 60084:
             full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
-                                         n_str(n_str(message), dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
+                                        n_str(message), n_str(dstr_to_cstr(&username), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
-        case 60029:
         case 60002:
         case 60035:
         case 60039:
@@ -146,8 +145,8 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
 
             dstr_destroy(&d_message); 
             break;
-        }
-
+    }
+    
     if (custom_json) free(custom_json);
     dstr_destroy(&full_message);
     dstr_destroy(&username);
@@ -211,7 +210,7 @@ char *ssl_error_to_error_id(char *ssl_error) {
     } else if (strcmp(ssl_error, "UP") == 0) {
         sprintf(error_id, "%d", id + 24);
     } else {
-        error_id = "60030";
+        sprintf(error_id, "60030");
     }
 
     return error_id;
