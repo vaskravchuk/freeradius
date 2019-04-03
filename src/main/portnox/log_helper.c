@@ -223,7 +223,6 @@ void ssl_error_to_error_id(char *ssl_error, char *error_id) {
     if (len >= 0) {
         request->auth_subtype[len] = 0;
     }
-    return error_id;
 }
 
 static dstr get_client_ip_port(REQUEST *request) {
