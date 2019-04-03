@@ -165,11 +165,11 @@ int ssl_error_to_error_id(char *ssl_error) {
     } else if (strcmp(ssl_error, "PU") == 0) {
         return error_id + 1;
     } else if (strcmp(ssl_error, "HF") == 0) {
-        return error_id + 2:
+        return error_id + 2;
     } else if (strcmp(ssl_error, "BC") == 0) {
         return error_id + 3;
     } else if (strcmp(ssl_error, "CU") == 0) {
-        return error_id 4;
+        return error_id + 4;
     } else if (strcmp(ssl_error, "IP") == 0) {
         return error_id + 5;
     } else if (strcmp(ssl_error, "CA") == 0) {
