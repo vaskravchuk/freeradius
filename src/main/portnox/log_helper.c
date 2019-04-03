@@ -89,7 +89,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
     mac = get_mac(request);
     port = request->client_shortname;
     auth_method = request->auth_subtype;
-radlog(L_INFO, "in logger before switch");
+    
     switch (error_code){
         case 60029:
             full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
@@ -107,7 +107,6 @@ radlog(L_INFO, "in logger before switch");
             log_portnox_error(error_code, &full_message, request);
             break;
         case 60060 ... 60084:
-            radlog(L_INFO, "in 60..84 case");
             full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
                                         n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
