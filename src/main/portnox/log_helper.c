@@ -158,64 +158,71 @@ radlog(L_INFO, "in logger before switch");
     return 0;
 }
 
-char ssl_error_to_error_id(char *ssl_error) {
+void ssl_error_to_error_id(char *ssl_error, char *error_id) {
+    if (!ssl_error) {
+        return;
+    }
+    size_t len;
     int id = 60060;
-    char error_id[7];
 
     if (strcmp(ssl_error, "UM") == 0) {
-        sprintf(error_id, "%d", id);
+        len = snprintf(error_id, sizeof(error_id), "%d", id);
     } else if (strcmp(ssl_error, "PU") == 0) {
-        sprintf(error_id, "%d", id + 1);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 1);
     } else if (strcmp(ssl_error, "HF") == 0) {
-        sprintf(error_id, "%d", id + 2);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 2);
     } else if (strcmp(ssl_error, "BC") == 0) {
-        sprintf(error_id, "%d", id + 3);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 3);
     } else if (strcmp(ssl_error, "CU") == 0) {
-        sprintf(error_id, "%d", id + 4);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 4);
     } else if (strcmp(ssl_error, "IP") == 0) {
-        sprintf(error_id, "%d", id + 5);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 5);
     } else if (strcmp(ssl_error, "CA") == 0) {
-        sprintf(error_id, "%d", id + 6);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 6);
     } else if (strcmp(ssl_error, "CY") == 0) {
-        sprintf(error_id, "%d", id + 7);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 7);
     } else if (strcmp(ssl_error, "IE") == 0) {
-        sprintf(error_id, "%d", id + 8);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 8);
     } else if (strcmp(ssl_error, "AD") == 0) {
-        sprintf(error_id, "%d", id + 9);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 9);
     } else if (strcmp(ssl_error, "BM") == 0) {
-        sprintf(error_id, "%d", id + 10);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 10);
     } else if (strcmp(ssl_error, "DF") == 0) {
-        sprintf(error_id, "%d", id + 11);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 11);
     } else if (strcmp(ssl_error, "NC") == 0) {
-        sprintf(error_id, "%d", id + 12);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 12);
     } else if (strcmp(ssl_error, "UC") == 0) {
-        sprintf(error_id, "%d", id + 13);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 13);
     } else if (strcmp(ssl_error, "CR") == 0) {
-        sprintf(error_id, "%d", id + 14);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 14);
     } else if (strcmp(ssl_error, "CE") == 0) {
-        sprintf(error_id, "%d", id + 15);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 15);
     } else if (strcmp(ssl_error, "DC") == 0) {
-        sprintf(error_id, "%d", id + 16);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 16);
     } else if (strcmp(ssl_error, "RO") == 0) {
-        sprintf(error_id, "%d", id + 17);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 17);
     } else if (strcmp(ssl_error, "DE") == 0) {
-        sprintf(error_id, "%d", id + 18);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 18);
     } else if (strcmp(ssl_error, "CY") == 0) {
-        sprintf(error_id, "%d", id + 19);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 19);
     } else if (strcmp(ssl_error, "ER") == 0) {
-        sprintf(error_id, "%d", id + 20);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 20);
     } else if (strcmp(ssl_error, "IS") == 0) {
-        sprintf(error_id, "%d", id + 21);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 21);
     } else if (strcmp(ssl_error, "US") == 0) {
-        sprintf(error_id, "%d", id + 22);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 22);
     } else if (strcmp(ssl_error, "NR") == 0) {
-        sprintf(error_id, "%d", id + 23);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 23);
     } else if (strcmp(ssl_error, "UP") == 0) {
-        sprintf(error_id, "%d", id + 24);
+        len = snprintf(error_id, sizeof(error_id), "%d", id + 24);
     } else {
-        sprintf(error_id, "60030");
+        len = snprintf(error_id, sizeof(error_id), "60030");
     }
-    radlog(L_INFO, "errorid %s", error_id);
+
+    //if len < 0 -> error occurs 
+    if (len >= 0) {
+        request->auth_subtype[len] = 0;
+    }
     return error_id;
 }
 
