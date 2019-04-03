@@ -221,7 +221,7 @@ void ssl_error_to_error_id(char *ssl_error, char *error_id) {
 
     //if len < 0 -> error occurs 
     if (len >= 0) {
-        request->auth_subtype[len] = 0;
+        error_id[len] = 0;
     }
 }
 
