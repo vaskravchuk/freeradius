@@ -159,7 +159,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
 
 char *ssl_error_to_error_id(char *ssl_error) {
     int id = 60060;
-    char error_id[5];
+    char error_id[7];
 
     if (strcmp(ssl_error, "UM") == 0) {
         sprintf(error_id, "%d", id);
