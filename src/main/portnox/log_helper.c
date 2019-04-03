@@ -158,7 +158,7 @@ radlog(L_INFO, "in logger before switch");
     return 0;
 }
 
-char *ssl_error_to_error_id(char *ssl_error) {
+char ssl_error_to_error_id(char *ssl_error) {
     int id = 60060;
     char error_id[7];
 
