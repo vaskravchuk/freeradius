@@ -215,7 +215,7 @@ char ssl_error_to_error_id(char *ssl_error) {
     } else {
         sprintf(error_id, "60030");
     }
-
+    radlog(L_INFO, "errorid %s", error_id);
     return error_id;
 }
 
