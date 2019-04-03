@@ -114,7 +114,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
         case 60002:
         case 60035:
         case 60039:
-        case 60051:
+        case 60051:{
             char *org_id = NULL;
 
             redis_result = get_org_id_for_client(request->client_shortname, &org_id);
@@ -130,6 +130,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
 
             if (org_id) free(org_id);
             break;
+        }
         case 1:
             client_ip = get_client_ip_port(request);
             full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes \"RadiusCustom\":%s",
@@ -137,7 +138,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
                                           n_str(auth_method), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
-        default:
+        default: {
             dstr d_message = {0};
 
             d_message = dstr_cstr(message);
@@ -145,6 +146,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
 
             dstr_destroy(&d_message); 
             break;
+        }
     };
 
     if (custom_json) free(custom_json);
