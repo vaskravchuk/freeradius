@@ -534,6 +534,7 @@ void request_set_auth_subtype(REQUEST *request, char *type)
 	}
 }
 
+
 /*
  *	Create a new REQUEST, based on an old one.
  *
