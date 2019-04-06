@@ -89,8 +89,15 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
     mac = get_mac(request);
     port = request->client_shortname;
     auth_method = request->auth_subtype;
-    
+
     switch (error_code){
+        case 1:
+            client_ip = get_client_ip_port(request);
+            full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes \"RadiusCustom\":%s",
+                                          n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)),
+                                          n_str(auth_method), n_str(custom_json));
+            log_portnox_error(error_code, &full_message, request);
+            break;
         case 60029:
             full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
                                          n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
@@ -104,11 +111,6 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
         case 60031:
             full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
                                      n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
-            log_portnox_error(error_code, &full_message, request);
-            break;
-        case 60060 ... 60084:
-            full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
-                                        n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
         case 60002:
@@ -131,11 +133,9 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
             if (org_id) free(org_id);
             break;
         }
-        case 1:
-            client_ip = get_client_ip_port(request);
-            full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes \"RadiusCustom\":%s",
-                                          n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)),
-                                          n_str(auth_method), n_str(custom_json));
+        case 60060 ... 60084:
+            full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+                                        n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
         default: {
@@ -155,73 +155,6 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
     dstr_destroy(&mac);
     dstr_destroy(&client_ip);
     return 0;
-}
-
-void ssl_error_to_error_id(char *ssl_error, char *error_id) {
-    if (!ssl_error) {
-        return;
-    }
-    size_t len;
-    int id = 60060;
-
-    if (strcmp(ssl_error, "UM") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id);
-    } else if (strcmp(ssl_error, "PU") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 1);
-    } else if (strcmp(ssl_error, "HF") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 2);
-    } else if (strcmp(ssl_error, "BC") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 3);
-    } else if (strcmp(ssl_error, "CU") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 4);
-    } else if (strcmp(ssl_error, "IP") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 5);
-    } else if (strcmp(ssl_error, "CA") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 6);
-    } else if (strcmp(ssl_error, "CY") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 7);
-    } else if (strcmp(ssl_error, "IE") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 8);
-    } else if (strcmp(ssl_error, "AD") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 9);
-    } else if (strcmp(ssl_error, "BM") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 10);
-    } else if (strcmp(ssl_error, "DF") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 11);
-    } else if (strcmp(ssl_error, "NC") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 12);
-    } else if (strcmp(ssl_error, "UC") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 13);
-    } else if (strcmp(ssl_error, "CR") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 14);
-    } else if (strcmp(ssl_error, "CE") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 15);
-    } else if (strcmp(ssl_error, "DC") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 16);
-    } else if (strcmp(ssl_error, "RO") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 17);
-    } else if (strcmp(ssl_error, "DE") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 18);
-    } else if (strcmp(ssl_error, "CY") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 19);
-    } else if (strcmp(ssl_error, "ER") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 20);
-    } else if (strcmp(ssl_error, "IS") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 21);
-    } else if (strcmp(ssl_error, "US") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 22);
-    } else if (strcmp(ssl_error, "NR") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 23);
-    } else if (strcmp(ssl_error, "UP") == 0) {
-        len = snprintf(error_id, sizeof(error_id), "%d", id + 24);
-    } else {
-        len = snprintf(error_id, sizeof(error_id), "60030");
-    }
-
-    //if len < 0 -> error occurs 
-    if (len >= 0) {
-        error_id[len] = 0;
-    }
 }
 
 static dstr get_client_ip_port(REQUEST *request) {
