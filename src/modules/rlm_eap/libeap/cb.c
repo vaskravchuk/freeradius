@@ -117,7 +117,8 @@ void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description)
 
 void cbtls_info(const SSL *s, int where, int ret)
 {
-	const char *str, *state, *alert_desc;
+	const char *str, *state;
+	char *alert_desc;
 	int w;
 	EAP_HANDLER *handler = (EAP_HANDLER *)SSL_get_ex_data(s, 0);
 	REQUEST *request = NULL;
