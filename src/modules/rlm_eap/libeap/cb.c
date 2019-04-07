@@ -100,13 +100,11 @@ void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description)
 		return;
 	}
 	char error_id[7];
-	char *error_desc;
-
+	
 	ssl_error_to_error_id(error, error_id);
-	error_desc = strcmp(error_id, "60030") == 0 ? NULL : description;
 
 	size_t len_error = snprintf(handler->ssl_error, sizeof(handler->ssl_error), "%s", error_id);
-	size_t len_desc = snprintf(handler->ssl_error_desc, sizeof(handler->ssl_error_desc), "%s", error_desc);
+	size_t len_desc = snprintf(handler->ssl_error_desc, sizeof(handler->ssl_error_desc), "%s", description);
 
 	//if len < 0 -> error occurs 
 	if (len_error >= 0) {
