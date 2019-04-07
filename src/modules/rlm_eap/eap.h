@@ -133,7 +133,7 @@ typedef struct _eap_handler {
 
 	char 			context_id[UUID_SIZE]; /* max unique id for every session */
 
-	char 			ssl_error[SSL_ERROR_SIZE];
+	char 			ssl_error[7];
 	char 			ssl_error_desc[SSL_ERROR_SIZE];
 } EAP_HANDLER;
 
