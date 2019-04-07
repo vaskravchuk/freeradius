@@ -1679,7 +1679,7 @@ static int eaptls_authenticate(void *arg, EAP_HANDLER *handler)
 					radlog(L_ERR, "eaptls_authenticate: handler->request->packet->vps == NULL");
 				}
 				
-				radius_exec_logger_centrale(handler->request, handler->ssl_error, strcmp(handler->ssl_error, "60030") == 0 ? NULL : handler->ssl_error_desc);
+				radius_exec_logger_centrale(handler->request, handler->ssl_error, handler->ssl_error_desc);
 			}
 		}
 
