@@ -154,7 +154,7 @@ void cbtls_info(const SSL *s, int where, int ret)
 			 SSL_alert_type_string_long(ret),
 			 alert_desc);
 
-			handler_set_ssl_error(handler, SSL_alert_desc_string(ret), alert_desc);
+			handler_set_ssl_error(handler, SSL_alert_desc_string(ret), SSL_alert_desc_string_long(ret));
 	} else if (where & SSL_CB_EXIT) {
 		if (ret == 0) {
 			snprintf(buffer, sizeof(buffer), "%s: failed in %s",
