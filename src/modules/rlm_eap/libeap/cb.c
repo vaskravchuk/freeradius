@@ -108,7 +108,7 @@ void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description)
 	int len_desc = snprintf(handler->ssl_error_desc, sizeof(handler->ssl_error_desc), "%s", description);
 
 	len_error = MIN(len_error, sizeof(handler->ssl_error) - 1) < 0 ? 0 : len_error;
-	len_desc = MIN(len_desc, sizeof(handler->len_desc) - 1) < 0 ? 0 : len_desc;
+	len_desc = MIN(len_desc, sizeof(handler->ssl_error_desc) - 1) < 0 ? 0 : len_desc;
 
 	handler->ssl_error[len_error] = 0;
 	handler->ssl_error_desc[len_desc] = 0;		
