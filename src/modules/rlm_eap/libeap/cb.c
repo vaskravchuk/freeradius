@@ -25,7 +25,6 @@
 RCSID("$Id$")
 
 #include "eap_tls.h"
-#include <freeradius-devel/portnox/string_helper.h>
 
 #ifndef NO_OPENSSL
 

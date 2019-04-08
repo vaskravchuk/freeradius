@@ -13,6 +13,8 @@
 RCSIDH(string_helper_h, "$Id$")
 
 #define n_str(S) ((S) ? (S) : ("(null)"))
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 int is_contains(char **arr, int size, char* str);
 int json_escape(char* str, char* out, int outlen);
