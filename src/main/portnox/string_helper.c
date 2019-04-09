@@ -12,9 +12,6 @@ RCSID("$Id$")
 #include <freeradius-devel/radiusd.h>
 #include <freeradius-devel/portnox/string_helper.h>
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
-
 int is_contains(char **arr, int size, char* str) {
     int found = 0;
     for (int i = 0; i < size; ++i) {
