@@ -368,8 +368,13 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				if (handler->cached_request->packet->vps == NULL) {
 					radlog(L_ERR, "eaplist_expire: handler->cached_request->packet->vps == NULL");
 				}
-				// not need to send to backend
-				//radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
+
+				// Get the current time
+				char* c_time_string;
+				time_t current_time = time(NULL);
+				handler->cached_request->end_time = &current_time;
+				
+				radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
 			}
 			/*
 			 * clear all 

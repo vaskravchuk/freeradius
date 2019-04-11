@@ -193,7 +193,6 @@ static int rad_check_password(REQUEST *request)
 			dict_valnamebyattr(PW_AUTH_TYPE,
 					   auth_type_pair->vp_integer));
 		cur_config_item = auth_type_pair->next;
-
 		if (auth_type == PW_AUTHTYPE_REJECT) {
 			RDEBUG2("Auth-Type = Reject, rejecting user");
 			return -2;
@@ -825,6 +824,12 @@ autz_redo:
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
+
+			// Get the current time
+			char* c_time_string;
+			time_t current_time = time(NULL);
+			request->end_time = &current_time;
+
 			// Success event. Will be send to BE for success alerts
 			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
@@ -833,6 +838,12 @@ autz_redo:
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
+
+			// Get the current time
+			char* c_time_string;
+			time_t current_time = time(NULL);
+			request->end_time = &current_time;
+
 			// Success event. Will be send to BE for success alerts
 			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
