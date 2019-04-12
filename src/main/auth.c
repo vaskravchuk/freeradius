@@ -826,7 +826,6 @@ autz_redo:
 		if (request->packet->dst_port != 0) {
 
 			// Get the current time
-			char* c_time_string;
 			time_t current_time = time(NULL);
 			request->end_time = &current_time;
 
@@ -840,7 +839,6 @@ autz_redo:
 		if (request->packet->dst_port != 0) {
 
 			// Get the current time
-			char* c_time_string;
 			time_t current_time = time(NULL);
 			request->end_time = &current_time;
 

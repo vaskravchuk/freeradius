@@ -370,7 +370,6 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				}
 
 				// Get the current time
-				char* c_time_string;
 				time_t current_time = time(NULL);
 				handler->cached_request->end_time = &current_time;
 				
