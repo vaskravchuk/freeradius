@@ -372,6 +372,9 @@ static void eaplist_expire(rlm_eap_t *inst, time_t timestamp)
 				// Get the current time
 				time_t current_time = time(NULL);
 				handler->cached_request->end_time = &current_time;
+
+				// Set start time
+				handler->cached_request->start_time = handler->timestamp;
 				
 				radius_exec_logger_centrale(handler->cached_request, "60029", NULL);
 			}
