@@ -514,7 +514,7 @@ void request_set_client(REQUEST *request, RADCLIENT *client)
 		return;
 	}
 
-	size_t len = snprintf(request->client_shortname, sizeof(client->shortname), "%s", client->shortname);
+	int len = snprintf(request->client_shortname, sizeof(client->shortname), "%s", client->shortname);
 	//if len < 0 -> error occurs 
 	if (len >= 0) {
 		request->client_shortname[len] = 0;
@@ -527,7 +527,7 @@ void request_set_auth_subtype(REQUEST *request, char *type)
 		return;
 	}
 
-	size_t len = snprintf(request->auth_subtype, sizeof(request->auth_subtype), "%s", type);
+	int len = snprintf(request->auth_subtype, sizeof(request->auth_subtype), "%s", type);
 	//if len < 0 -> error occurs 
 	if (len >= 0) {
 		request->auth_subtype[len] = 0;

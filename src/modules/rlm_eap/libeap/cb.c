@@ -25,12 +25,102 @@
 RCSID("$Id$")
 
 #include "eap_tls.h"
+#include <freeradius-devel/portnox/string_helper.h>
 
 #ifndef NO_OPENSSL
+
+void ssl_error_to_error_id(char *ssl_error, char *error_id, size_t err_len) {
+    if (!ssl_error) {
+        return;
+    }
+    int len;
+    int id = 60060;
+    int offset = 0;
+
+    if (strcmp(ssl_error, "UM") == 0) {
+        offset = 0;
+    } else if (strcmp(ssl_error, "PU") == 0) {
+        offset = 1;
+    } else if (strcmp(ssl_error, "HF") == 0) {
+        offset = 2;
+    } else if (strcmp(ssl_error, "BC") == 0) {
+        offset = 3;
+    } else if (strcmp(ssl_error, "CU") == 0) {
+        offset = 4;
+    } else if (strcmp(ssl_error, "IP") == 0) {
+        offset = 5;
+    } else if (strcmp(ssl_error, "CA") == 0) {
+        offset = 6;
+    } else if (strcmp(ssl_error, "CY") == 0) {
+        offset = 7;
+    } else if (strcmp(ssl_error, "IE") == 0) {
+        offset = 8;
+    } else if (strcmp(ssl_error, "AD") == 0) {
+        offset = 9;
+    } else if (strcmp(ssl_error, "BM") == 0) {
+        offset = 10;
+    } else if (strcmp(ssl_error, "DF") == 0) {
+        offset = 11;
+    } else if (strcmp(ssl_error, "NC") == 0) {
+        offset = 12;
+    } else if (strcmp(ssl_error, "UC") == 0) {
+        offset = 13;
+    } else if (strcmp(ssl_error, "CR") == 0) {
+        offset = 14;
+    } else if (strcmp(ssl_error, "CE") == 0) {
+        offset = 15;
+    } else if (strcmp(ssl_error, "DC") == 0) {
+        offset = 16;
+    } else if (strcmp(ssl_error, "RO") == 0) {
+        offset = 17;
+    } else if (strcmp(ssl_error, "DE") == 0) {
+        offset = 18;
+    } else if (strcmp(ssl_error, "CY") == 0) {
+        offset = 19;
+    } else if (strcmp(ssl_error, "ER") == 0) {
+        offset = 20;
+    } else if (strcmp(ssl_error, "IS") == 0) {
+        offset = 21;
+    } else if (strcmp(ssl_error, "US") == 0) {
+        offset = 22;
+    } else if (strcmp(ssl_error, "NR") == 0) {
+        offset = 23;
+    } else if (strcmp(ssl_error, "UP") == 0) {
+        offset = 24;
+    } else {
+        id = 60030;
+    }
+
+    len = snprintf(error_id, err_len, "%d", id + offset);
+	len = MIN(len, err_len - 1) < 0 ? 0 : len;
+    
+    error_id[len] = 0;
+}
+
+void handler_set_ssl_error(EAP_HANDLER *handler, char *error, char *description) {
+	if (!error && !description) {
+		return;
+	}
+	char error_id[7] = {0};
+
+	ssl_error_to_error_id(error, error_id, sizeof(error_id));
+
+	memcpy(handler->ssl_error, error_id, sizeof(handler->ssl_error));
+	memcpy(handler->ssl_error_desc, description, sizeof(handler->ssl_error_desc));
+	/*int len_error = snprintf(handler->ssl_error, sizeof(handler->ssl_error), "%s", error_id);
+	int len_desc = snprintf(handler->ssl_error_desc, sizeof(handler->ssl_error_desc), "%s", description);
+
+	len_error = MIN(len_error, sizeof(handler->ssl_error) - 1) < 0 ? 0 : len_error;
+	len_desc = MIN(len_desc, sizeof(handler->ssl_error_desc) - 1) < 0 ? 0 : len_desc;
+
+	handler->ssl_error[len_error] = 0;
+	handler->ssl_error_desc[len_desc] = 0;		*/
+}
 
 void cbtls_info(const SSL *s, int where, int ret)
 {
 	const char *str, *state;
+	char *alert_desc;
 	int w;
 	EAP_HANDLER *handler = (EAP_HANDLER *)SSL_get_ex_data(s, 0);
 	REQUEST *request = NULL;
@@ -59,10 +149,14 @@ void cbtls_info(const SSL *s, int where, int ret)
 	} else if (where & SSL_CB_ALERT) {
 		str=(where & SSL_CB_READ)?"read":"write";
 
+		alert_desc = SSL_alert_desc_string_long(ret);
+
 		snprintf(buffer, sizeof(buffer), "TLS Alert %s:%s:%s",
 			 str,
 			 SSL_alert_type_string_long(ret),
-			 SSL_alert_desc_string_long(ret));
+			 alert_desc);
+
+			handler_set_ssl_error(handler, SSL_alert_desc_string(ret), alert_desc);
 	} else if (where & SSL_CB_EXIT) {
 		if (ret == 0) {
 			snprintf(buffer, sizeof(buffer), "%s: failed in %s",

@@ -33,6 +33,8 @@ RCSIDH(eap_h, "$Id$")
 
 #include "eap_types.h"
 
+#define SSL_ERROR_SIZE 50
+
 /*
  * EAP_DS contains all the received/sending information
  * response = Received EAP packet
@@ -130,6 +132,9 @@ typedef struct _eap_handler {
 	VALUE_PAIR		*certs;
 
 	char 			context_id[UUID_SIZE]; /* max unique id for every session */
+
+	char 			ssl_error[SSL_ERROR_SIZE];
+	char 			ssl_error_desc[SSL_ERROR_SIZE];
 } EAP_HANDLER;
 
 /*
