@@ -64,6 +64,10 @@ srv_resp exec_http_request(srv_req* req) {
         headers = curl_slist_append(headers, "Accept: application/json");
         headers = curl_slist_append(headers, "Content-Type: application/json");
         headers = curl_slist_append(headers, "charsets: utf-8");
+
+        /* disable the Expect header (remove 1 sec delay) */ 
+        headers = curl_slist_append(headers, "Expect:");
+
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 
