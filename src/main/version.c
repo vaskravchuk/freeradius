@@ -164,7 +164,7 @@ void version(void)
 	DEBUG3("  ssl: %s", ssl_version());
 
 
-		radlog(L_INFO, "Based on FreeRADIUS " RADIUSD_ORIGINAL_VERSION_STRING);
+	radlog(L_INFO, "Based on FreeRADIUS " RADIUSD_ORIGINAL_VERSION_STRING);
 
 /*	radlog(L_INFO, "Copyright (C) 1999-2015 The FreeRADIUS server project and contributors.");
 	radlog(L_INFO, "There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A");

@@ -32,9 +32,9 @@ dnl # The version of the software
 
 FREERADIUS_VERSION=`cat VERSION | sed -n 's/freeradius=\(.*\)$/\1/p'`
 PORTNOX_VERSION=`cat VERSION | sed -n 's/portnox=\(.*\)$/\1/p'`
-RADIUSD_MAJOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/\..*//'`
-RADIUSD_MINOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
-RADIUSD_INCRM_VERSION=`echo $FREERADIUS_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
+RADIUSD_MAJOR_VERSION=`echo $PORTNOX_VERSION | sed 's/\..*//'`
+RADIUSD_MINOR_VERSION=`echo $PORTNOX_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
+RADIUSD_INCRM_VERSION=`echo $PORTNOX_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
 
 RADIUSD_VERSION=`echo | awk -v major="$RADIUSD_MAJOR_VERSION" \
 -v minor="$RADIUSD_MINOR_VERSION" \

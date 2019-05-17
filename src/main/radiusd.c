@@ -69,7 +69,7 @@ int log_stripped_names;
 int debug_flag = 0;
 int check_config = FALSE;
 
-const char *radiusd_version = "FreeRADIUS Version " RADIUSD_VERSION_STRING
+const char *radiusd_version = "Portnox RADIUS Version " RADIUSD_VERSION_STRING
 #ifdef RADIUSD_VERSION_COMMIT
 " (git #" RADIUSD_VERSION_COMMIT ")"
 #endif
