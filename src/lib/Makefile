@@ -41,7 +41,7 @@ TARGET		= $(LIBPREFIX)freeradius-radius
 all: $(TARGET).la
 
 $(TARGET).la: $(LT_OBJS)
-	$(LIBTOOL) --mode=link --tag=CC $(CC) -release $(RADIUSD_VERSION) \
+	$(LIBTOOL) --mode=link --tag=CC $(CC) -release $(RADIUSD_ORIGINAL_VERSION) \
 	$(LDFLAGS) $(LINK_MODE) -o $@ -rpath $(libdir) $^
 
 $(LT_OBJS): $(INCLUDES)
@@ -54,7 +54,7 @@ install: all
 	$(INSTALL) -d -m 755	$(R)$(libdir)
 	$(LIBTOOL) --mode=install $(INSTALL) -c $(TARGET).la \
 		$(R)$(libdir)/$(TARGET).la
-	rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la;
-	ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_VERSION).la
+	rm -f $(R)$(libdir)/$(TARGET)-$(RADIUSD_ORIGINAL_VERSION).la;
+	ln -s $(TARGET).la $(R)$(libdir)/$(TARGET)-$(RADIUSD_ORIGINAL_VERSION).la
 
 reconfig:
