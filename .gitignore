@@ -29,3 +29,5 @@ config.cache
 .DS_Store
 
 nbproject/
+/.tags
+/.tags1

@@ -25,6 +25,7 @@ CFLAGS		+= -I$(top_builddir)/src
 CFLAGS		+= -DHOSTINFO=\"${HOSTINFO}\"
 CFLAGS		+= -DRADIUSD_VERSION=\"${RADIUSD_VERSION}\"
 CFLAGS		+= -DRADIUSD_VERSION_STRING=\"${RADIUSD_VERSION_STRING}\"
+CFLAGS		+= -DRADIUSD_ORIGINAL_VERSION_STRING=\"${RADIUSD_ORIGINAL_VERSION_STRING}\"
 ifdef RADIUSD_VERSION_COMMIT
 CFLAGS		+= -DRADIUSD_VERSION_COMMIT=\"${RADIUSD_VERSION_COMMIT}\"
 endif
@@ -119,7 +120,7 @@ listen.lo: listen.c dhcpd.c command.c
 radclient.lo: radclient.c $(INCLUDES)
 	$(LIBTOOL) --mode=compile --tag=CC $(CC) $(CFLAGS) -I ../modules/rlm_mschap -c radclient.c
 
-MSCHAP_OBJS := ../modules/rlm_mschap/smbdes.lo ../modules/rlm_mschap/mschap.lo 
+MSCHAP_OBJS := ../modules/rlm_mschap/smbdes.lo ../modules/rlm_mschap/mschap.lo
 
 radclient$(EXEEXT): radclient.lo $(MSCHAP_OBJS) $(LIBRADIUS)
 	$(LIBTOOL) --mode=link --tag=CC $(CC) $(LDFLAGS) $(LINK_MODE) -o radclient radclient.lo $(MSCHAP_OBJS) $(LIBRADIUS) $(LIBS)
