@@ -2696,16 +2696,19 @@ ac_config_headers="$ac_config_headers src/include/autoconf.h"
 
 
 
-RADIUSD_MAJOR_VERSION=`cat VERSION | sed 's/\..*//'`
-RADIUSD_MINOR_VERSION=`cat VERSION | sed 's/^[^\.]*\.//' | sed 's/\..*$//'`
-RADIUSD_INCRM_VERSION=`cat VERSION | sed 's/^.*\..*\.//' | sed 's/[\.-].*$//'`
+FREERADIUS_VERSION=`cat VERSION | sed -n 's/freeradius=\(.*\)$/\1/p'`
+PORTNOX_VERSION=`cat VERSION | sed -n 's/portnox=\(.*\)$/\1/p'`
+RADIUSD_MAJOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/\..*//'`
+RADIUSD_MINOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
+RADIUSD_INCRM_VERSION=`echo $FREERADIUS_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
 
 RADIUSD_VERSION=`echo | awk -v major="$RADIUSD_MAJOR_VERSION" \
 -v minor="$RADIUSD_MINOR_VERSION" \
 -v incrm="$RADIUSD_INCRM_VERSION" \
 '{ printf "%02i%02i%02i", major, minor, incrm }'`
 
-RADIUSD_VERSION_STRING=`cat VERSION`
+RADIUSD_VERSION_STRING="$PORTNOX_VERSION"
+RADIUSD_ORIGINAL_VERSION_STRING="$FREERADIUS_VERSION"
 PACKAGE=freeradius
 
 
@@ -24344,5 +24347,3 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
-
-
