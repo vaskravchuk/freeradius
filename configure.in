@@ -30,8 +30,8 @@ AC_CONFIG_HEADER(src/include/autoconf.h)
 
 dnl # The version of the software
 
-FREERADIUS_VERSION=`cat VERSION | sed -n "s/freeradius=\(.*\)$/\1/p"`
-PORTNOX_VERSION=`cat VERSION | sed -n "s/portnox=\(.*\)$/\1/p"`
+FREERADIUS_VERSION=`cat VERSION | sed -n 's/freeradius=\(.*\)$/\1/p'`
+PORTNOX_VERSION=`cat VERSION | sed -n 's/portnox=\(.*\)$/\1/p'`
 RADIUSD_MAJOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/\..*//'`
 RADIUSD_MINOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
 RADIUSD_INCRM_VERSION=`echo $FREERADIUS_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
@@ -42,7 +42,8 @@ RADIUSD_VERSION=`echo | awk -v major="$RADIUSD_MAJOR_VERSION" \
 '{ printf "%02i%02i%02i", major, minor, incrm }'`
 
 dnl # Still useful for custom builds
-RADIUSD_VERSION_STRING="$PORTNOX_VERSION(f$FREERADIUS_VERSION)"
+RADIUSD_VERSION_STRING="$PORTNOX_VERSION"
+RADIUSD_ORIGINAL_VERSION_STRING="$FREERADIUS_VERSION"
 PACKAGE=PACKAGE_MAIN
 
 dnl #############################################################
