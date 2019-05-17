@@ -2703,9 +2703,9 @@ PORTNOX_VERSION=`cat VERSION | sed -n 's/portnox=\(.*\)$/\1/p'`
 RADIUSD_MAJOR_VERSION=`echo $PORTNOX_VERSION | sed 's/\..*//'`
 RADIUSD_MINOR_VERSION=`echo $PORTNOX_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
 RADIUSD_INCRM_VERSION=`echo $PORTNOX_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
-RADIUSD_ORIGINAL_MAJOR_VERSION=`echo $PORTNOX_VERSION | sed 's/\..*//'`
-RADIUSD_ORIGINAL_MINOR_VERSION=`echo $PORTNOX_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
-RADIUSD_ORIGINAL_INCRM_VERSION=`echo $PORTNOX_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
+RADIUSD_ORIGINAL_MAJOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/\..*//'`
+RADIUSD_ORIGINAL_MINOR_VERSION=`echo $FREERADIUS_VERSION | sed 's/^[[^\.]]*\.//' | sed 's/\..*$//'`
+RADIUSD_ORIGINAL_INCRM_VERSION=`echo $FREERADIUS_VERSION | sed 's/^.*\..*\.//' | sed 's/[[\.-]].*$//'`
 
 RADIUSD_ORIGINAL_VERSION=`echo | awk -v major="$RADIUSD_ORIGINAL_MAJOR_VERSION" \
 -v minor="$RADIUSD_ORIGINAL_MINOR_VERSION" \
