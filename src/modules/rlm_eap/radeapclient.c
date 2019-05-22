@@ -201,6 +201,10 @@ void reset_logs(REQUEST *request)
 	// no need
 }
 
+int str_format(char * s, int n, const char *format, ...) {
+
+}
+
 static int getport(const char *name)
 {
 	struct	servent		*svp;
