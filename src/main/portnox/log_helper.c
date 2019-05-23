@@ -93,23 +93,23 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
     switch (error_code){
         case 1:
             client_ip = get_client_ip_port(request);
-            full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt( "%s for %s on port %s with mac %s, client ip %s, auth method %s and attributes ,\"RadiusCustom\":%s",
                                           n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(dstr_to_cstr(&client_ip)),
                                           n_str(auth_method), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
         case 60029:
-            full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt("Radius request timeout error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
                                          n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
         case 60030:
-            full_message = dstr_from_fmt("Radius EAP-TLS handshake error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt("Radius EAP-TLS handshake error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
                                      n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
         case 60031:
-            full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt("Radius request wrong eap auth type error for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
                                      n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
@@ -122,11 +122,11 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
             redis_result = get_org_id_for_client(request->client_shortname, &org_id);
             if (redis_result)
             {
-                radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' \"RadiusCustom\":%s",
+                radlog(L_ERR, "radius_internal_logger_centrale failed to get org_id from redis on port %s with mac %s with error '%s' ,\"RadiusCustom\":%s",
                        n_str(port), n_str(dstr_to_cstr(&mac)), redis_dal_error_descr(redis_result), n_str(custom_json));
             }
 
-            full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt("%s while connecting to BASEURL/organizations/%s/authndot1x for %s on port %s with mac %s ,\"RadiusCustom\":%s",
                                          n_str(message), n_str(org_id), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
 
@@ -134,7 +134,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
             break;
         }
         case 60060 ... 60084:
-            full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes \"RadiusCustom\":%s",
+            full_message = dstr_from_fmt("Radius EAP-TLS error %s for %s on port %s with mac %s and attributes ,\"RadiusCustom\":%s",
                                         n_str(message), n_str(dstr_to_cstr(&username)), n_str(port), n_str(dstr_to_cstr(&mac)), n_str(custom_json));
             log_portnox_error(error_code, &full_message, request);
             break;
@@ -144,7 +144,7 @@ int radius_internal_logger_centrale(int error_code, char *message, REQUEST *requ
             d_message = dstr_cstr(message);
             log_portnox_error(error_code, &d_message, request);
 
-            dstr_destroy(&d_message); 
+            dstr_destroy(&d_message);
             break;
         }
     };
