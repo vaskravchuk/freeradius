@@ -59,6 +59,13 @@ RCSID("$Id$")
 
 #include "rlm_eap.h"
 
+static const CONF_PARSER module_config[] = {
+	{ "ports_no_EAP_type_checking", PW_TYPE_STRING_PTR,
+	  offsetof(rlm_eap_t, ports_no_EAP_type_checking), NULL, "10200,10100" },
+
+ 	{ NULL, -1, 0, NULL, NULL }           /* end the list */
+};
+
 static const char *eap_codes[] = {
   "",				/* 0 is invalid */
   "request",
@@ -1041,11 +1048,43 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		if ((eap_packet->data[0] != PW_EAP_NAK) &&
 		    (eap_packet->data[0] != handler->eap_type)) {
-			log_request(request, 1, "EAP FAILED (Response appears to match, but EAP type is wrong)");
-			RDEBUG("Response appears to match, but EAP type is wrong.");
-			free(*eap_packet_p);
-			*eap_packet_p = NULL;
-			return NULL;
+
+			char buf[16] = {0};
+			sprintf(buf, "%d", request->packet->src_port);
+
+			rlm_eap_t	*inst;
+
+			inst = (rlm_eap_t *) malloc(sizeof(*inst));
+			if (!inst) {
+				RDEBUG("inst cant alloc memory");
+				return NULL;
+			}
+
+			memset(inst, 0, sizeof(*inst));
+
+			/*for (i = 0; variables[i].name != NULL; i++)
+			{
+				if (variables[i].name == "ports_no_EAP_type_checking")
+				{
+					inst->ports_no_EAP_type_checking = variables[i].dflt;
+					break;
+				}
+			}*/
+
+			if (strstr(/* conf value */, buf) != NULL)
+			{
+				log_request(request, 1, "WARNING: EAP should have FAILED (EAP type is wrong), but it's OK for this port");
+				RDEBUG("Response appears to match, but EAP type is wrong, but it's OK for this port");
+			}
+			else{
+				log_request(request, 1, "EAP FAILED (Response appears to match, but EAP type is wrong)");
+				RDEBUG("Response appears to match, but EAP type is wrong.");
+				free(*eap_packet_p);
+				*eap_packet_p = NULL;
+				return NULL;
+			}
+
+			free(inst);
 		}
 
                vp = pairfind(request->packet->vps, PW_USER_NAME);
