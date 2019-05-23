@@ -221,7 +221,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 	/*
 	 *	Multiple levels of nesting are invalid.
 	 */
-	if (handler->request->parent 
+	if (handler->request->parent
 		&& handler->request->parent->parent
 		&& !handler->request->parent->parent->home_server) {
 		logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Multiple levels of TLS nesting is invalid)");
@@ -250,7 +250,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 		if ((default_eap_type < PW_EAP_MD5) ||
 		    (default_eap_type > PW_EAP_MAX_TYPES) ||
 		    (inst->types[default_eap_type] == NULL)) {
-			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (No such EAP type %s)", 
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (No such EAP type %s)",
 												eaptype_type2name(default_eap_type, namebuf, sizeof(namebuf)));
 			RDEBUG2("No such EAP type %s",
 			       eaptype_type2name(default_eap_type,
@@ -283,7 +283,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 
 		if (eaptype_call(inst->types[default_eap_type],
 				 handler) == 0) {
-			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Default EAP type %s failed in initiate)", 
+			logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Default EAP type %s failed in initiate)",
 													eaptype_type2name(default_eap_type, namebuf, sizeof(namebuf)));
 			RDEBUG2("Default EAP type %s failed in initiate",
 			       eaptype_type2name(default_eap_type,
@@ -360,7 +360,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			eaptype_name = eaptype_type2name(eaptype->data[i],
 							 namebuf,
 							 sizeof(namebuf));
-			
+
 			/*
 			 *	Prevent a firestorm if the client is confused.
 			 */
@@ -377,7 +377,7 @@ int eaptype_select(rlm_eap_t *inst, EAP_HANDLER *handler)
 			 */
 			if (vp && (vp->vp_integer != eaptype->data[i])) {
 				char	mynamebuf[64];
-				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Client wants %s, while we require %s.  Skipping the requested type)", 
+				logs_add_flow(handler->request, "EAP_TYPE_SELECT FAILED (Client wants %s, while we require %s.  Skipping the requested type)",
 														eaptype_name, eaptype_type2name(vp->vp_integer, mynamebuf, sizeof(mynamebuf)));
 				RDEBUG2("Client wants %s, while we require %s.  Skipping the requested type.",
 				       eaptype_name,
@@ -891,7 +891,7 @@ static int eap_validation(REQUEST *request, eap_packet_t *eap_packet)
 	    (eap_packet->data[0] > PW_EAP_MAX_TYPES)) {
 		log_request(request, 1, "EAP FAILED (Badly formatted EAP Message: Ignoring the packet)");
 
-		radlog_request(L_AUTH, 0, request, 
+		radlog_request(L_AUTH, 0, request,
 			       "Badly formatted EAP Message: Ignoring the packet");
 		return EAP_INVALID;
 	}
@@ -1041,11 +1041,16 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		if ((eap_packet->data[0] != PW_EAP_NAK) &&
 		    (eap_packet->data[0] != handler->eap_type)) {
-			log_request(request, 1, "EAP FAILED (Response appears to match, but EAP type is wrong)");
-			RDEBUG("Response appears to match, but EAP type is wrong.");
-			free(*eap_packet_p);
-			*eap_packet_p = NULL;
-			return NULL;
+      if (strstr(clients_no_EAP_type_paranoia, request->client_shortname) != NULL) {
+        log_request(request, 1, "EAP WARNING (Response appears to match, but EAP type is wrong, but paranoia is disabled)");
+      }
+      else {
+        log_request(request, 1, "EAP FAILED (Response appears to match, but EAP type is wrong)");
+        RDEBUG("Response appears to match, but EAP type is wrong.");
+        free(*eap_packet_p);
+        *eap_packet_p = NULL;
+        return NULL;
+      }
 		}
 
                vp = pairfind(request->packet->vps, PW_USER_NAME);
@@ -1138,7 +1143,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 						*/
                        if (strncmp(handler->identity, vp->vp_strvalue,
 				   MAX_STRING_LEN) != 0) {
-								log_request(request, 1, "EAP FAILED (Identity (%s) does not match User-Name (%s).  Authentication failed)", 
+								log_request(request, 1, "EAP FAILED (Identity (%s) does not match User-Name (%s).  Authentication failed)",
 																	handler->identity, vp->vp_strvalue);
                                RDEBUG("Identity (%s) does not match User-Name (%s).  Authentication failed.",
 				      handler->identity, vp->vp_strvalue);
@@ -1164,12 +1169,12 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 	if (is_new_handler)
 	{
 	   /*
-	    * if we need new eap handler -> new session, 
+	    * if we need new eap handler -> new session,
 	    * so we push eap context id from requests (Access-Request)
 	    */
 		memcpy(handler->context_id, request->context_id, sizeof(request->context_id));
 	}
-	else 
+	else
 	{
 	   /*
 	    * if we already initiated eap session

@@ -43,6 +43,8 @@ static const CONF_PARSER module_config[] = {
 	  offsetof(rlm_eap_t, max_sessions), NULL, "2048"},
 	{ "expiration_checking_interval", PW_TYPE_INTEGER,
 	  offsetof(rlm_eap_t, expiration_checking_interval), NULL, "2"},
+	{ "clients_no_EAP_type_paranoia", PW_TYPE_STRING_PTR,
+	  offsetof(rlm_eap_t, clients_no_EAP_type_paranoia), NULL, ""},
 
  	{ NULL, -1, 0, NULL, NULL }           /* end the list */
 };
@@ -482,10 +484,10 @@ static int eap_authenticate(void *instance, REQUEST *request)
 			eap_handler_free(inst, handler);
 			return RLM_MODULE_FAIL;
 		}
-		
+
 		radlog_eaphandler_portnox(
-			handler, 
-			(handler->trips == 0) ? 1 : 0, 
+			handler,
+			(handler->trips == 0) ? 1 : 0,
 			"EAP PROCESS");
 
 	} else {
@@ -672,7 +674,7 @@ static int eap_post_proxy(void *inst, REQUEST *request)
 				eap_handler_free(inst, handler);
 				return RLM_MODULE_FAIL;
 			}
-			
+
 		} else {	/* couldn't have been LEAP, there's no tunnel */
 			RDEBUG2("Freeing handler");
 			/* handler is not required any more, free it now */
