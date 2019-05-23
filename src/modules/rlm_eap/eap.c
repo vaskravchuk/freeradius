@@ -1041,7 +1041,7 @@ EAP_HANDLER *eap_handler(rlm_eap_t *inst, eap_packet_t **eap_packet_p,
 		 */
 		if ((eap_packet->data[0] != PW_EAP_NAK) &&
 		    (eap_packet->data[0] != handler->eap_type)) {
-      if (strstr(clients_no_EAP_type_paranoia, request->client_shortname) != NULL) {
+      if (strstr(inst->clients_no_EAP_type_paranoia, request->client_shortname) != NULL) {
         log_request(request, 1, "EAP WARNING (Response appears to match, but EAP type is wrong, but paranoia is disabled)");
       }
       else {
