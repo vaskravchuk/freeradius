@@ -32,7 +32,8 @@ RCSID("$Id$")
 static int portnox_chap_auth(void *instance, REQUEST *request)
 {
     static AUTH_SP_ATTR procs[2] = { (AUTH_SP_ATTR){CHAP_RESPONSE_ATTR, NT_RESPONSE_PR, NULL, NULL},
-    									 (AUTH_SP_ATTR){CHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
+                                     (AUTH_SP_ATTR){CHAP_CHALLENGE_ATTR, NT_CHALLENGE_PR, NULL, NULL},
+                                     (AUTH_SP_ATTR){PACKET_AUTH_VECTOR_ATTR, NT_CHALLENGE_PR, NULL, NULL} };
     static AUTH_SP_ATTR_LIST proc_list = {procs, sizeof(procs)/sizeof(procs[0])};
     static AUTH_INFO auth_info = {&proc_list,"60036","60037","60035"};
 
@@ -41,10 +42,10 @@ static int portnox_chap_auth(void *instance, REQUEST *request)
 
 	request_set_auth_subtype(request, "CHAP");
 
-    result = portnox_auth(request, 
-    					  CHAP_AUTH_METHOD, 
-    					  &auth_info, 
-    					  &answer, 
+    result = portnox_auth(request,
+    					  CHAP_AUTH_METHOD,
+    					  &auth_info,
+    					  &answer,
     					  NULL, 0);
 
 	if (result != OPERATION_SUCCESS) {
