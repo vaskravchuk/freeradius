@@ -39,53 +39,53 @@ void ssl_error_to_error_id(char *ssl_error, char *error_id, size_t err_len) {
 
     if (strcmp(ssl_error, "UM") == 0) {
         offset = 0;
-    } else if (strcmp(ssl_error, "PU") == 0) {
-        offset = 1;
-    } else if (strcmp(ssl_error, "HF") == 0) {
-        offset = 2;
-    } else if (strcmp(ssl_error, "BC") == 0) {
-        offset = 3;
-    } else if (strcmp(ssl_error, "CU") == 0) {
-        offset = 4;
-    } else if (strcmp(ssl_error, "IP") == 0) {
-        offset = 5;
-    } else if (strcmp(ssl_error, "CA") == 0) {
-        offset = 6;
-    } else if (strcmp(ssl_error, "CY") == 0) {
-        offset = 7;
-    } else if (strcmp(ssl_error, "IE") == 0) {
-        offset = 8;
-    } else if (strcmp(ssl_error, "AD") == 0) {
-        offset = 9;
     } else if (strcmp(ssl_error, "BM") == 0) {
-        offset = 10;
+        offset = 1;
     } else if (strcmp(ssl_error, "DF") == 0) {
-        offset = 11;
+        offset = 2;
+    } else if (strcmp(ssl_error, "HF") == 0) {
+        offset = 3;
     } else if (strcmp(ssl_error, "NC") == 0) {
-        offset = 12;
+        offset = 4;
+    } else if (strcmp(ssl_error, "BC") == 0) {
+        offset = 5;
     } else if (strcmp(ssl_error, "UC") == 0) {
-        offset = 13;
+        offset = 6;
     } else if (strcmp(ssl_error, "CR") == 0) {
-        offset = 14;
+        offset = 7;
     } else if (strcmp(ssl_error, "CE") == 0) {
-        offset = 15;
+        offset = 8;
+    } else if (strcmp(ssl_error, "CU") == 0) {
+        offset = 9;
+    } else if (strcmp(ssl_error, "IP") == 0) {
+        offset = 10;
     } else if (strcmp(ssl_error, "DC") == 0) {
-        offset = 16;
+        offset = 11;
     } else if (strcmp(ssl_error, "RO") == 0) {
-        offset = 17;
+        offset = 12;
+    } else if (strcmp(ssl_error, "CA") == 0) {
+        offset = 13;
+    } else if (strcmp(ssl_error, "AD") == 0) {
+        offset = 14;
     } else if (strcmp(ssl_error, "DE") == 0) {
-        offset = 18;
+        offset = 15;
     } else if (strcmp(ssl_error, "CY") == 0) {
-        offset = 19;
+        offset = 16;
     } else if (strcmp(ssl_error, "ER") == 0) {
-        offset = 20;
+        offset = 17;
+    } else if (strcmp(ssl_error, "PV") == 0) {
+        offset = 18;
     } else if (strcmp(ssl_error, "IS") == 0) {
-        offset = 21;
+        offset = 19;
+    } else if (strcmp(ssl_error, "IE") == 0) {
+        offset = 20;
     } else if (strcmp(ssl_error, "US") == 0) {
-        offset = 22;
+        offset = 21;
     } else if (strcmp(ssl_error, "NR") == 0) {
-        offset = 23;
+        offset = 22;
     } else if (strcmp(ssl_error, "UP") == 0) {
+        offset = 23;
+    } else if (strcmp(ssl_error, "UK") == 0) {
         offset = 24;
     } else {
         id = 60030;
