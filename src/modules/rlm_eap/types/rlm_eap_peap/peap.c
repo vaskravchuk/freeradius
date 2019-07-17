@@ -955,7 +955,7 @@ int eappeap_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	reset_logs(fake);
 	logs_add_flow(fake, "tunnel");
 	/*
-	 *	Mark tunnel type of request as TTLS.
+	 *	Mark tunnel type of request as PEAP.
 	 */
 	fake->tunnel_types |= TUNEL_TYPE_PEAP;
 
