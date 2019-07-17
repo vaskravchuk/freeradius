@@ -264,7 +264,7 @@ static char* get_request_json(REQUEST *request, int auth_method, char* identity,
 
     /* compose json */
     cJSON_AddNumberToObject(json_obj, AUTH_METHOD_PR, auth_method);
-    cJSON_AddNumberToObject(json_obj, AUTH_TUNNEL_TYPES_PR, request->tunnel_type);
+    cJSON_AddNumberToObject(json_obj, AUTH_TUNNEL_TYPES_PR, request->tunnel_types);
     if (identity && *identity) cJSON_AddStringToObject(json_obj, USERNAME_PR, identity);
     if (mac && *mac) cJSON_AddStringToObject(json_obj, MAC_ADDRESS_PR, mac);
     if (attrs) cJSON_AddItemToObject(json_obj, RADIUS_CUSTOM_PR, attrs);
