@@ -33,6 +33,10 @@ RCSIDH(radiusd_h, "$Id$")
 #include <freeradius-devel/conffile.h>
 #include <freeradius-devel/event.h>
 
+#define TUNEL_TYPE_NONE 0
+#define TUNEL_TYPE_PEAP 1 << 1
+#define TUNEL_TYPE_TTLS 1 << 2
+
 #define CLIENT_NAME_SIZE 16
 #define AUTH_SUBTYPE_SIZE 24
 #define UUID_SIZE 37
@@ -289,6 +293,8 @@ struct auth_req {
 	char 					auth_subtype[AUTH_SUBTYPE_SIZE]; /* auth subtype of request */
 
 	LOG_DESC 				*logs; /* state description */
+	int						tunnel_types; /* specify tunnel type from which request comes */
+
 };				/* REQUEST typedef */
 
 #define RAD_REQUEST_OPTION_NONE            (0)
