@@ -34,9 +34,8 @@ RCSIDH(radiusd_h, "$Id$")
 #include <freeradius-devel/event.h>
 
 #define TUNEL_TYPE_NONE 0
-#define TUNEL_TYPE_PROXY 1 << 1
-#define TUNEL_TYPE_PEAP 1 << 2
-#define TUNEL_TYPE_TTLS 1 << 3
+#define TUNEL_TYPE_PEAP 1 << 1
+#define TUNEL_TYPE_TTLS 1 << 2
 
 #define CLIENT_NAME_SIZE 16
 #define AUTH_SUBTYPE_SIZE 24
