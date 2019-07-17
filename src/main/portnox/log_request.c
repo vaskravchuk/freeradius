@@ -225,6 +225,8 @@ int request_struct_to_string(char *out, int outlen, REQUEST *request, char *msg,
 		if (!reply && request->logs->trips >= 0)
 			len += log_add_json_int(out + len, outlen - len, "N", request->logs->trips);
 
+		// print tunnel type of request
+		len += log_add_json_int(out + len, outlen - len, "TT", request->tunnel_types);
 
 		// print context_id
 		len += log_add_json_string(out + len, outlen - len, "CID", request->context_id);

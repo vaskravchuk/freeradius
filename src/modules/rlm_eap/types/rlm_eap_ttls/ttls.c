@@ -986,9 +986,14 @@ int eapttls_process(EAP_HANDLER *handler, tls_session_t *tls_session)
 	}
 
 	/*
-	 *	Allocate a fake REQUEST structe.
+	 *	Allocate a fake REQUEST struct.
 	 */
 	fake = request_alloc_fake(request);
+
+	/*
+	 *	Mark tunnel type of request as TTLS.
+	 */
+	fake->tunnel_types |= TUNEL_TYPE_TTLS;
 
 	rad_assert(fake->packet->vps == NULL);
 

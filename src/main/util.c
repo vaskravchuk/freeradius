@@ -625,6 +625,8 @@ REQUEST *request_alloc_fake(REQUEST *request)
   memcpy(fake->auth_subtype, request->auth_subtype, sizeof(request->auth_subtype));
   memcpy(fake->logs, request->logs, sizeof(LOG_DESC));
 
+  fake->tunnel_types = request->tunnel_types;
+
   return fake;
 }
 

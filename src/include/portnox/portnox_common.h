@@ -37,6 +37,7 @@ RCSIDH(portnox_common_h, "$Id$")
 #define ACCT_STATUS_TYPE_ATTR       "Acct-Status-Type"
 
 #define AUTH_METHOD_PR				"AuthNMethod"
+#define AUTH_TUNNEL_TYPES_PR		"TunnelTypes"
 #define MAC_ADDRESS_PR				"MacAddress"
 #define PLAIN_PWD_PR				"PlainPwd"
 #define USERNAME_PR					"UserName"
