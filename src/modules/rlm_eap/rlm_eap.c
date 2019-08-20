@@ -491,6 +491,9 @@ static int eap_authenticate(void *instance, REQUEST *request)
 			"EAP PROCESS");
 
 	} else {
+		// Set authentication start time
+		request->start_time = inst->session_head->timestamp;
+
 		radlog_eaphandler_portnox(handler, 0, "EAP FINISHED");
 		RDEBUG2("Freeing handler");
 		/* handler is not required any more, free it now */

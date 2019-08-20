@@ -235,6 +235,8 @@ struct auth_req {
 	int						thread_id;
 #endif
 	time_t					timestamp;
+	time_t 					start_time;
+	time_t					end_time;
 	unsigned int	   		number;	/* internal server number */
 
 	rad_listen_t			*listener;

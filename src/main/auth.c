@@ -824,6 +824,11 @@ autz_redo:
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
+
+			// Get the current time
+			time_t current_time = time(NULL);
+			request->end_time = &current_time;
+
 			// Success event. Will be send to BE for success alerts
 			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
@@ -832,6 +837,11 @@ autz_redo:
 
 		/// disable in tunnel: else we have copy(in_tunnel/out_tunnel)
 		if (request->packet->dst_port != 0) {
+
+			// Get the current time
+			time_t current_time = time(NULL);
+			request->end_time = &current_time;
+
 			// Success event. Will be send to BE for success alerts
 			radius_exec_logger_centrale(request, "1", "Authenticate status OK");
 		}
